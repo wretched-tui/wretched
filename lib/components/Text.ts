@@ -18,25 +18,25 @@ interface LinesProps {
   lines: string[]
 }
 
-interface Props {
+interface StyleProps {
   alignment?: Alignment
   wrap?: boolean
 }
 
+type Props = StyleProps & (TextProps | LinesProps)
+
 export class Text extends View {
   lines: string[]
-  alignment: Alignment
-  wrap: boolean
+  alignment: StyleProps['alignment']
+  wrap: StyleProps['wrap']
 
-  constructor({
-    text,
-    lines,
-    alignment,
-    wrap,
-  }: Props & (TextProps | LinesProps)) {
+  constructor({text, lines, alignment, wrap}: Props) {
     super()
-    if (text !== undefined) this.lines = text.split('\n')
-    else this.lines = lines
+    if (text !== undefined) {
+      this.lines = text.split('\n')
+    } else {
+      this.lines = lines
+    }
     this.alignment = alignment ?? 'left'
     this.wrap = wrap ?? false
   }
@@ -64,10 +64,6 @@ export class Text extends View {
       line,
       this.alignment === 'left' ? 0 : unicode.strWidth(line),
     ])
-    const maxWidth =
-      this.alignment === 'left'
-        ? 0
-        : Math.max(...lines.map(([, width]) => width))
 
     let y = 0
     let visibleX = 0
@@ -92,8 +88,8 @@ export class Text extends View {
       let didWrap = false
       const offsetX =
         this.alignment === 'center'
-          ? ~~((maxWidth - width) / 2)
-          : maxWidth - width
+          ? ~~((viewport.contentSize.width - width) / 2)
+          : viewport.contentSize.width - width
       for (const char of toChars(line)) {
         const width = unicode.charWidth(char)
         if (width === 0) {
