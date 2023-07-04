@@ -33,13 +33,9 @@ export class Viewport {
 
   /**
    * Does not support newlines (no default wrapping behavior),
-   * but prints strings left-to-right
+   * always prints left-to-right.
    */
   write(input: string, to: Point) {
-    if (this.visibleRect.size.width <= 0 || this.visibleRect.size.height <= 0) {
-      return
-    }
-
     if (
       to.x >= this.visibleRect.maxX() ||
       to.y < this.visibleRect.minY() ||
@@ -48,26 +44,27 @@ export class Viewport {
       return
     }
 
-    this.terminal.move(this.offset.x + to.x, this.offset.y + to.y)
     let x = to.x
-    let visibleX = x
-    let visible = ''
+    let visibleX = 0
+    let visible: string | undefined = undefined
     let attrs = ''
     let suffix = ''
     for (const char of toChars(input)) {
       if (char === '\n') {
-        return
+        break
       }
 
       const width = unicode.charWidth(char)
-
-      if (to.x + x < this.visibleRect.minX() && width === 0) {
+      if (width === 0) {
         attrs = char
-      } else if (to.x + x >= this.visibleRect.minX()) {
-        if (visible.length === 0) {
+        if (visible !== undefined) {
+          visible += char
+        }
+      } else if (x >= this.visibleRect.minX() && x + width - 1 < this.visibleRect.maxX()) {
+        if (visible === undefined) {
+          visible = attrs
           visibleX = x
           if (attrs) {
-            visible += attrs
             suffix = RESET
           }
         }
@@ -76,13 +73,16 @@ export class Viewport {
 
       x += width
 
-      if (to.x >= this.visibleRect.maxX()) {
+      // no need to consider characters after this; newline/wrap isn't supported here
+      if (x >= this.visibleRect.maxX()) {
         break
       }
     }
 
-    this.terminal.move(visibleX, this.offset.y + to.y)
-    this.terminal.write(visible + suffix)
+    this.terminal.move(this.offset.x + visibleX, this.offset.y + to.y)
+    if (visible !== undefined) {
+      this.terminal.write(visible + suffix)
+    }
   }
 
   clipped(clip: Rect): Viewport {

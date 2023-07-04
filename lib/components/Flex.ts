@@ -1,5 +1,6 @@
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
+import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
@@ -14,7 +15,7 @@ function isVertical(direction: Direction) {
   return direction === 'topToBottom' || direction === 'bottomToTop'
 }
 
-export class Flex extends View {
+export class Flex extends Container {
   direction: Direction
   sizes: Map<View, FlexSize> = new Map()
 

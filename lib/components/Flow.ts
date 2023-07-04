@@ -1,5 +1,6 @@
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
+import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
@@ -9,7 +10,7 @@ interface Props {
   direction: Direction
 }
 
-export class Flow extends View {
+export class Flow extends Container {
   direction: Direction
 
   constructor({children, direction}: Props) {

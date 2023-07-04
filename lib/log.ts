@@ -1,14 +1,8 @@
 import {EventEmitter} from 'events'
+import {inspect} from './inspect'
 
-const methods = [
-  'debug',
-  'dir',
-  'error',
-  'info',
-  'log',
-  'table',
-  'warn',
-] as const
+const inspect_methods = ['debug', 'error', 'info', 'log', 'warn'] as const
+const methods = [...inspect_methods, 'dir', 'table'] as const
 export type Method = (typeof methods)[number]
 export type Listener = (method: Method, args: any[]) => void
 
@@ -24,7 +18,11 @@ export function interceptConsoleLog() {
       if (emitter && method !== 'debug') {
         emitter.emit('log', [method, args])
       } else {
-        log.push([builtin, args])
+        if ((inspect_methods as readonly string[]).includes(method)) {
+          log.push([builtin, args.map(arg => inspect(arg))])
+        } else {
+          log.push([builtin, args])
+        }
       }
     }
   })

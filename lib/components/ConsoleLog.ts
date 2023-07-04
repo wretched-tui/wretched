@@ -33,7 +33,7 @@ class LogLine extends Text {
   constructor(method: Method, args: any[]) {
     const header = styled(centerPad(method.toUpperCase(), 7), 'black fg;white bg') + ' '
     const lines = args.flatMap(arg =>
-      inspect(arg)
+      inspect(arg, false)
         .split('\n')
         .map((line, index) => {
           if (index === 0) {

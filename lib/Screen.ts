@@ -12,7 +12,7 @@ export class Screen {
   buffer: Buffer
   view: View
 
-  static start(view: () => View): [Screen, BlessedProgram] {
+  static start(viewConstructor: () => View): [Screen, BlessedProgram] {
     const program = blessedProgram({
       useBuffer: true,
     })
@@ -22,7 +22,8 @@ export class Screen {
     program.hideCursor()
     program.clear()
 
-    const screen = new Screen(program, view())
+    const view = viewConstructor()
+    const screen = new Screen(program, view)
 
     program.key('C-c', function () {
       program.clear()
@@ -33,21 +34,12 @@ export class Screen {
       process.exit(0)
     })
 
-    let timerId: ReturnType<typeof setTimeout> | undefined
     program.on('resize', function (data) {
-      if (timerId !== undefined) {
-        clearTimeout(timerId)
-      }
-
-      timerId = setTimeout(() => screen.render(), 8)
+      screen.render()
     })
 
     program.on('mouse', function (data) {
-      if (timerId !== undefined) {
-        clearTimeout(timerId)
-      }
-
-      timerId = setTimeout(() => screen.render(), 8)
+      screen.render()
     })
 
     screen.render()
@@ -60,10 +52,20 @@ export class Screen {
     this.terminal = terminal
     this.buffer = new Buffer()
     this.view = view
-    view.didMount()
+    view.moveToScreen(this)
   }
 
+  timerId: ReturnType<typeof setTimeout> | undefined
   render() {
+    if (this.timerId === undefined) {
+      this.#render()
+    } else {
+      clearTimeout(this.timerId)
+      this.timerId = setTimeout(this.#render.bind(this), 8)
+    }
+  }
+
+  #render() {
     const screenSize = new Size(this.terminal.cols, this.terminal.rows)
     this.buffer.clear(screenSize)
 

@@ -1,5 +1,5 @@
 import {inspect as nodeInspect} from 'util'
-import * as ansi from './ansi'
+import {colorize} from './ansi'
 
 let _debug = false
 export function isDebugging(enabled?: boolean) {
@@ -9,13 +9,13 @@ export function isDebugging(enabled?: boolean) {
   return _debug
 }
 
-export function inspect(value: any, recursion = 0): string {
+export function inspect(value: any, wrap: boolean = true, recursion = 0): string {
   if (value instanceof Set) {
-    return `new Set(${inspect(Array.from(value.values()), recursion)})`
+    return `new Set(${inspect(Array.from(value.values()), wrap, recursion)})`
   }
 
   if (value instanceof Map) {
-    return `new Map(${inspect(value.entries(), recursion)})`
+    return `new Map(${inspect(value.entries(), wrap, recursion)})`
   }
 
   const tab = '  '.repeat(recursion)
@@ -24,14 +24,14 @@ export function inspect(value: any, recursion = 0): string {
   if (value instanceof Object && value.constructor !== Object && Object.keys(value).length === 0) {
     return nodeInspect(value).replace('\n', `\n${innerTab}`)
   } else if (typeof value === 'string') {
-    return ansi.colorize.string(value, recursion > 0)
+    return colorize.string(value, recursion > 0)
   } else if (
     typeof value === 'number' ||
     typeof value === 'boolean' ||
     typeof value === 'undefined' ||
     value === null
   ) {
-    return ansi.colorize.format(value)
+    return colorize.format(value)
   } else if (typeof value === 'function') {
     return `function${value.name ? ` ${value.name}` : ''}() {…}`
   } else if (Array.isArray(value)) {
@@ -39,11 +39,17 @@ export function inspect(value: any, recursion = 0): string {
       return '[]'
     }
 
-    const values = value.map(val => inspect(val, recursion + 1))
+    const values = value.map(val => inspect(val, wrap, recursion + 1))
     const count = values.reduce((len, val) => len + val.length, 0)
-    const inner = values.join(', ')
+    const newline = wrap && count > 100
+    let inner: string
+    if (newline) {
+      inner = values.join(`,\n${innerTab}`)
+    } else {
+      inner = values.join(', ')
+    }
 
-    return `[ ${inner} ]`
+    return newline ? `[\n${innerTab}${inner}\n${tab}]` : `[ ${inner} ]`
   }
 
   const name = value.constructor.name === 'Object' ? '' : value.constructor.name.concat(' ')
@@ -52,9 +58,17 @@ export function inspect(value: any, recursion = 0): string {
     return '{}'
   }
 
-  const values = keys.map(key => `${ansi.colorize.key(key)}: ${inspect(value[key], recursion + 1)}`)
+  const values = keys.map(
+    key => `${colorize.key(key)}: ${inspect(value[key], wrap, recursion + 1)}`,
+  )
   const count = values.reduce((len, val) => len + val.length, 0)
-  const inner = values.join(', ')
+  const newline = wrap && count > 100
+  let inner: string
+  if (newline) {
+    inner = values.join(`,\n${innerTab}`)
+  } else {
+    inner = values.join(', ')
+  }
 
-  return `${name}{ ${inner} }`
+  return newline ? `${name}{\n${innerTab}${inner}\n${tab}}` : `${name}{ ${inner} }`
 }

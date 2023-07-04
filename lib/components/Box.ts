@@ -1,12 +1,14 @@
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
+import {Container} from '../Container'
+import {inspect} from '../inspect'
 import {Rect, Point, Size} from '../geometry'
 
 interface Props {
   child: View
 }
 
-export class Box extends View {
+export class Box extends Container {
   constructor({child}: Props) {
     super()
     this.add(child)
