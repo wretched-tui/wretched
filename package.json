@@ -1,0 +1,34 @@
+{
+  "name": "wretched",
+  "description": "A low-level terminal interface library for node.js.",
+  "author": "Blessed by Christopher Jeffrey, Wretched by Colin T.A. Gray",
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "preferGlobal": false,
+  "repository": "git://github.com/colinta/wretched.git",
+  "homepage": "https://github.com/colinta/wretched",
+  "types": "index.d.ts",
+  "bugs": {
+    "url": "http://github.com/colinta/wretched/issues"
+  },
+  "scripts": {},
+  "keywords": [
+    "curses",
+    "tui",
+    "terminal",
+    "terminal-ui"
+  ],
+  "tags": [
+    "curses",
+    "tui",
+    "terminal"
+  ],
+  "engines": {
+    "node": ">= 20.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.2",
+    "typescript": "^5.1.6"
+  }
+}
