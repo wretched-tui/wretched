@@ -4,13 +4,19 @@ import {Container} from '../Container'
 import {inspect} from '../inspect'
 import {Rect, Point, Size} from '../geometry'
 
+type Border = 'single' | 'bold' | 'double' | 'round'
+
 interface Props {
   child: View
+  border?: Border
 }
 
 export class Box extends Container {
-  constructor({child}: Props) {
+  readonly border: Border
+
+  constructor({child, border}: Props) {
     super()
+    this.border = border ?? 'single'
     this.add(child)
   }
 
@@ -29,15 +35,24 @@ export class Box extends Container {
     const inside = viewport.clipped(new Rect(new Point(1, 1), viewport.contentSize.shrink(2, 2)))
     super.render(inside)
 
-    viewport.write('─'.repeat(maxX - 1), new Point(1, 0))
-    viewport.write('─'.repeat(maxX - 1), new Point(1, maxY))
+    const [sides, tops, tl, tr, bl, br] = BORDERS[this.border]
+    viewport.write(sides.repeat(maxX - 1), new Point(1, 0))
+    viewport.write(sides.repeat(maxX - 1), new Point(1, maxY))
     for (let y = 1; y < maxY; ++y) {
-      viewport.write('│', new Point(0, y))
-      viewport.write('│', new Point(maxX, y))
+      viewport.write(tops, new Point(0, y))
+      viewport.write(tops, new Point(maxX, y))
     }
-    viewport.write('┌', Point.zero)
-    viewport.write('┐', new Point(maxX, 0))
-    viewport.write('└', new Point(0, maxY))
-    viewport.write('┘', new Point(maxX, maxY))
+    viewport.write(tl, Point.zero)
+    viewport.write(tr, new Point(maxX, 0))
+    viewport.write(bl, new Point(0, maxY))
+    viewport.write(br, new Point(maxX, maxY))
   }
+}
+
+type Chars = [string, string, string, string, string, string]
+const BORDERS: Record<Border, Chars> = {
+  single: ['─', '│', '┌', '┐', '└', '┘'],
+  bold: ['━', '┃', '┏', '┓', '┗', '┛'],
+  double: ['═', '║', '╔', '╗', '╚', '╝'],
+  round: ['─', '│', '╭', '╮', '╰', '╯'],
 }
