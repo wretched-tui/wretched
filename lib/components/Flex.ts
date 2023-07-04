@@ -7,7 +7,7 @@ type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 type FlexSize = 'intrinsic' | {flex: number} | 'flex' // implies {flex: 1}
 
 interface Props {
-  children: [FlexSize, View][]
+  children: ([FlexSize, View] | View)[]
   direction: Direction
 }
 
@@ -23,7 +23,14 @@ export class Flex extends Container {
     super()
     this.direction = direction
 
-    for (const [flexSize, child] of children) {
+    for (const info of children) {
+      let flexSize: FlexSize, child: View
+      if (info instanceof View) {
+        flexSize = 'intrinsic'
+        child = info
+      } else {
+        ;[flexSize, child] = info
+      }
       this.sizes.set(child, flexSize)
       this.add(child)
     }
