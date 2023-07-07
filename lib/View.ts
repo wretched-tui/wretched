@@ -1,6 +1,7 @@
 import {Size} from './geometry'
 import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
+import type {MouseEvent} from './events'
 
 export abstract class View {
   #screen: Screen | null
@@ -22,6 +23,8 @@ export abstract class View {
   didMoveFrom(parent: View) {}
   didMount() {}
   didUnmount() {}
+
+  receiveMouse(event: MouseEvent) {}
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {

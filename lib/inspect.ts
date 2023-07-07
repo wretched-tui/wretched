@@ -1,5 +1,5 @@
 import {inspect as nodeInspect} from 'util'
-import {colorize} from './ansi'
+import {colorize, red} from './ansi'
 
 let _debug = false
 export function isDebugging(enabled?: boolean) {
@@ -10,6 +10,10 @@ export function isDebugging(enabled?: boolean) {
 }
 
 export function inspect(value: any, wrap: boolean = true, recursion = 0): string {
+  if (recursion >= 10) {
+    return red('...')
+  }
+
   if (value instanceof Set) {
     return `new Set(${inspect(Array.from(value.values()), wrap, recursion)})`
   }
@@ -28,7 +32,7 @@ export function inspect(value: any, wrap: boolean = true, recursion = 0): string
   } else if (
     typeof value === 'number' ||
     typeof value === 'boolean' ||
-    typeof value === 'undefined' ||
+    value === undefined ||
     value === null
   ) {
     return colorize.format(value)
@@ -52,7 +56,12 @@ export function inspect(value: any, wrap: boolean = true, recursion = 0): string
     return newline ? `[\n${innerTab}${inner}\n${tab}]` : `[ ${inner} ]`
   }
 
-  const name = value.constructor.name === 'Object' ? '' : value.constructor.name.concat(' ')
+  const name =
+    value.constructor === undefined
+      ? ''
+      : value.constructor.name === 'Object'
+      ? ''
+      : value.constructor.name.concat(' ')
   const keys = Object.keys(value)
   if (keys.length === 0) {
     return '{}'

@@ -19,7 +19,7 @@ export function interceptConsoleLog() {
         emitter.emit('log', [method, args])
       } else {
         if ((inspect_methods as readonly string[]).includes(method)) {
-          log.push([builtin, args.map(arg => inspect(arg))])
+          log.push([builtin, args.map(arg => inspect(arg, false))])
         } else {
           log.push([builtin, args])
         }

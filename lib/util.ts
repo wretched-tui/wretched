@@ -1,5 +1,5 @@
-import {Size} from './geometry'
 import {unicode} from './sys'
+import {Size} from './geometry'
 
 export function strSize(str: string | string[]): Size {
   if (Array.isArray(str)) {

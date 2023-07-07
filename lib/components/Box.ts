@@ -1,8 +1,9 @@
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
 import {Container} from '../Container'
-import {inspect} from '../inspect'
 import {Rect, Point, Size} from '../geometry'
+import {isMouseEnter, isMouseExit} from '../events'
+import {style} from '../ansi'
 
 type Border = 'single' | 'bold' | 'double' | 'round'
 
@@ -32,7 +33,9 @@ export class Box extends Container {
       viewport.write(' '.repeat(maxX - 1), new Point(1, y))
     }
 
-    const inside = viewport.clipped(new Rect(new Point(1, 1), viewport.contentSize.shrink(2, 2)))
+    const inside = viewport.clipped(
+      new Rect(new Point(1, 1), viewport.contentSize.shrink(2, 2)),
+    )
     super.render(inside)
 
     const [sides, tops, tl, tr, bl, br] = BORDERS[this.border]

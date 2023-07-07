@@ -6,6 +6,13 @@ export function styled(input: string, attr: string) {
   return program.global?.text(input, attr) ?? input
 }
 
+export function style(attr: string) {
+  if (attr.startsWith('\x1b[')) {
+    return attr
+  }
+  return program.global?.style(attr) ?? ''
+}
+
 export function ansi(code: number, input: string) {
   const opener = '\x1b['.concat(String(code), 'm')
   return opener.concat(input.replace(RESET, opener), RESET)

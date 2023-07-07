@@ -70,7 +70,7 @@ export abstract class Container extends View {
       }
 
       const index = this.children.indexOf(remove)
-      if (index !== -1) {
+      if (~index) {
         this.remove(index)
       }
     }

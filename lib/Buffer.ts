@@ -118,9 +118,10 @@ export class Buffer implements Terminal {
 
         if (prevAttrs !== attrs) {
           if (attrs === '') {
-            terminal.write(RESET)
+            terminal.write(RESET + char)
+          } else {
+            terminal.write(attrs + char)
           }
-          terminal.write(attrs + char)
           prevAttrs = attrs
         } else {
           terminal.write(char)

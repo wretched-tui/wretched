@@ -1,9 +1,10 @@
 import {unicode} from './sys'
 
 import type {Terminal} from './types'
-import {RESET} from './ansi'
-import {point, size, Rect, Point, Size} from './geometry'
-import {toChars} from './sys/unicode'
+import {RESET, style} from './ansi'
+import {Rect, Point, Size} from './geometry'
+import {View} from './View'
+import type {MouseEventListenerName, MouseEventListener} from './events'
 
 /**
  * Defines a region (size) in which to draw, and a subset (visibleRect) that is
@@ -15,20 +16,66 @@ export class Viewport {
   readonly visibleRect: Rect
   readonly offset: Point
   readonly terminal: Terminal
+  #mouseListeners: Map<string, MouseEventListener>
+  #pen = RESET
 
   constructor(
-    terminal: Terminal,
+    terminal: Terminal | Viewport,
     contentSize: Size,
     visibleRect: Rect,
     offset?: Point,
   ) {
-    this.terminal = terminal
+    if (terminal instanceof Viewport) {
+      this.terminal = terminal.terminal
+      this.#mouseListeners = terminal.#mouseListeners
+    } else {
+      this.terminal = terminal
+      this.#mouseListeners = new Map()
+    }
+
     this.contentSize = contentSize
     this.visibleRect = visibleRect
     this.offset = offset ?? Point.zero
     Object.defineProperty(this, 'terminal', {
       enumerable: false,
     })
+  }
+
+  setPen(attrs: string): this {
+    this.#pen = style(attrs)
+    return this
+  }
+
+  assignMouse(view: View, ...eventNames: MouseEventListenerName[]) {
+    const maxX = this.visibleRect.maxX()
+    const maxY = this.visibleRect.maxY()
+    for (let y = this.visibleRect.minY(); y < maxY; ++y)
+      for (let x = this.visibleRect.minX(); x < maxX; ++x)
+        for (const eventName of eventNames) {
+          const key = mouseKey(this.offset.x + x, this.offset.y + y, eventName)
+          const target = {
+            view,
+            offset: this.offset,
+          } as const
+          const listener = this.#mouseListeners.get(key) ?? {move: []}
+          if (eventName === 'mouse.move') {
+            listener.move.unshift(target)
+            this.#mouseListeners.set(key, listener)
+          } else if (
+            eventName.startsWith('mouse.button.') &&
+            !listener.button
+          ) {
+            listener.button = target
+            this.#mouseListeners.set(key, listener)
+          } else if (eventName === 'mouse.wheel' && !listener.wheel) {
+            listener.wheel = target
+            this.#mouseListeners.set(key, listener)
+          }
+        }
+  }
+
+  getMouseListener(x: number, y: number, event: MouseEventListenerName) {
+    return this.#mouseListeners.get(mouseKey(x, y, event))
   }
 
   /**
@@ -47,26 +94,25 @@ export class Viewport {
     let x = to.x
     let visibleX = 0
     let visible: string | undefined = undefined
-    let attrs = ''
-    let suffix = ''
-    for (const char of toChars(input)) {
+    let attrs = this.#pen
+    for (const char of unicode.toChars(input)) {
       if (char === '\n') {
         break
       }
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        attrs = char
+        attrs = char === RESET ? this.#pen : char
         if (visible !== undefined) {
           visible += char
         }
-      } else if (x >= this.visibleRect.minX() && x + width - 1 < this.visibleRect.maxX()) {
+      } else if (
+        x >= this.visibleRect.minX() &&
+        x + width - 1 < this.visibleRect.maxX()
+      ) {
         if (visible === undefined) {
           visible = attrs
           visibleX = x
-          if (attrs) {
-            suffix = RESET
-          }
         }
         visible += char
       }
@@ -79,9 +125,9 @@ export class Viewport {
       }
     }
 
-    this.terminal.move(this.offset.x + visibleX, this.offset.y + to.y)
     if (visible !== undefined) {
-      this.terminal.write(visible + suffix)
+      this.terminal.move(this.offset.x + visibleX, this.offset.y + to.y)
+      this.terminal.write(visible + RESET)
     }
   }
 
@@ -104,10 +150,14 @@ export class Viewport {
 
     const contentSize = new Size(contentWidth, contentHeight)
     const visibleRect = new Rect(
-      point(visibleMinX, visibleMinY),
-      size(visibleMaxX - visibleMinX, visibleMaxY - visibleMinY),
+      new Point(visibleMinX, visibleMinY),
+      new Size(visibleMaxX - visibleMinX, visibleMaxY - visibleMinY),
     )
-    const offset = point(offsetX, offsetY)
-    return new Viewport(this.terminal, contentSize, visibleRect, offset)
+    const offset = new Point(offsetX, offsetY)
+    return new Viewport(this, contentSize, visibleRect, offset)
   }
+}
+
+function mouseKey(x: number, y: number, event: string) {
+  return `${x},${y}:${event}`
 }
