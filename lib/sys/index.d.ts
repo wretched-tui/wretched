@@ -86,6 +86,7 @@ export class Tput implements IHasOptions<TputsOptions> {
   termcapFile: string
   error: Error
   terminal: string
+  colors: number
 
   setup(): void
   term(is: any): boolean
@@ -135,6 +136,7 @@ export interface BlessedProgramOptions {
 
 export class BlessedProgram extends EventEmitter {
   type: string
+  tput: Tput
   options: BlessedProgramOptions
   input: Readable
   output: Writable
@@ -576,19 +578,19 @@ interface Program {
 export const program: Program
 
 export const colors: {
-  match:
-    | ((text: `#${string}`) => number)
-    | ((r: number, g: number, b: number) => number)
-    | ((rgb: [r: number, g: number, b: number]) => number)
-  RGBTohex:
-    | ((r: number, g: number, b: number) => string)
-    | ((rgb: [r: number, g: number, b: number]) => string)
-  hexToRGB: (text: string) => number
-  reduce: (input: number, total: number) => number
+  match(text: `#${string}`): number
+  match(r: number, g: number, b: number): number
+  match(rgb: [r: number, g: number, b: number]): number
+  RGBToHex(r: number, g: number, b: number): string
+  RGBToHex(rgb: [r: number, g: number, b: number]): string
+  hexToRGB(text: string): number
+  reduce(input: number, total: number): number
+  indexToRGB(input: number): [number, number, number]
+  indexToHexString(input: number): `#{string}`
 }
 
 export const unicode: {
-  strWidth: (text: string) => number
-  charWidth: (text: string) => 0 | 1 | 2
-  toChars: (text: string) => string[]
+  strWidth(text: string): number
+  charWidth(text: string): 0 | 1 | 2
+  toChars(text: string): string[]
 }

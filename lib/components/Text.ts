@@ -2,9 +2,8 @@ import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
+import {Style, fromSGR, toSGR} from '../ansi'
 import {Point, Size} from '../geometry'
-import {strSize} from '../util'
-import {toChars} from '../sys/unicode'
 
 type Alignment = 'left' | 'right' | 'center'
 
@@ -19,11 +18,11 @@ interface LinesProps {
 }
 
 interface StyleProps {
-  alignment?: Alignment
-  wrap?: boolean
+  alignment: Alignment
+  wrap: boolean
 }
 
-type Props = StyleProps & (TextProps | LinesProps)
+type Props = Partial<StyleProps> & (TextProps | LinesProps)
 
 export class Text extends View {
   lines: [string, number][]
@@ -57,50 +56,35 @@ export class Text extends View {
   render(viewport: Viewport) {
     const lines: [string, number][] = this.lines
 
-    let y = 0
-    let visibleX = 0
-    let visibleLine = ''
-    let currentAttrs = ''
-
-    function writeVisible(offsetX: number) {
-      if (visibleLine.length) {
-        viewport.write(visibleLine, new Point(offsetX + visibleX, y))
-        visibleLine = ''
-      }
-    }
+    const point = new Point(0, 0).mutableCopy()
+    viewport.setPen(Style.NONE)
 
     for (const [line, width] of lines) {
       if (!line.length) {
-        y += 1
+        point.y += 1
         continue
       }
 
-      let x = 0
-      visibleX = 0
       let didWrap = false
       const offsetX =
-        this.alignment === 'center'
-          ? ~~((viewport.contentSize.width - width) / 2)
-          : this.alignment === 'left'
+        this.alignment === 'left'
           ? 0
+          : this.alignment === 'center'
+          ? ~~((viewport.contentSize.width - width) / 2)
           : viewport.contentSize.width - width
-      for (const char of toChars(line)) {
+      point.x = offsetX
+      for (const char of unicode.toChars(line)) {
         const width = unicode.charWidth(char)
         if (width === 0) {
-          // track the currentAttrs regardless of wether it's visible
-          currentAttrs = char
-          if (visibleLine.length) {
-            visibleLine += currentAttrs
-          }
+          // track the currentStyle regardless of wether it's visible
+          viewport.setPen(fromSGR(char))
           continue
         }
 
-        if (this.wrap && x >= viewport.contentSize.width) {
-          writeVisible(offsetX)
-
+        if (this.wrap && point.x >= viewport.contentSize.width) {
           didWrap = true
-          x = 0
-          y += 1
+          point.x = 0
+          point.y += 1
         }
 
         if (didWrap && char.match(/\s/)) {
@@ -109,28 +93,16 @@ export class Text extends View {
         didWrap = false
 
         if (
-          x >= viewport.visibleRect.minX() &&
-          x + width - 1 < viewport.visibleRect.maxX()
+          point.x >= viewport.visibleRect.minX() &&
+          point.x + width - 1 < viewport.visibleRect.maxX()
         ) {
-          if (!visibleLine.length) {
-            // this is the first visible character of the line, writeVisible should use this
-            // offset the next time it 'flushes' its buffer
-            visibleX = x
-            visibleLine = currentAttrs
-          }
-          visibleLine += char
+          viewport.write(char, point)
         }
 
-        x += width
-        if (x >= viewport.visibleRect.maxX()) {
-          // we're past the visible portion; flush the visible line
-          writeVisible(offsetX)
-        }
+        point.x += width
       }
 
-      writeVisible(offsetX)
-
-      y += 1
+      point.y += 1
     }
   }
 }

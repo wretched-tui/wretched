@@ -4,7 +4,8 @@ import {View} from '../View'
 import {Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
-import {styled, style} from '../ansi'
+import type {Color} from '../ansi'
+import {Style} from '../ansi'
 import {
   isMousePressed,
   isMouseReleased,
@@ -37,12 +38,17 @@ export class Button extends Container {
   onPress: StyleProps['onPress']
   #pressed = false
   #hover = false
+  textView?: View
+  fg: Color = 'black'
+  bg: Color = 'white'
+  hover: Color = 'gray'
+  hoverFg?: Color
 
   constructor({text, child, onPress}: Props) {
     super()
     if (text !== undefined) {
       this.defaultStyle = true
-      this.add(new Text({text, alignment: 'center'}))
+      this.add((this.textView = new Text({text, alignment: 'center'})))
     } else {
       this.defaultStyle = false
       this.add(child)
@@ -80,16 +86,18 @@ export class Button extends Container {
   render(viewport: Viewport) {
     viewport.assignMouse(this, 'mouse.button.left', 'mouse.move')
 
-    const bg = this.#pressed
-      ? 'black fg;green bg'
+    const bg: Style = this.#pressed
+      ? new Style({foreground: 'black', background: 'green'})
       : this.#hover
-      ? 'black fg;white bg'
-      : 'black fg;gray bg'
+      ? new Style({foreground: 'black', background: 'white'})
+      : new Style({foreground: 'black', background: 'gray'})
+    viewport.setPen(bg)
+
     const minX = viewport.visibleRect.minX()
     const maxX = viewport.visibleRect.maxX()
     const maxY = viewport.visibleRect.maxY()
     for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
-      viewport.write(styled(' '.repeat(maxX - minX), bg), new Point(minX, y))
+      viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
     }
 
     if (this.defaultStyle) {

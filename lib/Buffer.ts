@@ -1,12 +1,12 @@
 import {unicode} from './sys'
 
-import type {Terminal, Color} from './types'
-import {RESET} from './ansi'
+import type {Terminal, SGRTerminal} from './terminal'
+import type {Color} from './ansi'
+import {Style, fromSGR} from './ansi'
 import {Size} from './geometry'
 import {toChars} from './sys/unicode'
 
-const NUL = {char: '', width: 1, attrs: ''} as const
-type Char = {char: string; width: 1 | 2; attrs: string; hiding?: Char}
+type Char = {char: string; width: 1 | 2; style: Style; hiding?: Char}
 
 export class Buffer implements Terminal {
   size: Size = Size.zero
@@ -42,12 +42,11 @@ export class Buffer implements Terminal {
    * Writes the string at the cursor from left to write. Exits on newline (no default
    * wrapping behavior).
    */
-  write(str: string) {
+  write(str: string, style: Style) {
     if (this.x >= this.size.width || this.y < 0 || this.y >= this.size.height) {
       return
     }
 
-    let attrs = ''
     let line = this.#canvas.get(this.y)
     for (const char of toChars(str)) {
       if (char === '\n') {
@@ -57,19 +56,19 @@ export class Buffer implements Terminal {
       const width = unicode.charWidth(char)
       if (width === 0) {
         if (char === '') {
-          attrs = RESET
+          style = Style.NONE
         } else {
-          attrs = char
+          style = fromSGR(char)
         }
       } else if (this.x >= 0) {
         if (line) {
           const prev = line.get(this.x - 1)
           if (prev && prev.width === 2) {
             // hides a 2-width character that this character is overlapping
-            line.set(this.x - 1, {char: ' ', width: 1, attrs: prev.attrs})
+            line.set(this.x - 1, {char: ' ', width: 1, style: prev.style})
 
             // actually writes the character, and records the hidden character
-            line.set(this.x, {char, width, attrs, hiding: prev})
+            line.set(this.x, {char, width, style, hiding: prev})
 
             const hiding = prev.hiding
             if (hiding) {
@@ -77,7 +76,7 @@ export class Buffer implements Terminal {
             }
           } else {
             // actually writes the character
-            line.set(this.x, {char, width, attrs})
+            line.set(this.x, {char, width, style})
 
             const next = line.get(this.x + 1)
             if (next && next.hiding) {
@@ -87,7 +86,7 @@ export class Buffer implements Terminal {
             }
           }
         } else {
-          line = new Map([[this.x, {char, width, attrs}]])
+          line = new Map([[this.x, {char, width, style}]])
           this.#canvas.set(this.y, line)
         }
       }
@@ -96,38 +95,37 @@ export class Buffer implements Terminal {
     }
   }
 
-  flush(terminal: Terminal) {
-    let prevAttrs = ''
+  flush(terminal: SGRTerminal) {
+    let prevStyle = Style.NONE
     for (let y = 0; y < this.size.height; y++) {
       const line = this.#canvas.get(y) ?? new Map<number, Char>()
       const prevLine = this.#prev.get(y) ?? new Map<number, Char>()
+      this.#prev.set(y, prevLine)
 
       let didWrite = false
       let dx = 1
       for (let x = 0; x < this.size.width; x += dx) {
-        const chrInfo = line.get(x) ?? {char: ' ', attrs: RESET, width: 1}
-        const prevChar = prevLine.get(x)
-        if (prevChar && isCharEqual(chrInfo, prevChar)) {
+        const chrInfo = line.get(x) ?? {char: ' ', style: Style.NONE, width: 1}
+        const prevInfo = prevLine.get(x)
+        if (prevInfo && isCharEqual(chrInfo, prevInfo)) {
           didWrite = false
           continue
         }
 
-        const {char, width, attrs} = chrInfo
+        if (!didWrite) {
+          didWrite = true
+          terminal.move(x, y)
+        }
 
-        if (prevAttrs !== attrs) {
-          if (!didWrite) {
-            didWrite = true
-            terminal.move(x, y)
-          }
-          terminal.write(attrs + char)
-          prevAttrs = attrs
+        const {char, width, style} = chrInfo
+
+        if (prevStyle !== style) {
+          terminal.write(style.toSGR() + char)
+          prevStyle = style
         } else {
-          if (!didWrite) {
-            didWrite = true
-            terminal.move(x, y)
-          }
           terminal.write(char)
         }
+        prevLine.set(x, chrInfo)
 
         dx = width
       }
@@ -137,6 +135,8 @@ export class Buffer implements Terminal {
 
 function isCharEqual(lhs: Char, rhs: Char) {
   return (
-    lhs.char === rhs.char && lhs.width === rhs.width && lhs.attrs === rhs.attrs
+    lhs.char === rhs.char &&
+    lhs.width === rhs.width &&
+    lhs.style.isEqual(rhs.style)
   )
 }

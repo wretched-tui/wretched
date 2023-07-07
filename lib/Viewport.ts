@@ -1,7 +1,7 @@
 import {unicode} from './sys'
 
-import type {Terminal} from './types'
-import {RESET, style} from './ansi'
+import type {Terminal} from './terminal'
+import {Style, RESET, fromSGR} from './ansi'
 import {Rect, Point, Size} from './geometry'
 import {View} from './View'
 import type {MouseEventListenerName, MouseEventListener} from './events'
@@ -17,7 +17,7 @@ export class Viewport {
   readonly offset: Point
   readonly terminal: Terminal
   #mouseListeners: Map<string, MouseEventListener>
-  #pen = RESET
+  #pen = Style.NONE
 
   constructor(
     terminal: Terminal | Viewport,
@@ -41,8 +41,8 @@ export class Viewport {
     })
   }
 
-  setPen(attrs: string): this {
-    this.#pen = style(attrs)
+  setPen(style: Style): this {
+    this.#pen = style
     return this
   }
 
@@ -92,9 +92,7 @@ export class Viewport {
     }
 
     let x = to.x
-    let visibleX = 0
-    let visible: string | undefined = undefined
-    let attrs = this.#pen
+    let style = this.#pen
     for (const char of unicode.toChars(input)) {
       if (char === '\n') {
         break
@@ -102,19 +100,13 @@ export class Viewport {
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        attrs = char === RESET ? this.#pen : char
-        if (visible !== undefined) {
-          visible += char
-        }
+        style = char === RESET ? this.#pen : fromSGR(char)
       } else if (
         x >= this.visibleRect.minX() &&
         x + width - 1 < this.visibleRect.maxX()
       ) {
-        if (visible === undefined) {
-          visible = attrs
-          visibleX = x
-        }
-        visible += char
+        this.terminal.move(this.offset.x + x, this.offset.y + to.y)
+        this.terminal.write(char, style)
       }
 
       x += width
@@ -123,11 +115,6 @@ export class Viewport {
       if (x >= this.visibleRect.maxX()) {
         break
       }
-    }
-
-    if (visible !== undefined) {
-      this.terminal.move(this.offset.x + visibleX, this.offset.y + to.y)
-      this.terminal.write(visible + RESET)
     }
   }
 
@@ -154,6 +141,8 @@ export class Viewport {
       new Size(visibleMaxX - visibleMinX, visibleMaxY - visibleMinY),
     )
     const offset = new Point(offsetX, offsetY)
+
+    // do not copy `#pen` - child views assume this is reset
     return new Viewport(this, contentSize, visibleRect, offset)
   }
 }

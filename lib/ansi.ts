@@ -1,4 +1,276 @@
-import {program} from './sys'
+import {program, colors} from './sys'
+
+export class Style {
+  underline: boolean = false
+  inverse: boolean = false
+  bold: boolean = false
+  blink: boolean = false
+  invisible: boolean = false
+  foreground: Color = 'default'
+  background: Color = 'default'
+
+  static NONE = new Style()
+
+  constructor({
+    underline,
+    inverse,
+    bold,
+    blink,
+    invisible,
+    foreground,
+    background,
+  }: {
+    underline?: boolean
+    inverse?: boolean
+    bold?: boolean
+    blink?: boolean
+    invisible?: boolean
+    foreground?: Color
+    background?: Color
+  } = {}) {
+    this.underline = underline ?? this.underline
+    this.inverse = inverse ?? this.inverse
+    this.bold = bold ?? this.bold
+    this.blink = blink ?? this.blink
+    this.invisible = invisible ?? this.invisible
+    this.foreground = foreground ?? this.foreground
+    this.background = background ?? this.background
+  }
+
+  isEqual(style: Style) {
+    return (
+      this.underline === style.underline &&
+      this.inverse === style.inverse &&
+      this.bold === style.bold &&
+      this.blink === style.blink &&
+      this.invisible === style.invisible &&
+      this.foreground === style.foreground &&
+      this.background === style.background
+    )
+  }
+
+  toSGR() {
+    const {global: globalProgram} = program
+    if (!globalProgram) {
+      return ''
+    }
+
+    const parts: string[] = []
+    if (this.underline) {
+      parts.push('underline')
+    }
+    if (this.bold) {
+      parts.push('bold')
+    }
+    if (this.inverse) {
+      parts.push('inverse')
+    }
+    if (this.foreground) {
+      parts.push(toSGR(this.foreground, 'fg'))
+    }
+    if (this.background) {
+      parts.push(toSGR(this.background, 'bg'))
+    }
+    return globalProgram.style(parts.join(';'))
+  }
+}
+
+export type Color =
+  | 'default'
+  | 'black'
+  | 'red'
+  | 'green'
+  | 'yellow'
+  | 'blue'
+  | 'magenta'
+  | 'cyan'
+  | 'white'
+  | 'gray'
+  | 'brightRed'
+  | 'brightGreen'
+  | 'brightYellow'
+  | 'brightBlue'
+  | 'brightMagenta'
+  | 'brightCyan'
+  | 'brightWhite'
+  | `${string}`
+  | {sgr: string}
+  | {grayscale: number}
+  | [r: number, g: number, b: number]
+
+export function toSGR(color: Color, fgbg: 'fg' | 'bg'): string {
+  if (Array.isArray(color)) {
+    return `${colors.RGBToHex(color)} ${fgbg}`
+  } else if (typeof color === 'object') {
+    if ('grayscale' in color) {
+      return `${232 + Math.max(0, Math.min(23, color.grayscale))} ${fgbg}`
+    }
+    return `${color.sgr} ${fgbg}`
+  } else {
+    return `${color} ${fgbg}`
+  }
+}
+
+export function fromSGR(ansi: string): Style {
+  let match = ansi.match(/^\x1b\[([\d;]*)m$/)
+  if (!match) {
+    return Style.NONE
+  }
+  ansi = match[1] + ';'
+  let ansiCodes: string[] = []
+  let code = ''
+  for (const char of ansi) {
+    if (char === ';') {
+      if (
+        code === '38' ||
+        code === '38;5' ||
+        code === '48' ||
+        code === '48;5'
+      ) {
+        code += ';'
+      } else {
+        ansiCodes.push(code)
+        code = ''
+      }
+    } else {
+      code += char
+    }
+  }
+
+  let style = new Style()
+  for (const code of ansiCodes) {
+    if ((match = code.match(/^38;5;(\d+)$/))) {
+      style.foreground = {sgr: match[1]}
+      continue
+    } else if ((match = code.match(/^48;5;(\d+)$/))) {
+      style.background = {sgr: match[1]}
+      continue
+    }
+
+    switch (code) {
+      case '':
+        break
+      case '1':
+        style.bold = true
+        break
+      case '4':
+        style.underline = true
+        break
+      case '5':
+        style.blink = true
+        break
+      case '7':
+        style.inverse = true
+        break
+      case '8':
+        style.invisible = true
+        break
+      case '30':
+        style.foreground = 'black'
+        break
+      case '31':
+        style.foreground = 'red'
+        break
+      case '32':
+        style.foreground = 'green'
+        break
+      case '33':
+        style.foreground = 'yellow'
+        break
+      case '34':
+        style.foreground = 'blue'
+        break
+      case '35':
+        style.foreground = 'magenta'
+        break
+      case '36':
+        style.foreground = 'cyan'
+        break
+      case '37':
+        style.foreground = 'white'
+        break
+      case '39':
+        style.foreground = 'default'
+        break
+      case '90':
+        style.foreground = 'gray'
+        break
+      case '91':
+        style.foreground = 'brightRed'
+        break
+      case '92':
+        style.foreground = 'brightGreen'
+        break
+      case '93':
+        style.foreground = 'brightYellow'
+        break
+      case '94':
+        style.foreground = 'brightBlue'
+        break
+      case '95':
+        style.foreground = 'brightMagenta'
+        break
+      case '96':
+        style.foreground = 'brightCyan'
+        break
+      case '97':
+        style.foreground = 'brightWhite'
+        break
+      case '40':
+        style.background = 'black'
+        break
+      case '41':
+        style.background = 'red'
+        break
+      case '42':
+        style.background = 'green'
+        break
+      case '43':
+        style.background = 'yellow'
+        break
+      case '44':
+        style.background = 'blue'
+        break
+      case '45':
+        style.background = 'magenta'
+        break
+      case '46':
+        style.background = 'cyan'
+        break
+      case '47':
+        style.background = 'white'
+        break
+      case '49':
+        style.background = 'default'
+        break
+      case '100':
+        style.background = 'gray'
+        break
+      case '101':
+        style.background = 'brightRed'
+        break
+      case '102':
+        style.background = 'brightGreen'
+        break
+      case '103':
+        style.background = 'brightYellow'
+        break
+      case '104':
+        style.background = 'brightBlue'
+        break
+      case '105':
+        style.background = 'brightMagenta'
+        break
+      case '106':
+        style.background = 'brightCyan'
+        break
+      case '107':
+        style.background = 'brightWhite'
+        break
+    }
+  }
+  return style
+}
 
 export const RESET = '\x1b[0m'
 

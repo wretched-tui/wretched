@@ -1,6 +1,6 @@
 import type {BlessedProgram} from './sys'
 import {program as blessedProgram} from './sys'
-import {Terminal} from './types'
+import {Terminal, SGRTerminal} from './terminal'
 import {Viewport} from './Viewport'
 import {View} from './View'
 import {Rect, Point, Size} from './geometry'
@@ -9,7 +9,6 @@ import {Buffer} from './Buffer'
 import type {
   MouseButton,
   MouseDownEvent,
-  MouseEvent,
   MouseEventListener,
   MouseEventListenerName,
   MouseEventName,
@@ -21,7 +20,7 @@ import type {
 import {isMouseButton, isMouseWheel} from './events'
 
 export class Screen {
-  terminal: Terminal
+  terminal: SGRTerminal
   buffer: Buffer
   view: View
   #viewport?: Viewport
@@ -42,9 +41,9 @@ export class Screen {
     const view = viewConstructor()
     const screen = new Screen(program, view)
 
-    const refresh = setInterval(() => {
-      screen.render()
-    }, 16)
+    // const refresh = setInterval(() => {
+    //   screen.render()
+    // }, 16)
 
     program.on('focus' as any, function () {
       screen.trigger({type: 'focus'})
@@ -60,7 +59,7 @@ export class Screen {
 
     program.on('keypress', (char, key) => {
       if (key.name === 'c' && key.ctrl) {
-        clearInterval(refresh)
+        // clearInterval(refresh)
 
         program.clear()
         program.disableMouse()
@@ -84,15 +83,16 @@ export class Screen {
         name: translateMouseAction(action, data.button),
         type: 'mouse',
       })
+      screen.render()
     })
 
-    screen.render()
+    // screen.render()
 
     return [screen, program]
   }
   coords: [number, number, string][] = []
 
-  constructor(terminal: Terminal, view: View) {
+  constructor(terminal: SGRTerminal, view: View) {
     this.terminal = terminal
     this.buffer = new Buffer()
     this.view = view

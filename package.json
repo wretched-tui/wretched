@@ -12,7 +12,10 @@
   "bugs": {
     "url": "http://github.com/colinta/wretched/issues"
   },
-  "scripts": {},
+  "scripts": {
+    "demo": "rm -f dist/**/*.js && tsc && node --enable-source-maps dist/demo.js",
+    "test": "rm -f dist/**/*.js && tsc && node --enable-source-maps dist/test.js"
+  },
   "keywords": [
     "curses",
     "tui",
