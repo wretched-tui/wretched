@@ -19,26 +19,17 @@ export class Buffer implements Terminal {
     return this.size.height
   }
   #canvas: Map<number, Map<number, Char>> = new Map()
+  #prev: Map<number, Map<number, Char>> = new Map()
 
   setForeground(fg: Color): void {}
   setBackground(bg: Color): void {}
 
-  clear(size: Size) {
-    if (size.width < this.size.width) {
-      for (let y = 0; y < size.height; y++) {
-        for (let x = size.width; x < this.size.width; x++) {
-          this.#canvas.get(y)?.delete(x)
-        }
-      }
+  resize(size: Size) {
+    if (size.width < this.size.width || size.height < this.size.height) {
+      this.#canvas = new Map()
+      this.#prev = new Map()
     }
 
-    if (size.height < this.size.height) {
-      for (let y = size.height; y < this.size.height; y++) {
-        this.#canvas.delete(y)
-      }
-    }
-
-    this.#canvas = new Map()
     this.size = size
   }
 
@@ -65,8 +56,8 @@ export class Buffer implements Terminal {
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        if (char === RESET) {
-          attrs = ''
+        if (char === '') {
+          attrs = RESET
         } else {
           attrs = char
         }
@@ -108,30 +99,44 @@ export class Buffer implements Terminal {
   flush(terminal: Terminal) {
     let prevAttrs = ''
     for (let y = 0; y < this.size.height; y++) {
-      let line = this.#canvas.get(y) ?? new Map<number, Char>()
+      const line = this.#canvas.get(y) ?? new Map<number, Char>()
+      const prevLine = this.#prev.get(y) ?? new Map<number, Char>()
 
-      terminal.move(0, y)
+      let didWrite = false
       let dx = 1
       for (let x = 0; x < this.size.width; x += dx) {
-        const chrInfo = line.get(x) ?? {char: ' ', attrs: '', width: 1}
+        const chrInfo = line.get(x) ?? {char: ' ', attrs: RESET, width: 1}
+        const prevChar = prevLine.get(x)
+        if (prevChar && isCharEqual(chrInfo, prevChar)) {
+          didWrite = false
+          continue
+        }
+
         const {char, width, attrs} = chrInfo
 
         if (prevAttrs !== attrs) {
-          if (attrs === '') {
-            terminal.write(RESET + char)
-          } else {
-            terminal.write(attrs + char)
+          if (!didWrite) {
+            didWrite = true
+            terminal.move(x, y)
           }
+          terminal.write(attrs + char)
           prevAttrs = attrs
         } else {
+          if (!didWrite) {
+            didWrite = true
+            terminal.move(x, y)
+          }
           terminal.write(char)
         }
 
         dx = width
       }
-
-      terminal.write(RESET)
-      prevAttrs = ''
     }
   }
+}
+
+function isCharEqual(lhs: Char, rhs: Char) {
+  return (
+    lhs.char === rhs.char && lhs.width === rhs.width && lhs.attrs === rhs.attrs
+  )
 }

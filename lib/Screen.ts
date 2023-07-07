@@ -122,7 +122,7 @@ export class Screen {
 
   #render() {
     const screenSize = new Size(this.terminal.cols, this.terminal.rows)
-    this.buffer.clear(screenSize)
+    this.buffer.resize(screenSize)
 
     const size = this.view.intrinsicSize(screenSize)
 
