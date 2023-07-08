@@ -102,7 +102,11 @@ export class ScrollableList extends Container {
     return view
   }
 
-  heightForRow(row: number, contentWidth: number, view?: View): number | undefined {
+  heightForRow(
+    row: number,
+    contentWidth: number,
+    view?: View,
+  ): number | undefined {
     view = view ?? this.viewForRow(row)
     if (view === undefined) {
       return undefined
@@ -156,10 +160,17 @@ export class ScrollableList extends Container {
 
       visibleRows.add(view)
 
-      if (y < viewport.visibleRect.maxY() && y + height >= viewport.visibleRect.minY()) {
-        const rect = new Rect(new Point(0, y), new Size(viewport.contentSize.width, height))
-        const clipped = viewport.clipped(rect)
-        view.render(clipped)
+      if (
+        y < viewport.visibleRect.maxY() &&
+        y + height >= viewport.visibleRect.minY()
+      ) {
+        const rect = new Rect(
+          new Point(0, y),
+          new Size(viewport.contentSize.width, height),
+        )
+        viewport.clipped(rect, inside => {
+          view.render(inside)
+        })
       }
 
       y += height

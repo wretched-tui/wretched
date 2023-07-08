@@ -44,19 +44,35 @@ export class Viewport {
     })
   }
 
+  usingPen(style: Style | undefined, draw: () => void): void
+  usingPen(draw: () => void): void
+  usingPen(...args: [Style | undefined, () => void] | [() => void]): void {
+    if (args.length === 2) {
+      if (args[0] && args[0] !== Style.NONE) {
+        this.#pushPen(args[0])
+      }
+      args[1]()
+      if (args[0]) {
+        this.#popPen()
+      }
+    } else {
+      args[0]()
+    }
+  }
+
   replacePen(style: Style): this {
     this.#pen[0] = style
     return this
   }
 
-  pushPen(style: Style | undefined = undefined): this {
+  #pushPen(style: Style | undefined = undefined): this {
     style ??= this.#pen[0] ?? Style.NONE
     // yeah I know I said pushPen but #pen[0] is easier!
     this.#pen.unshift(style)
     return this
   }
 
-  popPen(): this {
+  #popPen(): this {
     this.#pen.shift()
     return this
   }
@@ -117,11 +133,6 @@ export class Viewport {
       const width = unicode.charWidth(char)
       if (width === 0) {
         style = char === RESET ? pen : fromSGR(char).merge(pen)
-        console.log('=========== Viewport.ts at line 117 ===========')
-        console.log({
-          foreground: style.foreground,
-          background: style.background,
-        })
       } else if (
         x >= this.visibleRect.minX() &&
         x + width - 1 < this.visibleRect.maxX()
@@ -150,7 +161,7 @@ export class Viewport {
     this.terminal.writeMeta(str)
   }
 
-  clipped(clip: Rect): Viewport {
+  clipped(clip: Rect, draw: (viewport: Viewport) => void) {
     const offsetX = this.offset.x + clip.origin.x
     const offsetY = this.offset.y + clip.origin.y
     const contentWidth = Math.max(0, clip.size.width)
@@ -175,7 +186,7 @@ export class Viewport {
     const offset = new Point(offsetX, offsetY)
 
     // do not copy `#pen` - child views assume this is reset
-    return new Viewport(this, contentSize, visibleRect, offset)
+    draw(new Viewport(this, contentSize, visibleRect, offset))
   }
 }
 

@@ -87,7 +87,9 @@ export class Flow extends Container {
         origin.y -= childSize.height
       }
 
-      child.render(viewport.clipped(new Rect(origin, childSize)))
+      viewport.clipped(new Rect(origin, childSize), inside => {
+        child.render(inside)
+      })
 
       if (this.direction === 'leftToRight') {
         origin.x += childSize.width

@@ -34,30 +34,32 @@ export class Box extends Container {
         : new Style({foreground: 'white', background: 'default'})
     const innerStyle = this.border === 'cool' ? borderStyle.invert() : undefined
 
-    viewport.pushPen(innerStyle)
-    for (let y = 1; y < maxY; ++y) {
-      viewport.write(' '.repeat(maxX - 1), new Point(1, y))
-    }
-    viewport.popPen()
+    viewport.usingPen(innerStyle, () => {
+      for (let y = 1; y < maxY; ++y) {
+        viewport.write(' '.repeat(maxX - 1), new Point(1, y))
+      }
+    })
 
-    const inside = viewport.clipped(
+    viewport.clipped(
       new Rect(new Point(1, 1), viewport.contentSize.shrink(2, 2)),
+      inside => {
+        super.render(inside)
+      },
     )
-    super.render(inside)
 
-    viewport.pushPen(borderStyle)
-    const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
-    viewport.write(top.repeat(maxX - 1), new Point(1, 0))
-    viewport.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
-    for (let y = 1; y < maxY; ++y) {
-      viewport.write(left, new Point(0, y))
-      viewport.write(right ?? left, new Point(maxX, y))
-    }
-    viewport.write(tl, Point.zero)
-    viewport.write(tr, new Point(maxX, 0))
-    viewport.write(bl, new Point(0, maxY))
-    viewport.write(br, new Point(maxX, maxY))
-    viewport.popPen()
+    viewport.usingPen(borderStyle, () => {
+      const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
+      viewport.write(top.repeat(maxX - 1), new Point(1, 0))
+      viewport.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
+      for (let y = 1; y < maxY; ++y) {
+        viewport.write(left, new Point(0, y))
+        viewport.write(right ?? left, new Point(maxX, y))
+      }
+      viewport.write(tl, Point.zero)
+      viewport.write(tr, new Point(maxX, 0))
+      viewport.write(bl, new Point(0, maxY))
+      viewport.write(br, new Point(maxX, maxY))
+    })
   }
 }
 

@@ -92,20 +92,23 @@ export class Button extends Container {
       ? new Style({foreground: 'black', background: 'white'})
       : new Style({foreground: 'black', background: 'gray'})
 
-    viewport.pushPen(bg)
-    const minX = viewport.visibleRect.minX()
-    const maxX = viewport.visibleRect.maxX()
-    const maxY = viewport.visibleRect.maxY()
-    for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
-      viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
-    }
-    viewport.popPen()
+    viewport.usingPen(bg, () => {
+      const minX = viewport.visibleRect.minX()
+      const maxX = viewport.visibleRect.maxX()
+      const maxY = viewport.visibleRect.maxY()
+      for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
+        viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
+      }
+    })
 
     if (this.defaultStyle) {
-      const inside = viewport
-        .clipped(new Rect(new Point(1, 0), viewport.contentSize.shrink(2, 0)))
-        .pushPen(bg)
-      super.render(inside)
+      viewport.clipped(
+        new Rect(new Point(1, 0), viewport.contentSize.shrink(2, 0)),
+        inside => {
+          inside.replacePen(bg)
+          super.render(inside)
+        },
+      )
     } else {
       super.render(viewport)
     }

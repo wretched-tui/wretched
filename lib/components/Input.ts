@@ -5,8 +5,6 @@ import {View} from '../View'
 import {Style, fromSGR, colorToSGR} from '../ansi'
 import {Point, Size} from '../geometry'
 
-type Alignment = 'left' | 'right' | 'center'
-
 interface Props {
   text: string
 }
@@ -63,13 +61,11 @@ export class Input extends View {
       }
 
       if (point.x >= minX && point.x + width - 1 < maxX) {
-        if (index === this.#cursor) {
-          viewport.pushPen(new Style({inverse: true}))
+        const style =
+          index === this.#cursor ? new Style({inverse: true}) : Style.NONE
+        viewport.usingPen(style, () => {
           viewport.write(char, point)
-          viewport.popPen()
-        } else {
-          viewport.write(char, point)
-        }
+        })
       }
 
       point.x += width

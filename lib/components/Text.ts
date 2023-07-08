@@ -56,56 +56,56 @@ export class Text extends View {
   render(viewport: Viewport) {
     const lines: [string, number][] = this.lines
 
-    viewport.pushPen()
-    const point = new Point(0, 0).mutableCopy()
-    for (const [line, width] of lines) {
-      if (!line.length) {
-        point.y += 1
-        continue
-      }
-
-      let didWrap = false
-      const offsetX =
-        this.alignment === 'left'
-          ? 0
-          : this.alignment === 'center'
-          ? ~~((viewport.contentSize.width - width) / 2)
-          : viewport.contentSize.width - width
-      point.x = offsetX
-      for (const char of unicode.toChars(line)) {
-        const width = unicode.charWidth(char)
-        if (width === 0) {
-          // track the currentStyle regardless of wether it's visible
-          viewport.replacePen(fromSGR(char))
-          continue
-        }
-
-        if (this.wrap && point.x >= viewport.contentSize.width) {
-          didWrap = true
-          point.x = 0
+    viewport.usingPen(() => {
+      const point = new Point(0, 0).mutableCopy()
+      for (const [line, width] of lines) {
+        if (!line.length) {
           point.y += 1
-        }
-
-        if (didWrap && char.match(/\s/)) {
           continue
         }
-        didWrap = false
 
-        if (
-          point.x >= viewport.visibleRect.minX() &&
-          point.x + width - 1 < viewport.visibleRect.maxX()
-        ) {
-          viewport.write(char, point)
+        let didWrap = false
+        const offsetX =
+          this.alignment === 'left'
+            ? 0
+            : this.alignment === 'center'
+            ? ~~((viewport.contentSize.width - width) / 2)
+            : viewport.contentSize.width - width
+        point.x = offsetX
+        for (const char of unicode.toChars(line)) {
+          const width = unicode.charWidth(char)
+          if (width === 0) {
+            // track the current style regardless of wether we are printing
+            viewport.replacePen(fromSGR(char))
+            continue
+          }
+
+          if (this.wrap && point.x >= viewport.contentSize.width) {
+            didWrap = true
+            point.x = 0
+            point.y += 1
+          }
+
+          if (didWrap && char.match(/\s/)) {
+            continue
+          }
+          didWrap = false
+
+          if (
+            point.x >= viewport.visibleRect.minX() &&
+            point.x + width - 1 < viewport.visibleRect.maxX()
+          ) {
+            viewport.write(char, point)
+          }
+
+          point.x += width
+          if (!this.wrap && point.x >= viewport.visibleRect.maxX()) {
+            break
+          }
         }
 
-        point.x += width
-        if (!this.wrap && point.x >= viewport.visibleRect.maxX()) {
-          break
-        }
+        point.y += 1
       }
-
-      point.y += 1
-    }
-    viewport.popPen()
+    })
   }
 }
