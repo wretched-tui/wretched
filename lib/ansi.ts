@@ -1,11 +1,16 @@
 import {program, colors} from './sys'
 
 export class Style {
-  underline: boolean = false
-  inverse: boolean = false
-  bold: boolean = false
-  blink: boolean = false
-  invisible: boolean = false
+  // SGR 1
+  underline?: boolean
+  // SGR 4
+  inverse?: boolean
+  // SGR 5
+  bold?: boolean
+  // SGR 7
+  blink?: boolean
+  // SGR 8
+  invisible?: boolean
   foreground: Color = 'default'
   background: Color = 'default'
 
@@ -28,13 +33,42 @@ export class Style {
     foreground?: Color
     background?: Color
   } = {}) {
-    this.underline = underline ?? this.underline
-    this.inverse = inverse ?? this.inverse
-    this.bold = bold ?? this.bold
-    this.blink = blink ?? this.blink
-    this.invisible = invisible ?? this.invisible
+    this.underline = underline
+    this.inverse = inverse
+    this.bold = bold
+    this.blink = blink
+    this.invisible = invisible
     this.foreground = foreground ?? this.foreground
     this.background = background ?? this.background
+  }
+
+  invert(): Style {
+    const style = new Style().merge(this)
+    style.foreground = this.background
+    style.background = this.foreground
+    return style
+  }
+
+  merge(style: Style): this {
+    this.underline = this.underline ?? style.underline
+    this.inverse = this.inverse ?? style.inverse
+    this.bold = this.bold ?? style.bold
+    this.blink = this.blink ?? style.blink
+    this.invisible = this.invisible ?? style.invisible
+
+    if (this.foreground === 'default') {
+      this.foreground = style.foreground
+    }
+
+    return this.mergeBackground(style)
+  }
+
+  mergeBackground(style: Style): this {
+    if (this.background === 'default') {
+      this.background = style.background
+    }
+
+    return this
   }
 
   isEqual(style: Style) {
@@ -75,7 +109,7 @@ export class Style {
   }
 }
 
-export type Color =
+export type Color = 
   | 'default'
   | 'black'
   | 'red'
@@ -93,18 +127,24 @@ export type Color =
   | 'brightMagenta'
   | 'brightCyan'
   | 'brightWhite'
-  | `${string}`
+  // SGR color 0-255
+  // fg: 38;5;0-255
+  // bg: 48;5;0-255
+  // 0-15 are "classic" terminal colors
+  // 16-231 are RGB colors
+  // r: 0-5, g: 0-5, b: 0-5
+  // sgr = 16 + r * 36 + g * 6 + b
+  // 232-255 are grayscale (232=black, 255=white)
   | {sgr: string}
-  | {grayscale: number}
+  // 0 - 255, these get mapped to the closest SGR color
   | [r: number, g: number, b: number]
+  // 00-FF, also get mapped to the closest SGR color
+  | `#${string}`
 
 export function toSGR(color: Color, fgbg: 'fg' | 'bg'): string {
   if (Array.isArray(color)) {
     return `${colors.RGBToHex(color)} ${fgbg}`
   } else if (typeof color === 'object') {
-    if ('grayscale' in color) {
-      return `${232 + Math.max(0, Math.min(23, color.grayscale))} ${fgbg}`
-    }
     return `${color.sgr} ${fgbg}`
   } else {
     return `${color} ${fgbg}`

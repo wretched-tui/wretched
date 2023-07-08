@@ -28,14 +28,17 @@ export class Box extends Container {
   render(viewport: Viewport) {
     const maxX = viewport.contentSize.width - 1
     const maxY = viewport.contentSize.height - 1
-    const style =
+    const borderStyle =
       this.border === 'cool'
-        ? new Style({foreground: '#70A2D1', background: '#2A81D1'})
+        ? new Style({foreground: [98, 196, 255], background: [34, 24, 37]})
         : new Style({foreground: 'white', background: 'black'})
-    viewport.setPen(style)
-    const bgChar = this.border === 'cool' ? '█' : ' '
+    const innerStyle = this.border === 'cool' ? borderStyle.invert() : undefined
+
+    if (innerStyle) {
+      viewport.setPen(innerStyle)
+    }
     for (let y = 1; y < maxY; ++y) {
-      viewport.write(bgChar.repeat(maxX - 1), new Point(1, y))
+      viewport.write(' '.repeat(maxX - 1), new Point(1, y))
     }
 
     const inside = viewport.clipped(
@@ -43,12 +46,13 @@ export class Box extends Container {
     )
     super.render(inside)
 
-    const [left, top, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
-    viewport.write(left.repeat(maxX - 1), new Point(1, 0))
-    viewport.write((right ?? left).repeat(maxX - 1), new Point(1, maxY))
+    viewport.setPen(borderStyle)
+    const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
+    viewport.write(top.repeat(maxX - 1), new Point(1, 0))
+    viewport.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
     for (let y = 1; y < maxY; ++y) {
-      viewport.write(top, new Point(0, y))
-      viewport.write(bottom ?? top, new Point(maxX, y))
+      viewport.write(left, new Point(0, y))
+      viewport.write(right ?? left, new Point(maxX, y))
     }
     viewport.write(tl, Point.zero)
     viewport.write(tr, new Point(maxX, 0))
@@ -61,7 +65,7 @@ type Chars =
   | [string, string, string, string, string, string]
   | [string, string, string, string, string, string, string, string]
 const BORDERS: Record<Border, Chars> = {
-  cool: ['▄', '▌', '▗', '▖', '▝', '▘', '▀', '▐'],
+  cool: ['▄', '▐', '▗', '▖', '▝', '▘', '▀', '▌'],
   single: ['─', '│', '┌', '┐', '└', '┘'],
   bold: ['━', '┃', '┏', '┓', '┗', '┛'],
   double: ['═', '║', '╔', '╗', '╚', '╝'],

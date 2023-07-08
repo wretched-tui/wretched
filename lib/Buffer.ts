@@ -10,8 +10,6 @@ type Char = {char: string; width: 1 | 2; style: Style; hiding?: Char}
 
 export class Buffer implements Terminal {
   size: Size = Size.zero
-  x: number = 0
-  y: number = 0
   get cols() {
     return this.size.width
   }
@@ -33,65 +31,56 @@ export class Buffer implements Terminal {
     this.size = size
   }
 
-  move(x: number, y: number) {
-    this.x = x
-    this.y = y
-  }
-
   /**
    * Writes the string at the cursor from left to write. Exits on newline (no default
    * wrapping behavior).
    */
-  write(str: string, style: Style) {
-    if (this.x >= this.size.width || this.y < 0 || this.y >= this.size.height) {
+  writeChar(str: string, x: number, y: number, style: Style) {
+    const [char] = str
+    if (char === '\n') {
+      return
+    }
+    const width = unicode.charWidth(char)
+    if (width === 0) {
       return
     }
 
-    let line = this.#canvas.get(this.y)
-    for (const char of toChars(str)) {
-      if (char === '\n') {
-        return
-      }
+    if (x >= this.size.width || y < 0 || y >= this.size.height) {
+      return
+    }
 
-      const width = unicode.charWidth(char)
-      if (width === 0) {
-        if (char === '') {
-          style = Style.NONE
-        } else {
-          style = fromSGR(char)
-        }
-      } else if (this.x >= 0) {
-        if (line) {
-          const prev = line.get(this.x - 1)
-          if (prev && prev.width === 2) {
-            // hides a 2-width character that this character is overlapping
-            line.set(this.x - 1, {char: ' ', width: 1, style: prev.style})
+    let line = this.#canvas.get(y)
+    const prevStyle = line?.get(x)?.style
+    style = prevStyle ? style.mergeBackground(prevStyle) : style
+    if (x >= 0) {
+      if (line) {
+        const prev = line.get(x - 1)
+        if (prev && prev.width === 2) {
+          // hides a 2-width character that this character is overlapping
+          line.set(x - 1, {char: ' ', width: 1, style: prev.style})
 
-            // actually writes the character, and records the hidden character
-            line.set(this.x, {char, width, style, hiding: prev})
+          // actually writes the character, and records the hidden character
+          line.set(x, {char, width, style, hiding: prev})
 
-            const hiding = prev.hiding
-            if (hiding) {
-              line.set(this.x - 2, hiding)
-            }
-          } else {
-            // actually writes the character
-            line.set(this.x, {char, width, style})
-
-            const next = line.get(this.x + 1)
-            if (next && next.hiding) {
-              // the next character can no longer be "hiding" the previous character (this
-              // character)
-              line.set(this.x + 1, {...next, hiding: undefined})
-            }
+          const hiding = prev.hiding
+          if (hiding) {
+            line.set(x - 2, hiding)
           }
         } else {
-          line = new Map([[this.x, {char, width, style}]])
-          this.#canvas.set(this.y, line)
-        }
-      }
+          // actually writes the character
+          line.set(x, {char, width, style})
 
-      this.x += width
+          const next = line.get(x + 1)
+          if (next && next.hiding) {
+            // the next character can no longer be "hiding" the previous character (this
+            // character)
+            line.set(x + 1, {...next, hiding: undefined})
+          }
+        }
+      } else {
+        line = new Map([[x, {char, width, style}]])
+        this.#canvas.set(y, line)
+      }
     }
   }
 

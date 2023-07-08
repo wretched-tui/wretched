@@ -100,13 +100,17 @@ export class Viewport {
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        style = char === RESET ? this.#pen : fromSGR(char)
+        style = char === RESET ? this.#pen : fromSGR(char).merge(this.#pen)
       } else if (
         x >= this.visibleRect.minX() &&
         x + width - 1 < this.visibleRect.maxX()
       ) {
-        this.terminal.move(this.offset.x + x, this.offset.y + to.y)
-        this.terminal.write(char, style)
+        this.terminal.writeChar(
+          char,
+          this.offset.x + x,
+          this.offset.y + to.y,
+          style,
+        )
       }
 
       x += width

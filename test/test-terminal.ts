@@ -1,11 +1,13 @@
-import type {Terminal, Color} from '../lib/types'
+import type {SGRTerminal} from '../lib/terminal'
+import type {Color} from '../lib/ansi'
 
-export class TestTerminal implements Terminal {
+export class TestTerminal implements SGRTerminal {
   chars = ''
   setForeground(fg: Color) {}
   setBackground(bg: Color) {}
   move(x: number, y: number) {
     this.x = x
+    this.y = y
   }
   write(str: string) {
     console.log(`x: ${this.x}, y: ${this.y}: ${str}`)

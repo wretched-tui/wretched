@@ -41,9 +41,9 @@ export class Screen {
     const view = viewConstructor()
     const screen = new Screen(program, view)
 
-    // const refresh = setInterval(() => {
-    //   screen.render()
-    // }, 16)
+    const refresh = setInterval(() => {
+      screen.render()
+    }, 16)
 
     program.on('focus' as any, function () {
       screen.trigger({type: 'focus'})
@@ -59,7 +59,7 @@ export class Screen {
 
     program.on('keypress', (char, key) => {
       if (key.name === 'c' && key.ctrl) {
-        // clearInterval(refresh)
+        clearInterval(refresh)
 
         program.clear()
         program.disableMouse()
@@ -86,7 +86,7 @@ export class Screen {
       screen.render()
     })
 
-    // screen.render()
+    screen.render()
 
     return [screen, program]
   }
