@@ -51,7 +51,7 @@ export class Style {
     this.blink = this.blink ?? style.blink
     this.invisible = this.invisible ?? style.invisible
 
-    if (this.foreground === 'default') {
+    if (this.foreground === 'default' || this.background === undefined) {
       this.foreground = style.foreground
     }
 
@@ -59,7 +59,7 @@ export class Style {
   }
 
   mergeBackground(style: Style): this {
-    if (this.background === 'default') {
+    if (this.background === 'default' || this.background === undefined) {
       this.background = style.background
     }
 
@@ -81,7 +81,7 @@ export class Style {
   /**
    * @param reset Used by the buffer to reset foreground/background colors
    */
-  colorToSGR(reset: boolean = false) {
+  toSGR(reset: boolean = false) {
     const {global: globalProgram} = program
     if (!globalProgram) {
       return ''

@@ -592,7 +592,7 @@ export const colors: {
 }
 
 export const unicode: {
-  strWidth(text: string): number
+  lineWidth(text: string): number
   charWidth(text: string): 0 | 1 | 2
   toChars(text: string): string[]
 }

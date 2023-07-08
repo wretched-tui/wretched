@@ -91,19 +91,20 @@ export class Button extends Container {
       : this.#hover
       ? new Style({foreground: 'black', background: 'white'})
       : new Style({foreground: 'black', background: 'gray'})
-    viewport.setPen(bg)
 
+    viewport.pushPen(bg)
     const minX = viewport.visibleRect.minX()
     const maxX = viewport.visibleRect.maxX()
     const maxY = viewport.visibleRect.maxY()
     for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
       viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
     }
+    viewport.popPen()
 
     if (this.defaultStyle) {
       const inside = viewport
         .clipped(new Rect(new Point(1, 0), viewport.contentSize.shrink(2, 0)))
-        .setPen(bg)
+        .pushPen(bg)
       super.render(inside)
     } else {
       super.render(viewport)

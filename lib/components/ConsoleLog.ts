@@ -27,7 +27,11 @@ export class ConsoleLog extends Flow {
     if (method === 'dir') {
     } else if (method === 'table') {
     } else {
-      this.add(new LogLine(method, args))
+      if (this.children.length < 1000) {
+        this.add(new LogLine(method, args))
+      } else if (this.children.length === 1000) {
+        this.add(new LogLine(method, ['UH OH']), 0)
+      }
     }
   }
 
@@ -54,7 +58,7 @@ class LogLine extends Text {
           if (index === 0) {
             return header + line
           } else {
-            return ' '.repeat(unicode.strWidth(header)) + line
+            return ' '.repeat(unicode.lineWidth(header)) + line
           }
         })
     })

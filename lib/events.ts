@@ -15,6 +15,7 @@ export namespace Screen {
 }
 export type KeyEvent = WretchedKeyEvent & {type: 'key'}
 export type FocusEvent = {type: 'focus' | 'blur'}
+export type ResizeEvent = {type: 'resize'}
 
 export type MouseMove = 'enter' | 'in' | 'below' | 'exit'
 export type MouseClick =
@@ -58,7 +59,7 @@ export type Event = MouseEvent | KeyEvent | FocusEvent
 export type SystemMouseEvent = Omit<MouseEvent, 'name'> & {
   name: SystemMouseEventName
 }
-export type SystemEvent = SystemMouseEvent | KeyEvent | FocusEvent
+export type SystemEvent = SystemMouseEvent | KeyEvent | FocusEvent | ResizeEvent
 export type MouseDownEvent = {
   target?: MouseEventTarget & {wasInside: boolean}
   button: MouseButton

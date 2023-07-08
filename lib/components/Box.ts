@@ -31,22 +31,21 @@ export class Box extends Container {
     const borderStyle =
       this.border === 'cool'
         ? new Style({foreground: [98, 196, 255], background: [34, 34, 37]})
-        : new Style({foreground: 'white', background: 'black'})
+        : new Style({foreground: 'white', background: 'default'})
     const innerStyle = this.border === 'cool' ? borderStyle.invert() : undefined
 
-    if (innerStyle) {
-      viewport.setPen(innerStyle)
-    }
+    viewport.pushPen(innerStyle)
     for (let y = 1; y < maxY; ++y) {
       viewport.write(' '.repeat(maxX - 1), new Point(1, y))
     }
+    viewport.popPen()
 
     const inside = viewport.clipped(
       new Rect(new Point(1, 1), viewport.contentSize.shrink(2, 2)),
     )
     super.render(inside)
 
-    viewport.setPen(borderStyle)
+    viewport.pushPen(borderStyle)
     const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
     viewport.write(top.repeat(maxX - 1), new Point(1, 0))
     viewport.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
@@ -58,6 +57,7 @@ export class Box extends Container {
     viewport.write(tr, new Point(maxX, 0))
     viewport.write(bl, new Point(0, maxY))
     viewport.write(br, new Point(maxX, maxY))
+    viewport.popPen()
   }
 }
 

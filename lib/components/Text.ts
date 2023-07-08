@@ -34,7 +34,7 @@ export class Text extends View {
     this.alignment = alignment ?? 'left'
     this.lines = (lines ?? text.split('\n')).map(line => [
       line,
-      unicode.strWidth(line),
+      unicode.lineWidth(line),
     ])
     this.wrap = wrap ?? false
   }
@@ -56,9 +56,8 @@ export class Text extends View {
   render(viewport: Viewport) {
     const lines: [string, number][] = this.lines
 
+    viewport.pushPen()
     const point = new Point(0, 0).mutableCopy()
-    viewport.setPen(Style.NONE)
-
     for (const [line, width] of lines) {
       if (!line.length) {
         point.y += 1
@@ -77,7 +76,7 @@ export class Text extends View {
         const width = unicode.charWidth(char)
         if (width === 0) {
           // track the currentStyle regardless of wether it's visible
-          viewport.setPen(fromSGR(char))
+          viewport.replacePen(fromSGR(char))
           continue
         }
 
@@ -100,9 +99,13 @@ export class Text extends View {
         }
 
         point.x += width
+        if (!this.wrap && point.x >= viewport.visibleRect.maxX()) {
+          break
+        }
       }
 
       point.y += 1
     }
+    viewport.popPen()
   }
 }

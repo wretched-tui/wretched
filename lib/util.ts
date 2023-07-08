@@ -3,12 +3,12 @@ import {Size} from './geometry'
 
 export function strSize(str: string | string[]): Size {
   if (Array.isArray(str)) {
-    return new Size(Math.max(...str.map(unicode.strWidth)), str.length)
+    return new Size(Math.max(...str.map(unicode.lineWidth)), str.length)
   } else {
     if (str.includes('\n')) {
       return strSize(str.split('\n'))
     }
-    return new Size(unicode.strWidth(str), 1)
+    return new Size(unicode.lineWidth(str), 1)
   }
 }
 
@@ -17,7 +17,7 @@ export function leftPad(str: string, length: number): string {
   if (lines.length > 1) {
     return lines.map(line => leftPad(line, length)).join('\n')
   }
-  const width = unicode.strWidth(str)
+  const width = unicode.lineWidth(str)
   if (width >= length) {
     return str
   }
@@ -30,7 +30,7 @@ export function rightPad(str: string, length: number): string {
   if (lines.length > 1) {
     return lines.map(line => rightPad(line, length)).join('\n')
   }
-  const width = unicode.strWidth(str)
+  const width = unicode.lineWidth(str)
   if (width >= length) {
     return str
   }
@@ -43,7 +43,7 @@ export function centerPad(str: string, length: number): string {
   if (lines.length > 1) {
     return lines.map(line => centerPad(line, length)).join('\n')
   }
-  const width = unicode.strWidth(str)
+  const width = unicode.lineWidth(str)
   if (width >= length) {
     return str
   }

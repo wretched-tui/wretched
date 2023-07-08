@@ -17,7 +17,10 @@ export class Viewport {
   readonly offset: Point
   readonly terminal: Terminal
   #mouseListeners: Map<string, MouseEventListener>
-  #pen = Style.NONE
+  #pen: Style[] = []
+  get pen() {
+    return this.#pen[0]
+  }
 
   constructor(
     terminal: Terminal | Viewport,
@@ -41,8 +44,20 @@ export class Viewport {
     })
   }
 
-  setPen(style: Style): this {
-    this.#pen = style
+  replacePen(style: Style): this {
+    this.#pen[0] = style
+    return this
+  }
+
+  pushPen(style: Style | undefined = undefined): this {
+    style ??= this.#pen[0] ?? Style.NONE
+    // yeah I know I said pushPen but #pen[0] is easier!
+    this.#pen.unshift(style)
+    return this
+  }
+
+  popPen(): this {
+    this.#pen.shift()
     return this
   }
 
@@ -92,7 +107,8 @@ export class Viewport {
     }
 
     let x = to.x
-    let style = this.#pen
+    const pen = this.#pen[0] ?? Style.NONE
+    let style = pen
     for (const char of unicode.toChars(input)) {
       if (char === '\n') {
         break
@@ -100,7 +116,12 @@ export class Viewport {
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        style = char === RESET ? this.#pen : fromSGR(char).merge(this.#pen)
+        style = char === RESET ? pen : fromSGR(char).merge(pen)
+        console.log('=========== Viewport.ts at line 117 ===========')
+        console.log({
+          foreground: style.foreground,
+          background: style.background,
+        })
       } else if (
         x >= this.visibleRect.minX() &&
         x + width - 1 < this.visibleRect.maxX()

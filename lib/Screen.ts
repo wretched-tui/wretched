@@ -46,10 +46,6 @@ export class Screen {
     const view = viewConstructor()
     const screen = new Screen(program, view)
 
-    const refresh = setInterval(() => {
-      screen.render()
-    }, 16)
-
     program.on('focus' as any, function () {
       screen.trigger({type: 'focus'})
     })
@@ -59,14 +55,11 @@ export class Screen {
     })
 
     program.on('resize', function () {
-      screen.render()
+      screen.trigger({type: 'resize'})
     })
 
     program.on('keypress', (char, key) => {
       if (key.name === 'c' && key.ctrl) {
-        clearInterval(refresh)
-
-        console.log('=========== Screen.ts at line 69 ===========')
         stopLogEmitter()
         screen.exit(program)
         program.clear()
@@ -94,11 +87,9 @@ export class Screen {
         name: translateMouseAction(action, data.button),
         type: 'mouse',
       })
-      screen.render()
     })
 
     screen.start(program)
-    screen.render()
 
     return [screen, program]
   }
@@ -127,38 +118,42 @@ export class Screen {
     this.view = view
   }
 
+  #refresh?: ReturnType<typeof setInterval>
   start(program: BlessedProgram) {
+    // this.#refresh = setInterval(() => {
+    //   this.render()
+    // }, 16)
     this.view.moveToScreen(this)
     Screen.#emitter.emit('start', program)
+    this.render()
   }
 
   exit(program: BlessedProgram) {
+    if (this.#refresh) {
+      clearInterval(this.#refresh)
+    }
+
     this.view.moveToScreen(null)
     Screen.#emitter.emit('exit', program)
   }
 
   trigger(event: SystemEvent) {
     switch (event.type) {
+      case 'resize':
       case 'focus':
       case 'blur':
+        break
       case 'key':
+        console.log('=========== Screen.ts at line 147 ===========')
+        console.log({'event.type': event})
         break
       case 'mouse':
         this.triggerMouse(event)
+        this.render()
     }
   }
 
-  timerId: ReturnType<typeof setTimeout> | undefined
   render() {
-    if (this.timerId === undefined) {
-      this.#render()
-    } else {
-      clearTimeout(this.timerId)
-      this.timerId = setTimeout(this.#render.bind(this), 8)
-    }
-  }
-
-  #render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
 
