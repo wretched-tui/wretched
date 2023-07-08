@@ -76,7 +76,9 @@ export abstract class Container extends View {
     }
   }
 
-  didMoveToScreen(screen: Screen | null) {
+  moveToScreen(screen: Screen | null) {
+    super.moveToScreen(screen)
+
     for (const child of this.children) {
       child.moveToScreen(this.screen)
     }

@@ -6,7 +6,7 @@ import {SGRTerminal} from './terminal'
 import {Viewport} from './Viewport'
 import {View} from './View'
 import {Rect, Point, Size} from './geometry'
-import {flushLogs} from './log'
+import {flushLogs, stopLogEmitter} from './log'
 import {Buffer} from './Buffer'
 import type {
   MouseButton,
@@ -20,9 +20,12 @@ import type {
   SystemMouseEventName,
 } from './events'
 import {isMouseButton, isMouseWheel} from './events'
+import type {Opaque} from './opaque'
+
+type Listener<T extends 'start' | 'exit'> = Opaque<T>
 
 export class Screen {
-  terminal: SGRTerminal
+  program: SGRTerminal
   buffer: Buffer
   view: View
   #viewport?: Viewport
@@ -63,6 +66,8 @@ export class Screen {
       if (key.name === 'c' && key.ctrl) {
         clearInterval(refresh)
 
+        console.log('=========== Screen.ts at line 69 ===========')
+        stopLogEmitter()
         screen.exit(program)
         program.clear()
         program.disableMouse()
@@ -99,19 +104,25 @@ export class Screen {
   }
 
   static #emitter = new EventEmitter()
-  static on(
-    event: 'start' | 'exit',
+
+  static on<T extends 'start' | 'exit'>(
+    event: T,
     listener: (program: BlessedProgram) => void,
-  ) {
+  ): Listener<T> {
     Screen.#emitter.on(event, listener)
+    return listener as unknown as Listener<T>
+  }
+
+  static off<T extends 'start' | 'exit'>(event: T, listener: Listener<T>) {
+    Screen.#emitter.off(event, listener as any)
   }
 
   static emit(event: 'start' | 'exit', program: BlessedProgram) {
     Screen.#emitter.emit(event, program)
   }
 
-  constructor(terminal: SGRTerminal, view: View) {
-    this.terminal = terminal
+  constructor(program: SGRTerminal, view: View) {
+    this.program = program
     this.buffer = new Buffer()
     this.view = view
   }
@@ -122,6 +133,7 @@ export class Screen {
   }
 
   exit(program: BlessedProgram) {
+    this.view.moveToScreen(null)
     Screen.#emitter.emit('exit', program)
   }
 
@@ -147,14 +159,14 @@ export class Screen {
   }
 
   #render() {
-    const screenSize = new Size(this.terminal.cols, this.terminal.rows)
+    const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
 
     const size = this.view.intrinsicSize(screenSize)
 
     const viewport = new Viewport(this.buffer, size, new Rect(Point.zero, size))
     this.view.render(viewport)
-    this.buffer.flush(this.terminal)
+    this.buffer.flush(this.program)
 
     this.#viewport = viewport
   }

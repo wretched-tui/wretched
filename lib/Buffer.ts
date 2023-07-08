@@ -24,8 +24,7 @@ export class Buffer implements Terminal {
   setBackground(bg: Color): void {}
 
   resize(size: Size) {
-    if (size.width < this.size.width || size.height < this.size.height) {
-      this.#canvas = new Map()
+    if (size.width !== this.size.width || size.height !== this.size.height) {
       this.#prev = new Map()
     }
 
@@ -131,6 +130,12 @@ export class Buffer implements Terminal {
         dx = width
       }
     }
+
+    if (prevStyle !== Style.NONE) {
+      terminal.write('\x1b[0m')
+    }
+
+    this.#canvas = new Map()
   }
 }
 

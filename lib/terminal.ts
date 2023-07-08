@@ -1,3 +1,4 @@
+import type {BlessedProgram} from './sys'
 import type {Style} from './ansi'
 
 export interface Terminal {
@@ -7,9 +8,7 @@ export interface Terminal {
   writeMeta(str: string): void
 }
 
-export interface SGRTerminal {
-  cols: number
-  rows: number
-  move(x: number, y: number): void
-  write(str: string): void
-}
+export type SGRTerminal = Pick<
+  BlessedProgram,
+  'cols' | 'rows' | 'move' | 'write' | 'on' | 'once'
+>

@@ -1,18 +1,13 @@
 import {program, colors} from './sys'
 
 export class Style {
-  // SGR 1
   underline?: boolean
-  // SGR 4
   inverse?: boolean
-  // SGR 5
   bold?: boolean
-  // SGR 7
   blink?: boolean
-  // SGR 8
   invisible?: boolean
-  foreground: Color = 'default'
-  background: Color = 'default'
+  foreground?: Color
+  background?: Color
 
   static NONE = new Style()
 
@@ -83,7 +78,10 @@ export class Style {
     )
   }
 
-  colorToSGR() {
+  /**
+   * @param reset Used by the buffer to reset foreground/background colors
+   */
+  colorToSGR(reset: boolean = false) {
     const {global: globalProgram} = program
     if (!globalProgram) {
       return ''
@@ -101,9 +99,13 @@ export class Style {
     }
     if (this.foreground) {
       parts.push(colorToSGR(this.foreground, 'fg'))
+    } else if (reset) {
+      parts.push(colorToSGR('default', 'fg'))
     }
     if (this.background) {
       parts.push(colorToSGR(this.background, 'bg'))
+    } else if (reset) {
+      parts.push(colorToSGR('default', 'bg'))
     }
     return globalProgram.style(parts.join(';'))
   }

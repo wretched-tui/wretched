@@ -21,26 +21,25 @@ export class ITerm2 extends View {
   constructor({bg}: Props) {
     super()
     this.bg = bg ? colorToHex(bg).slice(1) : undefined
+  }
 
-    Screen.on('start', program => {
-      program.once('data', (input: any) => {
-        const decoder = new StringDecoder('utf8')
-        const response = decoder.write(input)
-        this.restoreBg = this.#parseBackgroundResponse(response)
+  didMount(screen: Screen) {
+    screen.program.once('data', (input: any) => {
+      const decoder = new StringDecoder('utf8')
+      const response = decoder.write(input)
+      this.restoreBg = this.#parseBackgroundResponse(response)
 
-        if (this.bg) {
-          program.write(this.#setBackgroundCommand(this.bg))
-        }
-      })
-
-      program.write(this.#getBackgroundColorCommand())
-    })
-
-    Screen.on('exit', program => {
-      if (this.restoreBg) {
-        program.write(this.#setBackgroundCommand(this.restoreBg))
+      if (this.bg) {
+        screen.program.write(this.#setBackgroundCommand(this.bg))
       }
     })
+    screen.program.write(this.#getBackgroundColorCommand())
+  }
+
+  didUnmount(prev: Screen) {
+    if (this.restoreBg) {
+      prev.program.write(this.#setBackgroundCommand(this.restoreBg))
+    }
   }
 
   #getBackgroundColorCommand() {

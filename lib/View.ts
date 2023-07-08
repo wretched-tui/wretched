@@ -17,22 +17,24 @@ export abstract class View {
 
   willMoveTo(parent: View) {}
   didMoveFrom(parent: View) {}
-  didMount() {}
-  didUnmount() {}
+  didMount(screen: Screen) {}
+  didUnmount(screen: Screen) {}
 
   receiveMouse(event: MouseEvent) {}
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {
+      const prev = this.#screen
       this.#screen = screen
-      this.didMoveToScreen(screen)
 
       if (screen) {
-        this.didMount()
+        if (prev) {
+          this.didUnmount(prev)
+        }
+        this.didMount(screen)
       } else {
-        this.didUnmount()
+        this.didUnmount(prev!)
       }
     }
   }
-  didMoveToScreen(screen: Screen | null) {}
 }

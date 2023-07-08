@@ -6,31 +6,44 @@ const methods = [...inspect_methods, 'dir', 'table'] as const
 export type Method = (typeof methods)[number]
 export type Listener = (method: Method, args: any[]) => void
 
-const log: [(typeof console)[Method], any[]][] = []
+const log: [Method, any[]][] = []
 const listeners: Listener[] = []
 let emitter: EventEmitter | null = null
 
+const builtin: any = {}
+methods.forEach(method => {
+  builtin[method] = console[method]
+})
+
 export function interceptConsoleLog() {
   methods.forEach(method => {
-    const builtin = console[method]
     console[method] = function () {
       const args = [...arguments]
       if (emitter && method !== 'debug') {
         emitter.emit('log', [method, args])
       } else {
-        if ((inspect_methods as readonly string[]).includes(method)) {
-          log.push([builtin, args.map(arg => inspect(arg, false))])
-        } else {
-          log.push([builtin, args])
-        }
+        appendLog([method, args])
       }
     }
   })
 }
 
+function appendLog([method, args]: [Method, any[]]) {
+  if ((inspect_methods as readonly string[]).includes(method)) {
+    log.push([method, args.map(arg => inspect(arg, false))])
+  } else {
+    log.push([method, args])
+  }
+}
+
+export function stopLogEmitter() {
+  emitter = new EventEmitter()
+  emitter.on('log', appendLog)
+}
+
 export function flushLogs() {
-  log.forEach(([builtin, args]) => {
-    builtin.apply(console, args)
+  log.forEach(([method, args]) => {
+    builtin[method].apply(console, args)
   })
   log.splice(0, log.length)
 }
