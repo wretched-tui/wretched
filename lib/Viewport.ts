@@ -17,9 +17,7 @@ export class Viewport {
   readonly visibleRect: Rect
   readonly offset: Point
   readonly terminal: Terminal
-  focus: View | undefined
   #screen: Screen
-  #focusRing: View[]
   #pen: Style[] = []
   get pen() {
     return this.#pen[0]
@@ -35,10 +33,8 @@ export class Viewport {
     this.#screen = screen
     if (terminal instanceof Viewport) {
       this.terminal = terminal.terminal
-      this.#focusRing = terminal.#focusRing
     } else {
       this.terminal = terminal
-      this.#focusRing = []
     }
 
     this.contentSize = contentSize
@@ -83,33 +79,16 @@ export class Viewport {
   }
 
   hasFocus(view: View) {
-    if (this.focus) {
-      return this.focus === view
-    }
-    return this.#focusRing[0] === view
+    return this.#screen.hasFocus(view)
   }
 
   addFocus(view: View) {
-    this.#focusRing.push(view)
+    return this.#screen.addFocus(view)
   }
 
-  nextFocus(): View | undefined {
-    if (this.focus && this.#focusRing[0] !== this.focus) {
-      const index = this.#focusRing.indexOf(this.focus)
-      if (~index) {
-        const pre = this.#focusRing.slice(0, index)
-        this.#focusRing = this.#focusRing.slice(index).concat(pre)
-      }
-    }
-
-    const first = this.#focusRing.shift()
-    if (first) {
-      this.#focusRing.push(first)
-      this.focus = this.#focusRing[0]
-    }
-
-    return this.focus
-  }
+  // nextFocus() {
+  //   this.#screen.nextFocus()
+  // }
 
   assignMouse(view: View, ...eventNames: MouseEventListenerName[]) {
     const maxX = this.visibleRect.maxX()

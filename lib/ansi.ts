@@ -79,34 +79,41 @@ export class Style {
   }
 
   /**
-   * @param reset Used by the buffer to reset foreground/background colors
+   * @param prevStyle Used by the buffer to reset foreground/background colors and attrs
    */
-  toSGR(reset: boolean = false) {
+  toSGR(prevStyle: Style) {
     const {global: globalProgram} = program
     if (!globalProgram) {
       return ''
     }
 
     const parts: string[] = []
-    if (this.underline) {
+    if (this.underline && !prevStyle.underline) {
       parts.push('underline')
+    } else if (prevStyle.underline) {
+      parts.push('!underline')
     }
-    if (this.bold) {
+
+    if (this.bold && !prevStyle.bold) {
       parts.push('bold')
+    } else if (prevStyle.bold) {
+      parts.push('!bold')
     }
-    if (this.inverse) {
+
+    if (this.inverse && !prevStyle.inverse) {
       parts.push('inverse')
+    } else if (prevStyle.inverse) {
+      parts.push('!inverse')
     }
+
     if (this.foreground) {
       parts.push(colorToSGR(this.foreground, 'fg'))
-    } else if (reset) {
-      parts.push(colorToSGR('default', 'fg'))
     }
+
     if (this.background) {
       parts.push(colorToSGR(this.background, 'bg'))
-    } else if (reset) {
-      parts.push(colorToSGR('default', 'bg'))
     }
+
     return globalProgram.style(parts.join(';'))
   }
 }

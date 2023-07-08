@@ -16,6 +16,7 @@ import type {
   SystemMouseEvent,
   SystemMouseEventName,
 } from './events'
+import {FocusManager} from './FocusManager'
 import {MouseManager} from './MouseManager'
 import type {Opaque} from './opaque'
 
@@ -25,7 +26,7 @@ export class Screen {
   program: SGRTerminal
   buffer: Buffer
   view: View
-  #viewport?: Viewport
+  #focusManager = new FocusManager()
   #mouseManager = new MouseManager()
 
   static start(viewConstructor: () => View): [Screen, BlessedProgram] {
@@ -144,24 +145,34 @@ export class Screen {
         break
       case 'mouse':
         this.triggerMouse(event)
+        break
     }
     this.render()
   }
 
   triggerKeyboard(event: KeyEvent) {
-    console.log('=========== Screen.ts at line 147 ===========')
-    console.log({'event.type': event})
-    if (event.name === 'tab') {
-      this.#prevFocus = this.#viewport?.nextFocus()
-    } else {
-    }
+    this.#focusManager.trigger(event)
   }
+
+  hasFocus(view: View) {
+    return this.#focusManager.hasFocus(view)
+  }
+
+  addFocus(view: View) {
+    this.#focusManager.addFocus(view)
+  }
+
+  // nextFocus() {
+  //   this.#focusManager.nextFocus()
+  // }
 
   #prevFocus: View | undefined
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
+
     this.#mouseManager.reset()
+    this.#focusManager.reset()
 
     const size = this.view.intrinsicSize(screenSize)
 
@@ -171,12 +182,9 @@ export class Screen {
       size,
       new Rect(Point.zero, size),
     )
-    viewport.focus = this.#prevFocus
-    this.view.render(viewport)
-    this.#prevFocus = viewport.focus
-    this.buffer.flush(this.program)
 
-    this.#viewport = viewport
+    this.view.render(viewport)
+    this.buffer.flush(this.program)
   }
 
   triggerMouse(systemEvent: SystemMouseEvent): void {

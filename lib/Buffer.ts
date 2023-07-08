@@ -120,7 +120,7 @@ export class Buffer implements Terminal {
         const {char, width, style} = chrInfo
 
         if (prevStyle !== style) {
-          terminal.write(style.toSGR() + char)
+          terminal.write(style.toSGR(prevStyle) + char)
           prevStyle = style
         } else {
           terminal.write(char)

@@ -2,7 +2,7 @@ import type {BlessedProgram} from './sys'
 import {Size} from './geometry'
 import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
-import type {MouseEvent} from './events'
+import type {KeyEvent, MouseEvent} from './events'
 
 export abstract class View {
   parent: View | null = null
@@ -20,6 +20,7 @@ export abstract class View {
   didMount(screen: Screen) {}
   didUnmount(screen: Screen) {}
 
+  receiveKey(event: KeyEvent) {}
   receiveMouse(event: MouseEvent) {}
 
   moveToScreen(screen: Screen | null) {

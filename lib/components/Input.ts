@@ -2,8 +2,9 @@ import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
-import {Style, fromSGR, colorToSGR} from '../ansi'
+import {Style} from '../ansi'
 import {Point, Size} from '../geometry'
+import type {KeyEvent} from '../events'
 
 interface Props {
   text: string
@@ -24,10 +25,16 @@ export class Input extends View {
     super()
     this.text = text
     this.#offset = 0
-    this.#cursor = 0
+    this.#cursor = [...text].length
   }
 
-  intrinsicSize(availableSize: Size): Size {
+  receiveKey(event: KeyEvent) {
+    if (isPrintable(event)) {
+      this.text += event.sequence
+    }
+  }
+
+  intrinsicSize(): Size {
     const width = unicode.lineWidth(this.text)
     return new Size(width, 1)
   }
@@ -47,7 +54,8 @@ export class Input extends View {
       index = -1
     const minX = viewport.visibleRect.minX(),
       maxX = viewport.visibleRect.maxX()
-    for (let char of unicode.toChars(line)) {
+    const chars = unicode.toChars(line).concat(' ')
+    for (let char of chars) {
       index += 1
 
       if (char === '\n') {
@@ -65,8 +73,17 @@ export class Input extends View {
       }
 
       if (point.x >= minX && point.x + width - 1 < maxX) {
-        const style =
-          index === this.#cursor ? new Style({inverse: true}) : Style.NONE
+        let style: Style
+        if (this.#cursor === index) {
+          if (hasFocus) {
+            style = new Style({inverse: true})
+          } else {
+            style = new Style({underline: true})
+          }
+        } else {
+          style = Style.NONE
+        }
+
         viewport.usingPen(style, () => {
           viewport.write(char, point)
         })
@@ -78,4 +95,8 @@ export class Input extends View {
       }
     }
   }
+}
+
+function isPrintable(event: KeyEvent) {
+  return true
 }
