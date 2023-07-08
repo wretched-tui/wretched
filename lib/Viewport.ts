@@ -3,6 +3,7 @@ import {unicode} from './sys'
 import type {Terminal} from './terminal'
 import {Style, RESET, fromSGR} from './ansi'
 import {Rect, Point, Size} from './geometry'
+import {Screen} from './Screen'
 import {View} from './View'
 import type {MouseEventListenerName, MouseEventListener} from './events'
 
@@ -17,26 +18,26 @@ export class Viewport {
   readonly offset: Point
   readonly terminal: Terminal
   focus: View | undefined
+  #screen: Screen
   #focusRing: View[]
-  #mouseListeners: Map<string, MouseEventListener>
   #pen: Style[] = []
   get pen() {
     return this.#pen[0]
   }
 
   constructor(
+    screen: Screen,
     terminal: Terminal | Viewport,
     contentSize: Size,
     visibleRect: Rect,
     offset?: Point,
   ) {
+    this.#screen = screen
     if (terminal instanceof Viewport) {
       this.terminal = terminal.terminal
-      this.#mouseListeners = terminal.#mouseListeners
       this.#focusRing = terminal.#focusRing
     } else {
       this.terminal = terminal
-      this.#mouseListeners = new Map()
       this.#focusRing = []
     }
 
@@ -114,32 +115,9 @@ export class Viewport {
     const maxX = this.visibleRect.maxX()
     const maxY = this.visibleRect.maxY()
     for (let y = this.visibleRect.minY(); y < maxY; ++y)
-      for (let x = this.visibleRect.minX(); x < maxX; ++x)
-        for (const eventName of eventNames) {
-          const key = mouseKey(this.offset.x + x, this.offset.y + y, eventName)
-          const target = {
-            view,
-            offset: this.offset,
-          } as const
-          const listener = this.#mouseListeners.get(key) ?? {move: []}
-          if (eventName === 'mouse.move') {
-            listener.move.unshift(target)
-            this.#mouseListeners.set(key, listener)
-          } else if (
-            eventName.startsWith('mouse.button.') &&
-            !listener.button
-          ) {
-            listener.button = target
-            this.#mouseListeners.set(key, listener)
-          } else if (eventName === 'mouse.wheel' && !listener.wheel) {
-            listener.wheel = target
-            this.#mouseListeners.set(key, listener)
-          }
-        }
-  }
-
-  getMouseListener(x: number, y: number, event: MouseEventListenerName) {
-    return this.#mouseListeners.get(mouseKey(x, y, event))
+      for (let x = this.visibleRect.minX(); x < maxX; ++x) {
+        this.#screen.assignMouse(view, this.offset, new Point(x, y), eventNames)
+      }
   }
 
   /**
@@ -219,10 +197,6 @@ export class Viewport {
     const offset = new Point(offsetX, offsetY)
 
     // do not copy `#pen` - child views assume this is reset
-    draw(new Viewport(this, contentSize, visibleRect, offset))
+    draw(new Viewport(this.#screen, this, contentSize, visibleRect, offset))
   }
-}
-
-function mouseKey(x: number, y: number, event: string) {
-  return `${x},${y}:${event}`
 }

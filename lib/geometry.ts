@@ -17,6 +17,8 @@ export class Point {
     return this.copy() as MutablePoint
   }
 
+  offset(dp: Point): Point
+  offset(dx: number, dy: number): Point
   offset(...args: [number, number] | [pt: Point]) {
     if (args.length === 2) {
       return new Point(this.x + args[0], this.y + args[1])
@@ -60,7 +62,10 @@ export class Size {
 
   grow(...args: [number, number] | [Size]): Size {
     if (args.length === 2) {
-      return new Size(Math.max(0, this.width + args[0]), Math.max(0, this.height + args[1]))
+      return new Size(
+        Math.max(0, this.width + args[0]),
+        Math.max(0, this.height + args[1]),
+      )
     } else {
       return new Size(
         Math.max(0, this.width + args[0].width),

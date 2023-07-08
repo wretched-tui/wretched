@@ -11,16 +11,12 @@ import {Buffer} from './Buffer'
 import type {
   KeyEvent,
   MouseButton,
-  MouseDownEvent,
-  MouseEventListener,
   MouseEventListenerName,
-  MouseEventName,
-  MouseEventTarget,
   SystemEvent,
   SystemMouseEvent,
   SystemMouseEventName,
 } from './events'
-import {isMouseButton, isMouseWheel} from './events'
+import {MouseManager} from './MouseManager'
 import type {Opaque} from './opaque'
 
 type Listener<T extends 'start' | 'exit'> = Opaque<T>
@@ -30,8 +26,7 @@ export class Screen {
   buffer: Buffer
   view: View
   #viewport?: Viewport
-  #mouseMoveViews: MouseEventTarget[] = []
-  #mouseDownEvent: MouseDownEvent | undefined
+  #mouseManager = new MouseManager()
 
   static start(viewConstructor: () => View): [Screen, BlessedProgram] {
     const program = blessedProgram({
@@ -154,6 +149,8 @@ export class Screen {
   }
 
   triggerKeyboard(event: KeyEvent) {
+    console.log('=========== Screen.ts at line 147 ===========')
+    console.log({'event.type': event})
     if (event.name === 'tab') {
       this.#prevFocus = this.#viewport?.nextFocus()
     } else {
@@ -164,10 +161,16 @@ export class Screen {
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
+    this.#mouseManager.reset()
 
     const size = this.view.intrinsicSize(screenSize)
 
-    const viewport = new Viewport(this.buffer, size, new Rect(Point.zero, size))
+    const viewport = new Viewport(
+      this,
+      this.buffer,
+      size,
+      new Rect(Point.zero, size),
+    )
     viewport.focus = this.#prevFocus
     this.view.render(viewport)
     this.#prevFocus = viewport.focus
@@ -177,153 +180,16 @@ export class Screen {
   }
 
   triggerMouse(systemEvent: SystemMouseEvent): void {
-    if (systemEvent.name === 'mouse.move.in' && this.#mouseDownEvent) {
-      return this.triggerMouse({
-        ...systemEvent,
-        name: 'mouse.button.up',
-        button: this.#mouseDownEvent.button,
-      })
-    }
-
-    if (this.#mouseDownEvent) {
-      if (!isMouseButton(systemEvent)) {
-        return
-      }
-      this.#dragMouse(systemEvent, this.#mouseDownEvent)
-
-      if (systemEvent.name === 'mouse.button.up') {
-        this.#moveMouse(systemEvent)
-      }
-    } else if (isMouseButton(systemEvent)) {
-      this.#pressMouse(systemEvent)
-    } else if (isMouseWheel(systemEvent)) {
-      this.#scrollMouse(systemEvent)
-    } else {
-      this.#moveMouse(systemEvent)
-    }
+    this.#mouseManager.trigger(systemEvent)
   }
 
-  #getListener(systemEvent: SystemMouseEvent): MouseEventTarget | undefined {
-    return this.#getListeners(systemEvent)?.[0]
-  }
-
-  #getListeners(systemEvent: SystemMouseEvent): MouseEventTarget[] | undefined {
-    let listener: MouseEventListener | undefined
-    for (const eventName of checkEventNames(systemEvent)) {
-      listener = this.#viewport?.getMouseListener(
-        systemEvent.x,
-        systemEvent.y,
-        eventName,
-      )
-      if (listener) {
-        if (isMouseButton(systemEvent)) {
-          return listener.button ? [listener.button] : undefined
-        } else if (isMouseWheel(systemEvent)) {
-          return listener.wheel ? [listener.wheel] : undefined
-        } else {
-          return listener.move
-        }
-      }
-    }
-    return undefined
-  }
-
-  #sendMouse(
-    systemEvent: Omit<SystemMouseEvent, 'name'>,
-    eventName: MouseEventName,
-    target: MouseEventTarget,
+  assignMouse(
+    view: View,
+    offset: Point,
+    point: Point,
+    eventNames: MouseEventListenerName[],
   ) {
-    const event = {
-      ...systemEvent,
-      name: eventName,
-      x: systemEvent.x - target.offset.x,
-      y: systemEvent.y - target.offset.y,
-    }
-    target.view.receiveMouse(event)
-  }
-
-  #dragMouse(systemEvent: SystemMouseEvent, mouseDown: MouseDownEvent) {
-    if (systemEvent.name === 'mouse.button.up') {
-      this.#mouseDownEvent = undefined
-    }
-
-    const {target} = mouseDown
-    if (!target) {
-      return
-    }
-
-    const isInside = this.#getListener(systemEvent)?.view === target.view
-    if (systemEvent.name === 'mouse.button.up') {
-      if (isInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.up', target)
-      } else {
-        this.#sendMouse(systemEvent, 'mouse.button.cancel', target)
-      }
-    } else {
-      if (isInside && target.wasInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.drag', target)
-      } else if (isInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.enter', target)
-      } else if (target.wasInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.exit', target)
-      } else {
-        this.#sendMouse(systemEvent, 'mouse.button.dragOutside', target)
-      }
-
-      target.wasInside = isInside
-      this.#mouseDownEvent = {...mouseDown, target}
-    }
-  }
-
-  #pressMouse(systemEvent: SystemMouseEvent) {
-    const listener = this.#getListener(systemEvent)
-    if (listener) {
-      this.#sendMouse(systemEvent, 'mouse.button.down', listener)
-      this.#mouseDownEvent = {
-        target: {view: listener.view, offset: listener.offset, wasInside: true},
-        button: systemEvent.button,
-      }
-    }
-  }
-
-  #scrollMouse(systemEvent: SystemMouseEvent) {
-    const listener = this.#getListener(systemEvent)
-    if (listener) {
-      this.#sendMouse(systemEvent, systemEvent.name, listener)
-    }
-  }
-
-  #moveMouse(systemEvent: SystemMouseEvent) {
-    const listeners = this.#getListeners(systemEvent) ?? []
-    let prevListeners = this.#mouseMoveViews
-    let index = 0
-    for (const listener of listeners) {
-      let didEnter = true
-      prevListeners = prevListeners.filter(prev => {
-        if (prev.view === listener.view) {
-          didEnter = false
-          return false
-        }
-        return true
-      })
-
-      if (didEnter) {
-        this.#sendMouse(systemEvent, 'mouse.move.enter', listener)
-      }
-
-      if (index === 0) {
-        this.#sendMouse(systemEvent, 'mouse.move.in', listener)
-      } else {
-        this.#sendMouse(systemEvent, 'mouse.move.below', listener)
-      }
-
-      index += 1
-    }
-    this.#mouseMoveViews = listeners
-
-    for (const listener of prevListeners) {
-      this.#sendMouse(systemEvent, 'mouse.move.exit', listener)
-    }
+    this.#mouseManager.assignMouse(view, offset, point, eventNames)
   }
 }
 
@@ -342,20 +208,5 @@ function translateMouseAction(
       return 'mouse.wheel.down'
     case 'wheelup':
       return 'mouse.wheel.up'
-  }
-}
-
-function checkEventNames(
-  systemEvent: SystemMouseEvent,
-): MouseEventListenerName[] {
-  switch (systemEvent.name) {
-    case 'mouse.move.in':
-      return ['mouse.move']
-    case 'mouse.button.down':
-    case 'mouse.button.up':
-      return [`mouse.button.${systemEvent.button}`, 'mouse.button.all']
-    case 'mouse.wheel.down':
-    case 'mouse.wheel.up':
-      return ['mouse.wheel']
   }
 }
