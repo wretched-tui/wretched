@@ -1,6 +1,6 @@
 import type {BlessedProgram} from './sys'
 import {program as blessedProgram} from './sys'
-import {Terminal, SGRTerminal} from './terminal'
+import {SGRTerminal} from './terminal'
 import {Viewport} from './Viewport'
 import {View} from './View'
 import {Rect, Point, Size} from './geometry'
@@ -75,6 +75,9 @@ export class Screen {
     program.on('mouse', function (data) {
       let action = data.action
       if (action === 'focus' || action === 'blur') {
+        return
+      }
+      if (data.button === 'unknown') {
         return
       }
 

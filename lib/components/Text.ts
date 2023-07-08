@@ -2,7 +2,7 @@ import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
-import {Style, fromSGR, toSGR} from '../ansi'
+import {Style, fromSGR, colorToSGR} from '../ansi'
 import {Point, Size} from '../geometry'
 
 type Alignment = 'left' | 'right' | 'center'

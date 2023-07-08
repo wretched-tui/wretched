@@ -30,7 +30,7 @@ export class Box extends Container {
     const maxY = viewport.contentSize.height - 1
     const borderStyle =
       this.border === 'cool'
-        ? new Style({foreground: [98, 196, 255], background: [34, 24, 37]})
+        ? new Style({foreground: [98, 196, 255], background: [34, 34, 37]})
         : new Style({foreground: 'white', background: 'black'})
     const innerStyle = this.border === 'cool' ? borderStyle.invert() : undefined
 
@@ -65,7 +65,7 @@ type Chars =
   | [string, string, string, string, string, string]
   | [string, string, string, string, string, string, string, string]
 const BORDERS: Record<Border, Chars> = {
-  cool: ['▄', '▐', '▗', '▖', '▝', '▘', '▀', '▌'],
+  cool: ['▄', ' ', '▗', '▖', '▝', '▘', '▀', ' '],
   single: ['─', '│', '┌', '┐', '└', '┘'],
   bold: ['━', '┃', '┏', '┓', '┗', '┛'],
   double: ['═', '║', '╔', '╗', '╚', '╝'],

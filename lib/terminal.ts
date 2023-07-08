@@ -7,9 +7,9 @@ export interface Terminal {
   writeMeta(str: string): void
 }
 
-export type SGRTerminal = Omit<Terminal, 'writeChar'> & {
-  x: number
-  y: number
+export interface SGRTerminal {
+  cols: number
+  rows: number
   move(x: number, y: number): void
   write(str: string): void
 }

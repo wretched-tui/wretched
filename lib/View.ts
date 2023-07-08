@@ -1,19 +1,15 @@
+import type {BlessedProgram} from './sys'
 import {Size} from './geometry'
 import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
 import type {MouseEvent} from './events'
 
 export abstract class View {
-  #screen: Screen | null
+  parent: View | null = null
+  #screen: Screen | null = null
+
   get screen(): Screen | null {
     return this.#screen
-  }
-
-  parent: View | null
-
-  constructor() {
-    this.parent = null
-    this.#screen = null
   }
 
   abstract intrinsicSize(size: Size): Size
@@ -38,6 +34,5 @@ export abstract class View {
       }
     }
   }
-
   didMoveToScreen(screen: Screen | null) {}
 }

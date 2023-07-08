@@ -27,7 +27,7 @@ export type MouseAction =
   | 'wheelup'
   | 'focus'
   | 'blur'
-export type MouseButton = 'left' | 'middle' | 'right'
+export type MouseButton = 'left' | 'middle' | 'right' | 'unknown'
 
 export interface MouseEvent {
   name: 'mouse'
@@ -581,12 +581,13 @@ export const colors: {
   match(text: `#${string}`): number
   match(r: number, g: number, b: number): number
   match(rgb: [r: number, g: number, b: number]): number
-  RGBToHex(r: number, g: number, b: number): string
-  RGBToHex(rgb: [r: number, g: number, b: number]): string
-  hexToRGB(text: string): number
+  RGBToHex(r: number, g: number, b: number): `#${string}`
+  RGBToHex(rgb: [r: number, g: number, b: number]): `#${string}`
+  hexToRGB(text: string): [number, number, number]
+  nameToIndex(name: string): number
+  indexToRGB(index: number): [number, number, number]
+  indexToHex(index: number): `#{string}`
   reduce(input: number, total: number): number
-  indexToRGB(input: number): [number, number, number]
-  indexToHexString(input: number): `#{string}`
 }
 
 export const unicode: {
