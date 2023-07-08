@@ -558,6 +558,7 @@ export class BlessedProgram extends EventEmitter {
   on(event: 'keypress', fn: (char: string, key: KeyEvent) => void): this
   on(event: 'focus', fn: () => void): this
   on(event: 'blur', fn: () => void): this
+  on(event: string, fn: (...args: any[]) => void): this
 
   key(
     key: string | string[],

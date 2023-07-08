@@ -1,3 +1,5 @@
+import {EventEmitter} from 'events'
+
 import type {BlessedProgram} from './sys'
 import {program as blessedProgram} from './sys'
 import {SGRTerminal} from './terminal'
@@ -61,6 +63,7 @@ export class Screen {
       if (key.name === 'c' && key.ctrl) {
         clearInterval(refresh)
 
+        screen.exit(program)
         program.clear()
         program.disableMouse()
         program.showCursor()
@@ -89,17 +92,37 @@ export class Screen {
       screen.render()
     })
 
+    screen.start(program)
     screen.render()
 
     return [screen, program]
   }
-  coords: [number, number, string][] = []
+
+  static #emitter = new EventEmitter()
+  static on(
+    event: 'start' | 'exit',
+    listener: (program: BlessedProgram) => void,
+  ) {
+    Screen.#emitter.on(event, listener)
+  }
+
+  static emit(event: 'start' | 'exit', program: BlessedProgram) {
+    Screen.#emitter.emit(event, program)
+  }
 
   constructor(terminal: SGRTerminal, view: View) {
     this.terminal = terminal
     this.buffer = new Buffer()
     this.view = view
-    view.moveToScreen(this)
+  }
+
+  start(program: BlessedProgram) {
+    this.view.moveToScreen(this)
+    Screen.#emitter.emit('start', program)
+  }
+
+  exit(program: BlessedProgram) {
+    Screen.#emitter.emit('exit', program)
   }
 
   trigger(event: SystemEvent) {
