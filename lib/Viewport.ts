@@ -16,6 +16,8 @@ export class Viewport {
   readonly visibleRect: Rect
   readonly offset: Point
   readonly terminal: Terminal
+  focus: View | undefined
+  #focusRing: View[]
   #mouseListeners: Map<string, MouseEventListener>
   #pen: Style[] = []
   get pen() {
@@ -31,9 +33,11 @@ export class Viewport {
     if (terminal instanceof Viewport) {
       this.terminal = terminal.terminal
       this.#mouseListeners = terminal.#mouseListeners
+      this.#focusRing = terminal.#focusRing
     } else {
       this.terminal = terminal
       this.#mouseListeners = new Map()
+      this.#focusRing = []
     }
 
     this.contentSize = contentSize
@@ -75,6 +79,35 @@ export class Viewport {
   #popPen(): this {
     this.#pen.shift()
     return this
+  }
+
+  hasFocus(view: View) {
+    if (this.focus) {
+      return this.focus === view
+    }
+    return this.#focusRing[0] === view
+  }
+
+  addFocus(view: View) {
+    this.#focusRing.push(view)
+  }
+
+  nextFocus(): View | undefined {
+    if (this.focus && this.#focusRing[0] !== this.focus) {
+      const index = this.#focusRing.indexOf(this.focus)
+      if (~index) {
+        const pre = this.#focusRing.slice(0, index)
+        this.#focusRing = this.#focusRing.slice(index).concat(pre)
+      }
+    }
+
+    const first = this.#focusRing.shift()
+    if (first) {
+      this.#focusRing.push(first)
+      this.focus = this.#focusRing[0]
+    }
+
+    return this.focus
   }
 
   assignMouse(view: View, ...eventNames: MouseEventListenerName[]) {

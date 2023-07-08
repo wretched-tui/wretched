@@ -9,6 +9,7 @@ import {Rect, Point, Size} from './geometry'
 import {flushLogs, stopLogEmitter} from './log'
 import {Buffer} from './Buffer'
 import type {
+  KeyEvent,
   MouseButton,
   MouseDownEvent,
   MouseEventListener,
@@ -144,15 +145,22 @@ export class Screen {
       case 'blur':
         break
       case 'key':
-        console.log('=========== Screen.ts at line 147 ===========')
-        console.log({'event.type': event})
+        this.triggerKeyboard(event)
         break
       case 'mouse':
         this.triggerMouse(event)
-        this.render()
+    }
+    this.render()
+  }
+
+  triggerKeyboard(event: KeyEvent) {
+    if (event.name === 'tab') {
+      this.#prevFocus = this.#viewport?.nextFocus()
+    } else {
     }
   }
 
+  #prevFocus: View | undefined
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
@@ -160,7 +168,9 @@ export class Screen {
     const size = this.view.intrinsicSize(screenSize)
 
     const viewport = new Viewport(this.buffer, size, new Rect(Point.zero, size))
+    viewport.focus = this.#prevFocus
     this.view.render(viewport)
+    this.#prevFocus = viewport.focus
     this.buffer.flush(this.program)
 
     this.#viewport = viewport

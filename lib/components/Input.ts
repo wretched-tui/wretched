@@ -33,6 +33,10 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
+    viewport.assignMouse(this, 'mouse.button.left')
+    viewport.addFocus(this)
+    const hasFocus = viewport.hasFocus(this)
+
     const line = this.text
     if (!line.length) {
       return
