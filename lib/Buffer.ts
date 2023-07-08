@@ -16,6 +16,7 @@ export class Buffer implements Terminal {
   get rows() {
     return this.size.height
   }
+  #meta: string = ''
   #canvas: Map<number, Map<number, Char>> = new Map()
   #prev: Map<number, Map<number, Char>> = new Map()
 
@@ -84,7 +85,18 @@ export class Buffer implements Terminal {
     }
   }
 
+  /**
+   * For ANSI sequences that aren't related to any specific character.
+   */
+  writeMeta(str: string) {
+    this.#meta += str
+  }
+
   flush(terminal: SGRTerminal) {
+    if (this.#meta) {
+      terminal.write(this.#meta)
+    }
+
     let prevStyle = Style.NONE
     for (let y = 0; y < this.size.height; y++) {
       const line = this.#canvas.get(y) ?? new Map<number, Char>()

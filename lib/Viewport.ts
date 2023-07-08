@@ -122,6 +122,13 @@ export class Viewport {
     }
   }
 
+  /**
+   * Forwards 'meta' ANSI sequences (see ITerm) to the terminal
+   */
+  writeMeta(str: string) {
+    this.terminal.writeMeta(str)
+  }
+
   clipped(clip: Rect): Viewport {
     const offsetX = this.offset.x + clip.origin.x
     const offsetY = this.offset.y + clip.origin.y

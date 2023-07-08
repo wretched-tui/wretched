@@ -4,6 +4,7 @@ export interface Terminal {
   cols: number
   rows: number
   writeChar(char: string, x: number, y: number, style: Style): void
+  writeMeta(str: string): void
 }
 
 export type SGRTerminal = Omit<Terminal, 'writeChar'> & {
