@@ -6,7 +6,7 @@ import {SGRTerminal} from './terminal'
 import {Viewport} from './Viewport'
 import {View} from './View'
 import {Rect, Point, Size} from './geometry'
-import {flushLogs, stopLogEmitter} from './log'
+import {flushLogs} from './log'
 import {Buffer} from './Buffer'
 import type {
   KeyEvent,
@@ -41,7 +41,13 @@ export class Screen {
     program.setMouse({sendFocus: true}, true)
 
     const view = viewConstructor()
-    const screen = new Screen(program, view)
+    const screen = new Screen(program, view, () => {
+      program.clear()
+      program.disableMouse()
+      program.showCursor()
+      program.normalBuffer()
+      flushLogs()
+    })
 
     program.on('focus' as any, function () {
       screen.trigger({type: 'focus'})
@@ -57,13 +63,7 @@ export class Screen {
 
     program.on('keypress', (char, key) => {
       if (key.name === 'c' && key.ctrl) {
-        stopLogEmitter()
-        screen.exit(program)
-        program.clear()
-        program.disableMouse()
-        program.showCursor()
-        program.normalBuffer()
-        flushLogs()
+        screen._exit(program)
         process.exit(0)
       } else {
         screen.trigger({type: 'key', ...key})
@@ -86,52 +86,32 @@ export class Screen {
       })
     })
 
-    screen.start(program)
+    screen._start(program)
 
     return [screen, program]
   }
 
-  static #emitter = new EventEmitter()
+  #onExit: () => void
 
-  static on<T extends 'start' | 'exit'>(
-    event: T,
-    listener: (program: BlessedProgram) => void,
-  ): Listener<T> {
-    Screen.#emitter.on(event, listener)
-    return listener as unknown as Listener<T>
-  }
-
-  static off<T extends 'start' | 'exit'>(event: T, listener: Listener<T>) {
-    Screen.#emitter.off(event, listener as any)
-  }
-
-  static emit(event: 'start' | 'exit', program: BlessedProgram) {
-    Screen.#emitter.emit(event, program)
-  }
-
-  constructor(program: SGRTerminal, view: View) {
+  constructor(program: SGRTerminal, view: View, onExit: () => void) {
     this.program = program
     this.buffer = new Buffer()
     this.view = view
+    this.#onExit = onExit
   }
 
-  #refresh?: ReturnType<typeof setInterval>
-  start(program: BlessedProgram) {
-    // this.#refresh = setInterval(() => {
-    //   this.render()
-    // }, 16)
+  _start(program: BlessedProgram) {
     this.view.moveToScreen(this)
-    Screen.#emitter.emit('start', program)
     this.render()
   }
 
-  exit(program: BlessedProgram) {
-    if (this.#refresh) {
-      clearInterval(this.#refresh)
-    }
-
+  _exit(program: BlessedProgram) {
     this.view.moveToScreen(null)
-    Screen.#emitter.emit('exit', program)
+    this.#onExit()
+  }
+
+  exit() {
+    this.#onExit()
   }
 
   trigger(event: SystemEvent) {
@@ -184,6 +164,11 @@ export class Screen {
     )
 
     this.view.render(viewport)
+
+    if (this.#focusManager.needsRerender()) {
+      this.view.render(viewport)
+    }
+
     this.buffer.flush(this.program)
   }
 

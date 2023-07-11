@@ -115,7 +115,7 @@ export class Viewport {
     let x = to.x
     const pen = this.#pen[0] ?? Style.NONE
     let style = pen
-    for (const char of unicode.toChars(input)) {
+    for (const char of unicode.toPrintableChars(input)) {
       if (char === '\n') {
         break
       }

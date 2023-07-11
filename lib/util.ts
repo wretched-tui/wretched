@@ -1,17 +1,6 @@
 import {unicode} from './sys'
 import {Size} from './geometry'
 
-export function strSize(str: string | string[]): Size {
-  if (Array.isArray(str)) {
-    return new Size(Math.max(...str.map(unicode.lineWidth)), str.length)
-  } else {
-    if (str.includes('\n')) {
-      return strSize(str.split('\n'))
-    }
-    return new Size(unicode.lineWidth(str), 1)
-  }
-}
-
 export function leftPad(str: string, length: number): string {
   const lines = str.split('\n')
   if (lines.length > 1) {

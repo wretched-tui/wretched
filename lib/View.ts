@@ -8,6 +8,12 @@ export abstract class View {
   parent: View | null = null
   #screen: Screen | null = null
 
+  constructor() {
+    Object.defineProperty(this, 'parent', {
+      enumerable: false,
+    })
+  }
+
   get screen(): Screen | null {
     return this.#screen
   }

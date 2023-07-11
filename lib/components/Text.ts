@@ -2,7 +2,7 @@ import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
-import {Style, fromSGR, colorToSGR} from '../ansi'
+import {fromSGR} from '../ansi'
 import {Point, Size} from '../geometry'
 
 type Alignment = 'left' | 'right' | 'center'
@@ -72,7 +72,7 @@ export class Text extends View {
             ? ~~((viewport.contentSize.width - width) / 2)
             : viewport.contentSize.width - width
         point.x = offsetX
-        for (const char of unicode.toChars(line)) {
+        for (const char of unicode.toPrintableChars(line)) {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing

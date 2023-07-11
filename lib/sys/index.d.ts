@@ -42,7 +42,7 @@ export interface MouseEvent {
 }
 
 export interface KeyEvent {
-  sequence: string
+  char: string
   name: string
   ctrl: boolean
   meta: boolean
@@ -592,7 +592,37 @@ export const colors: {
 }
 
 export const unicode: {
+  /**
+   * Removes ANSI color/style sequences (/\x1b[[\d;]+m/)
+   */
+  removeAnsi(input: string): string
+  /**
+   * Returns the number of *cells* that the first character of the string takes up.
+   *
+   * "Cell" refers to a terminal space: ASCII characters take 1 cell, Emoji and Asian
+   * characters take 2 cells. ANSI codes (\x1b[...) return 0.
+   */
+  charWidth(text: string, atIndex?: number): 0 | 1 | 2
+  /**
+   * Returns the number of *cells* that the first line of the string takes up.
+   */
   lineWidth(text: string): number
-  charWidth(text: string): 0 | 1 | 2
-  toChars(text: string): string[]
+  /**
+   * Return the width and height of the entire string. Width is the maximum length of
+   * all the lines, and height is the number of lines, including
+   */
+  stringSize(text: string | string[]): {width: number; height: number}
+  /**
+   * Breaks the string up into graphemes: single ASCII characters, Emoji characters,
+   * and ANSI sequences.
+   */
+  toPrintableChars(text: string): string[]
+  /**
+   * Returns the grapheme at a specific index (inefficient algorithm, btw)
+   */
+  charAt(text: string, at: number): string
+  /**
+   * Returns number of graphemes (inefficient algorithm, btw)
+   */
+  charCount(text: string): number
 }

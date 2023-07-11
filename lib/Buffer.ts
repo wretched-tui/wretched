@@ -4,7 +4,6 @@ import type {Terminal, SGRTerminal} from './terminal'
 import type {Color} from './ansi'
 import {Style, fromSGR} from './ansi'
 import {Size} from './geometry'
-import {toChars} from './sys/unicode'
 
 type Char = {char: string; width: 1 | 2; style: Style; hiding?: Char}
 
@@ -35,8 +34,7 @@ export class Buffer implements Terminal {
    * Writes the string at the cursor from left to write. Exits on newline (no default
    * wrapping behavior).
    */
-  writeChar(str: string, x: number, y: number, style: Style) {
-    const [char] = str
+  writeChar(char: string, x: number, y: number, style: Style) {
     if (char === '\n') {
       return
     }

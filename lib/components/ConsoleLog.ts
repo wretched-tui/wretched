@@ -1,7 +1,7 @@
 import {unicode} from '../sys'
 
 import type {Method} from '../log'
-import {subscribe, unsubscribe} from '../log'
+import {fetchLogs} from '../log'
 import {centerPad} from '../util'
 import {inspect} from '../inspect'
 import {styled} from '../ansi'
@@ -13,14 +13,6 @@ import {Text} from './Text'
 export class ConsoleLog extends Flow {
   constructor() {
     super({direction: 'topToBottom', children: []})
-  }
-
-  didMount() {
-    subscribe(this.appendLog.bind(this))
-  }
-
-  didUnmount() {
-    unsubscribe(this.appendLog.bind(this))
   }
 
   appendLog(method: Method, args: any[]) {
@@ -42,6 +34,7 @@ export class ConsoleLog extends Flow {
   }
 
   render(viewport: Viewport) {
+    fetchLogs().forEach(([method, args]) => this.appendLog(method, args))
     viewport.assignMouse(this, 'mouse.wheel')
     super.render(viewport)
   }

@@ -1,21 +1,13 @@
-export type {MouseButton} from './sys'
-import {View} from './View'
-import {Point} from './geometry'
-import type {
-  MouseButton,
-  MouseEvent as WretchedMouseEvent,
-  KeyEvent as WretchedKeyEvent,
-} from './sys'
+import type {MouseButton} from '../sys'
+import {View} from '../View'
+import {Point} from '../geometry'
 
-export namespace Screen {
-  export type MouseEvent = Omit<WretchedMouseEvent, 'action' | 'name'> & {
-    type: 'mouse'
-    action: 'mousemove' | 'mousedown' | 'mouseup' | 'wheeldown' | 'wheelup'
-  }
-}
-export type KeyEvent = WretchedKeyEvent & {type: 'key'}
-export type FocusEvent = {type: 'focus' | 'blur'}
-export type ResizeEvent = {type: 'resize'}
+// export namespace Screen {
+//   export type MouseEvent = Omit<WretchedMouseEvent, 'action' | 'name'> & {
+//     type: 'mouse'
+//     action: 'mousemove' | 'mousedown' | 'mouseup' | 'wheeldown' | 'wheelup'
+//   }
+// }
 
 export type MouseMove = 'enter' | 'in' | 'below' | 'exit'
 export type MouseClick =
@@ -54,12 +46,9 @@ export type MouseEvent = {
   button: MouseButton
 }
 
-export type Event = MouseEvent | KeyEvent | FocusEvent
-
 export type SystemMouseEvent = Omit<MouseEvent, 'name'> & {
   name: SystemMouseEventName
 }
-export type SystemEvent = SystemMouseEvent | KeyEvent | FocusEvent | ResizeEvent
 export type MouseDownEvent = {
   target?: MouseEventTarget & {wasInside: boolean}
   button: MouseButton

@@ -30,6 +30,15 @@ export class FocusManager {
     this.#currentFocus ??= view
   }
 
+  needsRerender() {
+    if (this.#currentFocus && !this.#focusRing.includes(this.#currentFocus)) {
+      this.#currentFocus = this.#focusRing[0]
+      return true
+    } else {
+      return false
+    }
+  }
+
   nextFocus(): View | undefined {
     if (this.#currentFocus && this.#focusRing[0] !== this.#currentFocus) {
       const index = this.#focusRing.indexOf(this.#currentFocus)
