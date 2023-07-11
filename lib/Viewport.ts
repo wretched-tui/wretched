@@ -5,7 +5,7 @@ import {Style, RESET, fromSGR} from './ansi'
 import {Rect, Point, Size} from './geometry'
 import {Screen} from './Screen'
 import {View} from './View'
-import type {MouseEventListenerName, MouseEventListener} from './events'
+import type {MouseEventListenerName} from './events'
 
 /**
  * Defines a region (size) in which to draw, and a subset (visibleRect) that is
@@ -115,7 +115,7 @@ export class Viewport {
     let x = to.x
     const pen = this.#pen[0] ?? Style.NONE
     let style = pen
-    for (const char of unicode.toPrintableChars(input)) {
+    for (const char of unicode.printableChars(input)) {
       if (char === '\n') {
         break
       }

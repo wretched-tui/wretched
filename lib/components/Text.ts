@@ -72,7 +72,7 @@ export class Text extends View {
             ? ~~((viewport.contentSize.width - width) / 2)
             : viewport.contentSize.width - width
         point.x = offsetX
-        for (const char of unicode.toPrintableChars(line)) {
+        for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing

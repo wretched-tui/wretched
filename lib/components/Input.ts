@@ -46,7 +46,7 @@ export class Input extends View {
   constructor({text}: Props) {
     super()
     text = unicode.removeAnsi(text)
-    this.#chars = unicode.toPrintableChars(text)
+    this.#chars = unicode.printableChars(text)
     this.#width = unicode.lineWidth(text)
     this.#offset = 0
     this.#cursor = {start: this.#chars.length, end: this.#chars.length}
@@ -67,6 +67,8 @@ export class Input extends View {
       this.#receiveKeyBackspace()
     } else if (event.name === 'delete') {
       this.#receiveKeyDelete()
+    } else if (event.full === 'C-w') {
+      this.#receiveKeyDeleteWord()
     } else if (isKeyPrintable(event)) {
       this.#receiveKeyPrintable(event)
     }
@@ -81,11 +83,6 @@ export class Input extends View {
     viewport.addFocus(this)
     const hasFocus = viewport.hasFocus(this)
 
-    const line = this.#chars
-    if (!line.length) {
-      return
-    }
-
     const point = new Point(0, 0).mutableCopy()
     let offset = 0,
       index = -1
@@ -93,7 +90,7 @@ export class Input extends View {
       maxVisibleX = viewport.visibleRect.maxX()
     const minSelected = this.minSelected(),
       maxSelected = this.maxSelected()
-    const chars = line.concat(' ')
+    const chars = this.#chars.concat(' ')
     viewport.usingPen(() => {
       for (const char of chars) {
         const width = unicode.charWidth(char)
@@ -147,9 +144,7 @@ export class Input extends View {
         .slice(0, this.minSelected())
         .concat(char, this.#chars.slice(this.maxSelected()))
       this.#cursor.start = this.#cursor.end = this.minSelected() + 1
-      this.#width = this.#chars
-        .map(unicode.charWidth)
-        .reduce((a, b) => a + b, 0 as number)
+      this.#updateWidth()
     }
   }
 
@@ -207,6 +202,20 @@ export class Input extends View {
     }
   }
 
+  #updateWidth() {
+    this.#width = this.#chars
+      .map(unicode.charWidth)
+      .reduce((a, b) => a + b, 0 as number)
+  }
+
+  #deleteSelection() {
+    this.#chars = this.#chars
+      .slice(0, this.minSelected())
+      .concat(this.#chars.slice(this.maxSelected()))
+    this.#cursor.start = this.#cursor.end = this.minSelected()
+    this.#updateWidth()
+  }
+
   #receiveKeyBackspace() {
     if (isEmptySelection(this.#cursor)) {
       if (this.#cursor.start === 0) {
@@ -218,13 +227,7 @@ export class Input extends View {
         .concat(this.#chars.slice(this.#cursor.start))
       this.#cursor.start = this.#cursor.end = this.#cursor.start - 1
     } else {
-      this.#chars = this.#chars
-        .slice(0, this.minSelected())
-        .concat(this.#chars.slice(this.maxSelected()))
-      this.#cursor.start = this.#cursor.end = this.minSelected()
-      this.#width = this.#chars
-        .map(unicode.charWidth)
-        .reduce((a, b) => a + b, 0 as number)
+      this.#deleteSelection()
     }
   }
 
@@ -238,13 +241,28 @@ export class Input extends View {
         .slice(0, this.#cursor.start)
         .concat(this.#chars.slice(this.#cursor.start + 1))
     } else {
-      this.#chars = this.#chars
-        .slice(0, this.minSelected())
-        .concat(this.#chars.slice(this.maxSelected()))
-      this.#cursor.start = this.#cursor.end = this.minSelected()
-      this.#width = this.#chars
-        .map(unicode.charWidth)
-        .reduce((a, b) => a + b, 0 as number)
+      this.#deleteSelection()
+    }
+  }
+
+  #receiveKeyDeleteWord() {
+    if (!isEmptySelection(this.#cursor)) {
+      return this.#deleteSelection()
+    }
+
+    if (this.#cursor.start === 0) {
+      return
+    }
+
+    for (const [chars, offset] of unicode.words(this.#chars)) {
+      if (this.#cursor.start <= offset + chars.length) {
+        this.#chars = this.#chars
+          .slice(0, offset)
+          .concat(this.#chars.slice(this.#cursor.start))
+        this.#cursor.start = this.#cursor.end = offset
+        this.#updateWidth()
+        return
+      }
     }
   }
 }

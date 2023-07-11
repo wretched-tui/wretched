@@ -43,5 +43,8 @@ export function isKeyPrintable(event: KeyEvent) {
     case 'f12':
       return false
   }
+  if (event.char.length === 0) {
+    return false
+  }
   return true
 }

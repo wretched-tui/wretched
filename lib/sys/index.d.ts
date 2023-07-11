@@ -616,7 +616,7 @@ export const unicode: {
    * Breaks the string up into graphemes: single ASCII characters, Emoji characters,
    * and ANSI sequences.
    */
-  toPrintableChars(text: string): string[]
+  printableChars(text: string): string[]
   /**
    * Returns the grapheme at a specific index (inefficient algorithm, btw)
    */
@@ -625,4 +625,9 @@ export const unicode: {
    * Returns number of graphemes (inefficient algorithm, btw)
    */
   charCount(text: string): number
+  /**
+   * @param input String or array of graphemes
+   * @returns [graphemes, offset][] Array of tuples. Each tuple is an array of graphemes and the offset
+   */
+  words(input: string | string[]): [string[], number][]
 }
