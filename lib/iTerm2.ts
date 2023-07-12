@@ -10,18 +10,21 @@ let _restoreBg: string | undefined
  * Sets iTerm2 proprietary ANSI codes
  */
 export class iTerm2 {
-  static setBackground(program: BlessedProgram, bg: Color) {
-    const hex = colorToHex(bg).slice(1)
+  static async setBackground(program: BlessedProgram, bg: Color) {
+    return new Promise(resolve => {
+      const hex = colorToHex(bg).slice(1)
 
-    program.once('data', (input: any) => {
-      const decoder = new StringDecoder('utf8')
-      const response = decoder.write(input)
-      _restoreBg = parseBackgroundResponse(response)
+      program.once('data', (input: any) => {
+        const decoder = new StringDecoder('utf8')
+        const response = decoder.write(input)
+        _restoreBg = parseBackgroundResponse(response)
 
-      program.write(setBackgroundCommand(hex))
+        program.write(setBackgroundCommand(hex))
+        resolve(void 0)
+      })
+
+      program.write(getBackgroundColorCommand())
     })
-
-    program.write(getBackgroundColorCommand())
   }
 
   static restoreBg(program: BlessedProgram) {

@@ -31,7 +31,9 @@ export class Screen {
   #mouseManager = new MouseManager()
   #tickManager = new TickManager(() => this.render())
 
-  static start(viewConstructor: () => View): [Screen, BlessedProgram] {
+  static async start(
+    viewConstructor: View | ((program: BlessedProgram) => View | Promise<View>),
+  ): Promise<[Screen, BlessedProgram]> {
     const program = blessedProgram({
       useBuffer: true,
     })
@@ -42,14 +44,21 @@ export class Screen {
     program.clear()
     program.setMouse({sendFocus: true}, true)
 
-    const view = viewConstructor()
-    const screen = new Screen(program, view)
+    const fn = function () {}
+    program.on('keypress', fn)
 
-    program.on('focus' as any, function () {
+    const view =
+      viewConstructor instanceof View
+        ? viewConstructor
+        : await viewConstructor(program)
+    const screen = new Screen(program, view)
+    program.off('keypress', fn)
+
+    program.on('focus', function () {
       screen.trigger({type: 'focus'})
     })
 
-    program.on('blur' as any, function () {
+    program.on('blur', function () {
       screen.trigger({type: 'blur'})
     })
 
