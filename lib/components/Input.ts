@@ -29,6 +29,7 @@ export class Input extends View {
 
   // Printable width
   #width: number
+  #visibleWidth: number = 0
   // Text drawing starts at this offset (if it can't fit on screen)
   #offset: number
   #cursor: Cursor
@@ -53,11 +54,18 @@ export class Input extends View {
   }
 
   receiveKey(event: KeyEvent) {
-    if (event.name === 'enter') {
+    const prevChars = this.#chars
+    this.#showCursor = true
+    this.#dt = 0
+
+    if (event.name === 'enter' || event.name === 'return') {
       this.onSubmit?.(this.#chars.join(''))
-    } else if (event.name === 'up') {
+      return
+    }
+
+    if (event.name === 'up' || event.name === 'home') {
       this.#receiveKeyUp(event)
-    } else if (event.name === 'down') {
+    } else if (event.name === 'down' || event.name === 'end') {
       this.#receiveKeyDown(event)
     } else if (event.name === 'left') {
       this.#receiveKeyLeft(event)
@@ -72,6 +80,10 @@ export class Input extends View {
     } else if (isKeyPrintable(event)) {
       this.#receiveKeyPrintable(event)
     }
+
+    if (prevChars !== this.#chars) {
+      this.onChange?.(this.#chars.join(''))
+    }
   }
 
   intrinsicSize(): Size {
@@ -79,9 +91,15 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
-    viewport.assignMouse(this, 'mouse.button.left')
-    viewport.addFocus(this)
+    viewport.registerMouse(this, 'mouse.button.left')
+    viewport.registerFocus(this)
     const hasFocus = viewport.hasFocus(this)
+    this.#visibleWidth = viewport.contentSize.width
+    if (this.#cursor.end < this.#offset) {
+      this.#offset = this.#cursor.end
+    } else if (this.#cursor.end >= this.#offset + this.#visibleWidth) {
+      this.#offset = this.#cursor.end - this.#visibleWidth - 1
+    }
 
     const point = new Point(0, 0).mutableCopy()
     let offset = 0,
@@ -150,10 +168,7 @@ export class Input extends View {
 
   #receiveKeyUp({shift}: KeyEvent) {
     if (shift) {
-      this.#cursor = {
-        start: this.#cursor.start,
-        end: 0,
-      }
+      this.#cursor.end = 0
     } else {
       this.#cursor = {start: 0, end: 0}
     }
@@ -161,21 +176,64 @@ export class Input extends View {
 
   #receiveKeyDown({shift}: KeyEvent) {
     if (shift) {
-      this.#cursor = {
-        start: this.#cursor.start,
-        end: this.#chars.length,
-      }
+      this.#cursor.end = this.#chars.length
     } else {
       this.#cursor = {start: this.#chars.length, end: this.#chars.length}
     }
   }
 
-  #receiveKeyLeft({shift}: KeyEvent) {
+  #prevWordOffset(shift: boolean): number {
+    let cursor: number
     if (shift) {
-      this.#cursor = {
-        start: this.#cursor.start,
-        end: Math.max(0, this.#cursor.end - 1),
+      cursor = this.#cursor.end
+    } else if (isEmptySelection(this.#cursor)) {
+      cursor = this.#cursor.start
+    } else {
+      cursor = this.minSelected()
+    }
+
+    let prevWordOffset: number = 0
+    for (const [chars, offset] of unicode.words(this.#chars)) {
+      prevWordOffset = offset
+      if (cursor <= offset + chars.length) {
+        break
       }
+    }
+
+    return prevWordOffset
+  }
+
+  #nextWordOffset(shift: boolean): number {
+    let cursor: number
+    if (shift) {
+      cursor = this.#cursor.end
+    } else if (isEmptySelection(this.#cursor)) {
+      cursor = this.#cursor.start
+    } else {
+      cursor = this.maxSelected()
+    }
+
+    let nextWordOffset: number = 0
+    for (const [chars, offset] of unicode.words(this.#chars)) {
+      nextWordOffset = offset + chars.length
+      if (cursor < offset + chars.length) {
+        break
+      }
+    }
+
+    return nextWordOffset
+  }
+
+  #receiveKeyLeft({shift, meta}: KeyEvent) {
+    if (meta) {
+      const prevWordOffset = this.#prevWordOffset(shift)
+      if (shift) {
+        this.#cursor.end = prevWordOffset
+      } else {
+        this.#cursor.start = this.#cursor.end = prevWordOffset
+      }
+    } else if (shift) {
+      this.#cursor.end = Math.max(0, this.#cursor.end - 1)
     } else if (isEmptySelection(this.#cursor)) {
       this.#cursor.start = this.#cursor.end = Math.max(
         0,
@@ -186,12 +244,16 @@ export class Input extends View {
     }
   }
 
-  #receiveKeyRight({shift}: KeyEvent) {
-    if (shift) {
-      this.#cursor = {
-        start: this.#cursor.start,
-        end: Math.min(this.#chars.length, this.#cursor.end + 1),
+  #receiveKeyRight({shift, meta}: KeyEvent) {
+    if (meta) {
+      const nextWordOffset = this.#nextWordOffset(shift)
+      if (shift) {
+        this.#cursor.end = nextWordOffset
+      } else {
+        this.#cursor.start = this.#cursor.end = nextWordOffset
       }
+    } else if (shift) {
+      this.#cursor.end = Math.min(this.#chars.length, this.#cursor.end + 1)
     } else if (isEmptySelection(this.#cursor)) {
       this.#cursor.start = this.#cursor.end = Math.min(
         this.#chars.length,
@@ -254,16 +316,12 @@ export class Input extends View {
       return
     }
 
-    for (const [chars, offset] of unicode.words(this.#chars)) {
-      if (this.#cursor.start <= offset + chars.length) {
-        this.#chars = this.#chars
-          .slice(0, offset)
-          .concat(this.#chars.slice(this.#cursor.start))
-        this.#cursor.start = this.#cursor.end = offset
-        this.#updateWidth()
-        return
-      }
-    }
+    const offset = this.#prevWordOffset(false)
+    this.#chars = this.#chars
+      .slice(0, offset)
+      .concat(this.#chars.slice(this.#cursor.start))
+    this.#cursor.start = this.#cursor.end = offset
+    this.#updateWidth()
   }
 }
 

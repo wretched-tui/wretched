@@ -23,7 +23,7 @@ export class MouseManager {
     this.#mouseListeners = new Map()
   }
 
-  assignMouse(
+  registerMouse(
     view: View,
     offset: Point,
     point: Point,

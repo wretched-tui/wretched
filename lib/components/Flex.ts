@@ -4,15 +4,15 @@ import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
-type FlexSize = 'intrinsic' | {flex: number} | 'flex' // implies {flex: 1}
+type FlexSize =
+  | 'intrinsic'
+  | {flex: number}
+  | 'flex' // implies {flex: 1}
+  | `flex${number}` // {flex: number} shorthand
 
 interface Props {
   children: ([FlexSize, View] | View)[]
   direction: Direction
-}
-
-function isVertical(direction: Direction) {
-  return direction === 'topToBottom' || direction === 'bottomToTop'
 }
 
 export class Flex extends Container {
@@ -43,30 +43,35 @@ export class Flex extends Container {
     let hasFlex = false
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'intrinsic'
+      const childSize = child.intrinsicSize(availableSize)
       if (flexSize === 'intrinsic') {
-        const childSize = child.intrinsicSize(availableSize)
-        switch (this.direction) {
-          case 'leftToRight':
-          case 'rightToLeft':
-            remainingSize = Math.max(0, remainingSize - childSize.width)
-            size.width += childSize.width
-            size.height = Math.max(size.height, childSize.height)
-            break
-          case 'topToBottom':
-          case 'bottomToTop':
-            remainingSize = Math.max(0, remainingSize - childSize.height)
-            size.width = Math.max(size.width, childSize.width)
-            size.height += childSize.height
-            break
+        if (isVertical(this.direction)) {
+          remainingSize = Math.max(0, remainingSize - childSize.height)
+          size.width = Math.max(size.width, childSize.width)
+          size.height += childSize.height
+        } else {
+          remainingSize = Math.max(0, remainingSize - childSize.width)
+          size.width += childSize.width
+          size.height = Math.max(size.height, childSize.height)
         }
       } else {
         hasFlex = true
-        break
+        if (isVertical(this.direction)) {
+          size.width = Math.max(size.width, childSize.width)
+          size.height = availableSize.height
+        } else {
+          size.width = availableSize.width
+          size.height = Math.max(size.height, childSize.height)
+        }
       }
     }
 
     if (hasFlex) {
-      return availableSize
+      if (isVertical(this.direction)) {
+        return new Size(size.width, availableSize.height)
+      } else {
+        return new Size(availableSize.width, size.height)
+      }
     }
 
     return size
@@ -96,7 +101,14 @@ export class Flex extends Container {
           remainingSize = Math.max(0, remainingSize - childSize.width)
         }
       } else {
-        const flex = flexSize === 'flex' ? 1 : flexSize.flex
+        let flex: number
+        if (flexSize === 'flex') {
+          flex = 1
+        } else if (typeof flexSize === 'string') {
+          flex = +flexSize.slice(4) // 'flexN'
+        } else {
+          flex = flexSize.flex
+        }
         flexTotal += flex
         flexViews.push([flexSize, flex, child])
         flexCount += 1
@@ -168,4 +180,8 @@ export class Flex extends Container {
       }
     }
   }
+}
+
+function isVertical(direction: Direction) {
+  return direction === 'topToBottom' || direction === 'bottomToTop'
 }

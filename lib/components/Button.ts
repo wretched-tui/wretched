@@ -84,7 +84,7 @@ export class Button extends Container {
   }
 
   render(viewport: Viewport) {
-    viewport.assignMouse(this, 'mouse.button.left', 'mouse.move')
+    viewport.registerMouse(this, 'mouse.button.left', 'mouse.move')
 
     const bg: Style = this.#pressed
       ? new Style({foreground: 'black', background: 'green'})

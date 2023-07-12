@@ -41,13 +41,7 @@ export class Screen {
     program.setMouse({sendFocus: true}, true)
 
     const view = viewConstructor()
-    const screen = new Screen(program, view, () => {
-      program.clear()
-      program.disableMouse()
-      program.showCursor()
-      program.normalBuffer()
-      flushLogs()
-    })
+    const screen = new Screen(program, view)
 
     program.on('focus' as any, function () {
       screen.trigger({type: 'focus'})
@@ -63,7 +57,12 @@ export class Screen {
 
     program.on('keypress', (char, key) => {
       if (key.name === 'c' && key.ctrl) {
-        screen._exit(program)
+        program.clear()
+        program.disableMouse()
+        program.showCursor()
+        program.normalBuffer()
+        screen.exit()
+        flushLogs()
         process.exit(0)
       } else {
         screen.trigger({type: 'key', ...key})
@@ -86,32 +85,24 @@ export class Screen {
       })
     })
 
-    screen._start(program)
+    screen.start()
 
     return [screen, program]
   }
 
-  #onExit: () => void
-
-  constructor(program: SGRTerminal, view: View, onExit: () => void) {
+  constructor(program: SGRTerminal, view: View) {
     this.program = program
     this.buffer = new Buffer()
     this.view = view
-    this.#onExit = onExit
   }
 
-  _start(program: BlessedProgram) {
+  start() {
     this.view.moveToScreen(this)
     this.render()
   }
 
-  _exit(program: BlessedProgram) {
-    this.view.moveToScreen(null)
-    this.#onExit()
-  }
-
   exit() {
-    this.#onExit()
+    this.view.moveToScreen(null)
   }
 
   trigger(event: SystemEvent) {
@@ -130,7 +121,12 @@ export class Screen {
     this.render()
   }
 
+  registerFocus(view: View) {
+    this.#focusManager.registerFocus(view)
+  }
+
   triggerKeyboard(event: KeyEvent) {
+    event = translateKeyEvent(event)
     this.#focusManager.trigger(event)
   }
 
@@ -138,15 +134,23 @@ export class Screen {
     return this.#focusManager.hasFocus(view)
   }
 
-  addFocus(view: View) {
-    this.#focusManager.addFocus(view)
-  }
-
   // nextFocus() {
   //   this.#focusManager.nextFocus()
   // }
 
-  #prevFocus: View | undefined
+  registerMouse(
+    view: View,
+    offset: Point,
+    point: Point,
+    eventNames: MouseEventListenerName[],
+  ) {
+    this.#mouseManager.registerMouse(view, offset, point, eventNames)
+  }
+
+  triggerMouse(systemEvent: SystemMouseEvent): void {
+    this.#mouseManager.trigger(systemEvent)
+  }
+
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
@@ -155,7 +159,6 @@ export class Screen {
     this.#focusManager.reset()
 
     const size = this.view.intrinsicSize(screenSize)
-
     const viewport = new Viewport(
       this,
       this.buffer,
@@ -169,20 +172,8 @@ export class Screen {
       this.view.render(viewport)
     }
 
+
     this.buffer.flush(this.program)
-  }
-
-  triggerMouse(systemEvent: SystemMouseEvent): void {
-    this.#mouseManager.trigger(systemEvent)
-  }
-
-  assignMouse(
-    view: View,
-    offset: Point,
-    point: Point,
-    eventNames: MouseEventListenerName[],
-  ) {
-    this.#mouseManager.assignMouse(view, offset, point, eventNames)
   }
 }
 
@@ -202,4 +193,34 @@ function translateMouseAction(
     case 'wheelup':
       return 'mouse.wheel.up'
   }
+}
+
+/**
+ * These are mostly due to my own terminal keybindings; would be better to have
+ * these configured in some .rc file.
+ */
+function translateKeyEvent(event: KeyEvent): KeyEvent {
+  if (event.full === 'M-b') {
+    return {
+      type: 'key',
+      full: 'M-left',
+      name: 'left',
+      ctrl: false,
+      meta: true,
+      shift: false,
+      char: '1;9D',
+    }
+  }
+  if (event.full === 'M-f') {
+    return {
+      type: 'key',
+      full: 'M-right',
+      name: 'right',
+      ctrl: false,
+      meta: true,
+      shift: false,
+      char: '1;9C',
+    }
+  }
+  return event
 }

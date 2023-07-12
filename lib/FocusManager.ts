@@ -25,7 +25,7 @@ export class FocusManager {
     return this.#focusRing[0] === view
   }
 
-  addFocus(view: View) {
+  registerFocus(view: View) {
     this.#focusRing.push(view)
     this.#currentFocus ??= view
   }

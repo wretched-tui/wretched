@@ -78,24 +78,29 @@ export class Viewport {
     return this
   }
 
-  hasFocus(view: View) {
-    return this.#screen.hasFocus(view)
+  registerFocus(view: View) {
+    return this.#screen.registerFocus(view)
   }
 
-  addFocus(view: View) {
-    return this.#screen.addFocus(view)
+  hasFocus(view: View) {
+    return this.#screen.hasFocus(view)
   }
 
   // nextFocus() {
   //   this.#screen.nextFocus()
   // }
 
-  assignMouse(view: View, ...eventNames: MouseEventListenerName[]) {
+  registerMouse(view: View, ...eventNames: MouseEventListenerName[]) {
     const maxX = this.visibleRect.maxX()
     const maxY = this.visibleRect.maxY()
     for (let y = this.visibleRect.minY(); y < maxY; ++y)
       for (let x = this.visibleRect.minX(); x < maxX; ++x) {
-        this.#screen.assignMouse(view, this.offset, new Point(x, y), eventNames)
+        this.#screen.registerMouse(
+          view,
+          this.offset,
+          new Point(x, y),
+          eventNames,
+        )
       }
   }
 
