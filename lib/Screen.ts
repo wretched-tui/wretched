@@ -18,6 +18,7 @@ import type {
 } from './events'
 import {FocusManager} from './FocusManager'
 import {MouseManager} from './MouseManager'
+import {TickManager} from './TickManager'
 import type {Opaque} from './opaque'
 
 type Listener<T extends 'start' | 'exit'> = Opaque<T>
@@ -28,6 +29,7 @@ export class Screen {
   view: View
   #focusManager = new FocusManager()
   #mouseManager = new MouseManager()
+  #tickManager = new TickManager(() => this.render())
 
   static start(viewConstructor: () => View): [Screen, BlessedProgram] {
     const program = blessedProgram({
@@ -102,6 +104,7 @@ export class Screen {
   }
 
   exit() {
+    this.#tickManager.stop()
     this.view.moveToScreen(null)
   }
 
@@ -120,6 +123,12 @@ export class Screen {
     }
     this.render()
   }
+
+  registerTick(view: View) {
+    this.#tickManager.registerTick(view)
+  }
+
+  triggerTick(dt: number) {}
 
   registerFocus(view: View) {
     this.#focusManager.registerFocus(view)
@@ -155,6 +164,7 @@ export class Screen {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.buffer.resize(screenSize)
 
+    this.#tickManager.reset()
     this.#mouseManager.reset()
     this.#focusManager.reset()
 
@@ -172,6 +182,7 @@ export class Screen {
       this.view.render(viewport)
     }
 
+    this.#tickManager.endRender()
 
     this.buffer.flush(this.program)
   }

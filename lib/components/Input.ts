@@ -53,6 +53,17 @@ export class Input extends View {
     this.#cursor = {start: this.#chars.length, end: this.#chars.length}
   }
 
+  #showCursor = true
+  #dt = 0
+  receiveTick(dt: number) {
+    this.#dt += dt
+    if (this.#dt > 500) {
+      this.#showCursor = !this.#showCursor
+      this.#dt = this.#dt % 500
+      return true
+    }
+  }
+
   receiveKey(event: KeyEvent) {
     const prevChars = this.#chars
     this.#showCursor = true
@@ -93,22 +104,25 @@ export class Input extends View {
   render(viewport: Viewport) {
     viewport.registerMouse(this, 'mouse.button.left')
     viewport.registerFocus(this)
+    viewport.registerTick(this)
     const hasFocus = viewport.hasFocus(this)
     this.#visibleWidth = viewport.contentSize.width
-    if (this.#cursor.end < this.#offset) {
+    if (this.#visibleWidth >= this.#width) {
+      this.#offset = 0
+    } else if (this.#cursor.end < this.#offset) {
       this.#offset = this.#cursor.end
     } else if (this.#cursor.end >= this.#offset + this.#visibleWidth) {
-      this.#offset = this.#cursor.end - this.#visibleWidth - 1
+      this.#offset = this.#cursor.end - this.#visibleWidth + 1
     }
 
     const point = new Point(0, 0).mutableCopy()
-    let offset = 0,
-      index = -1
+    let index = -1
     const minVisibleX = viewport.visibleRect.minX(),
       maxVisibleX = viewport.visibleRect.maxX()
     const minSelected = this.minSelected(),
       maxSelected = this.maxSelected()
     const chars = this.#chars.concat(' ')
+    let pen = Style.NONE
     viewport.usingPen(() => {
       for (const char of chars) {
         const width = unicode.charWidth(char)
@@ -118,24 +132,30 @@ export class Input extends View {
 
         index += 1
 
-        offset += 1
-        if (offset < this.#offset) {
-          break
+        if (index < this.#offset) {
+          continue
         }
 
         if (point.x >= minVisibleX && point.x + width - 1 < maxVisibleX) {
           if (hasFocus) {
             let style: Style
-            if (index === minSelected) {
+            if (
+              index >= minSelected &&
+              index < maxSelected &&
+              this.#showCursor
+            ) {
               if (isEmptySelection(this.#cursor)) {
                 style = new Style({underline: true})
               } else {
                 style = new Style({inverse: true})
               }
-              viewport.replacePen(style)
-            } else if (index === maxSelected) {
+            } else {
               style = Style.NONE
+            }
+
+            if (!pen.isEqual(style)) {
               viewport.replacePen(style)
+              pen = style
             }
           }
 

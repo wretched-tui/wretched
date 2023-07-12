@@ -104,6 +104,10 @@ export class Viewport {
       }
   }
 
+  registerTick(view: View) {
+    return this.#screen.registerTick(view)
+  }
+
   /**
    * Does not support newlines (no default wrapping behavior),
    * always prints left-to-right.

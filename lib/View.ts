@@ -28,6 +28,9 @@ export abstract class View {
 
   receiveKey(event: KeyEvent) {}
   receiveMouse(event: MouseEvent) {}
+  receiveTick(dt: number): boolean | undefined {
+    return
+  }
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {
