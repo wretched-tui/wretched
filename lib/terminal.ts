@@ -1,5 +1,5 @@
 import type {BlessedProgram} from './sys'
-import type {Style} from './ansi'
+import type {Style} from './Style'
 
 export interface Terminal {
   cols: number

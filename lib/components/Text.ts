@@ -2,7 +2,7 @@ import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
-import {Style, fromSGR} from '../ansi'
+import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 
 type Alignment = 'left' | 'right' | 'center'
@@ -26,6 +26,18 @@ interface StyleProps {
 type Props = Partial<StyleProps> & (TextProps | LinesProps)
 
 export class Text extends View {
+  #text: string
+  get text(): string {
+    return this.#text
+  }
+  set text(value: string) {
+    if (this.#text === value) {
+      return
+    }
+    this.#text = value
+    this.#lines = value.split('\n').map(line => [line, unicode.lineWidth(line)])
+  }
+
   #lines: [string, number][]
   #style: StyleProps['style']
   #alignment: StyleProps['alignment']
@@ -33,13 +45,16 @@ export class Text extends View {
 
   constructor({text, lines, style, alignment, wrap}: Props) {
     super()
+
     this.#style = style
     this.#alignment = alignment ?? 'left'
+    this.#wrap = wrap ?? false
+
+    this.#text = text ?? lines.join('\n')
     this.#lines = (lines ?? text.split('\n')).map(line => [
       line,
       unicode.lineWidth(line),
     ])
-    this.#wrap = wrap ?? false
   }
 
   intrinsicSize(availableSize: Size): Size {
@@ -79,7 +94,7 @@ export class Text extends View {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            writer.replacePen(fromSGR(char))
+            writer.replacePen(Style.fromSGR(char))
             continue
           }
 

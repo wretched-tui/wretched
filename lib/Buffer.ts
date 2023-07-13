@@ -2,7 +2,7 @@ import {unicode} from './sys'
 
 import type {Terminal, SGRTerminal} from './terminal'
 import type {Color} from './ansi'
-import {Style, fromSGR} from './ansi'
+import {Style} from './Style'
 import {Size} from './geometry'
 
 type Char = {char: string; width: 1 | 2; style: Style; hiding?: Char}
@@ -49,7 +49,7 @@ export class Buffer implements Terminal {
 
     let line = this.#canvas.get(y)
     const prevStyle = line?.get(x)?.style
-    style = prevStyle ? style.mergeBackground(prevStyle) : style
+    style = prevStyle ? style.defaultBackground(prevStyle) : style
     if (x >= 0) {
       if (line) {
         const prev = line.get(x - 1)

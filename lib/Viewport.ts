@@ -1,7 +1,8 @@
 import {unicode} from './sys'
 
 import type {Terminal} from './terminal'
-import {Style, RESET, fromSGR} from './ansi'
+import {RESET} from './ansi'
+import {Style} from './Style'
 import {Rect, Point, Size} from './geometry'
 import {Screen} from './Screen'
 import {View} from './View'
@@ -134,7 +135,7 @@ export class Viewport {
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        style = char === RESET ? pen : fromSGR(char).merge(pen)
+        style = char === RESET ? pen : pen.merge(Style.fromSGR(char))
       } else if (
         x >= this.visibleRect.minX() &&
         x + width - 1 < this.visibleRect.maxX()

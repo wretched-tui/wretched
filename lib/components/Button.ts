@@ -4,8 +4,7 @@ import {View} from '../View'
 import {Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
-import type {Color} from '../ansi'
-import {Style} from '../ansi'
+import {Style} from '../Style'
 import {
   isMousePressed,
   isMouseReleased,
@@ -24,13 +23,12 @@ interface LinesProps {
 }
 
 interface StyleProps {
-  foreground?: Color
-  background?: Color
-  hoverForeground?: Color
-  hoverBackground?: Color
-  pressForeground?: Color
-  pressBackground?: Color
-  onPress?: () => void
+  style?: Partial<Style>
+  hover?: Partial<Style>
+  press?: Partial<Style>
+  onClick?: () => void
+  onHover?: (value: boolean) => void
+  onPress?: (value: boolean) => void
 }
 
 type Props = StyleProps & (TextProps | LinesProps)
@@ -41,50 +39,78 @@ export class Button extends Container {
    * sides. If `content:` is used, no decorations are added.
    */
   defaultStyle: boolean
+  onClick: StyleProps['onClick']
+  onHover: StyleProps['onHover']
   onPress: StyleProps['onPress']
-  textView?: View
-  foreground?: Color
-  background?: Color
-  hoverForeground?: Color
-  hoverBackground: Color
-  pressForeground?: Color
-  pressBackground: Color
+  style: Style
+  hover: Style
+  press: Style
 
+  #textView?: Text
   #pressed = false
+  #pressedOverride = false
+  get isPressed() {
+    return this.#pressedOverride || this.#pressed
+  }
+  set isPressed(value: boolean) {
+    const wasPressed = this.isPressed
+    this.#pressedOverride = value
+  }
+
   #hover = false
+  #hoverOverride = false
+  get isHover() {
+    return this.#hoverOverride || this.#hover
+  }
+  set isHover(value: boolean) {
+    const wasHover = this.isHover
+    this.#hoverOverride = value
+  }
+
+  get text() {
+    return this.#textView?.text
+  }
+  set text(value: string | undefined) {
+    if (this.#textView) {
+      this.#textView.text = value ?? ''
+    }
+  }
 
   constructor({
     text,
     content,
+    onClick,
+    onHover,
     onPress,
-    foreground,
-    background,
-    hoverBackground,
-    hoverForeground,
-    pressForeground,
-    pressBackground,
+    style,
+    hover,
+    press,
   }: Props) {
     super()
-    this.foreground = foreground ?? 'black'
-    this.background = background ?? 'gray'
-    this.hoverForeground = hoverForeground ?? this.foreground
-    this.hoverBackground = hoverBackground ?? 'white'
-    this.pressForeground = pressForeground ?? 'white'
-    this.pressBackground = pressBackground ?? 'green'
+
+    this.style = new Style({foreground: 'black', background: 'gray'}).merge(
+      style,
+    )
+    this.hover = this.style.merge({background: 'white'}).merge(hover)
+    this.press = this.style
+      .merge({foreground: 'gray', background: 'green'})
+      .merge(press)
 
     if (text !== undefined) {
       this.defaultStyle = true
       this.add(
-        (this.textView = new Text({
+        (this.#textView = new Text({
           text,
           alignment: 'center',
         })),
       )
     } else {
       this.defaultStyle = false
-      this.add((this.textView = content))
+      this.add(content)
     }
 
+    this.onClick = onClick
+    this.onHover = onHover
     this.onPress = onPress
   }
 
@@ -99,17 +125,30 @@ export class Button extends Container {
 
   receiveMouse(event: MouseEvent) {
     if (isMousePressed(event)) {
+      if (!this.isPressed) {
+        this.onPress?.(true)
+      }
       this.#pressed = true
     } else if (isMouseReleased(event)) {
+      if (this.isPressed) {
+        this.onPress?.(false)
+      }
       this.#pressed = false
+
       if (event.name === 'mouse.button.up') {
-        this.onPress?.()
+        this.onClick?.()
       }
     }
 
     if (isMouseEnter(event)) {
+      if (!this.isHover) {
+        this.onHover?.(true)
+      }
       this.#hover = true
     } else if (isMouseExit(event)) {
+      if (this.isHover) {
+        this.onHover?.(false)
+      }
       this.#hover = false
     }
   }
@@ -118,17 +157,11 @@ export class Button extends Container {
     viewport.claim(this, writer => {
       writer.registerMouse(this, 'mouse.button.left', 'mouse.move')
 
-      const style: Style = this.#pressed
-        ? new Style({
-            foreground: this.pressForeground,
-            background: this.pressBackground,
-          })
-        : this.#hover
-        ? new Style({
-            foreground: this.hoverForeground,
-            background: this.hoverBackground,
-          })
-        : new Style({foreground: this.foreground, background: this.background})
+      const style: Style = this.isPressed
+        ? this.press
+        : this.isHover
+        ? this.hover
+        : this.style
 
       writer.usingPen(style, () => {
         const minX = viewport.visibleRect.minX()

@@ -4,7 +4,7 @@ import type {KeyEvent} from '../events'
 import {isKeyPrintable} from '../events'
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
-import {Style} from '../ansi'
+import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 
 interface Props {

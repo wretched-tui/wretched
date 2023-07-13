@@ -2,7 +2,7 @@ import type {Viewport} from '../Viewport'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
-import {Style} from '../ansi'
+import {Style} from '../Style'
 
 type Border = 'cool' | 'single' | 'bold' | 'double' | 'round'
 
