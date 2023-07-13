@@ -3,7 +3,14 @@ import {View} from '../View'
 import {Point, Size} from '../geometry'
 
 type Direction = 'vertical' | 'horizontal'
-type Border = 'single' | 'bold' | 'dash' | 'dash2' | 'dash3' | 'dash4' | 'double'
+type Border =
+  | 'single'
+  | 'bold'
+  | 'dash'
+  | 'dash2'
+  | 'dash3'
+  | 'dash4'
+  | 'double'
 
 interface Props {
   direction: Direction
@@ -32,17 +39,19 @@ export class Separator extends View {
   }
 
   render(viewport: Viewport) {
-    if (this.direction === 'vertical') {
-      const [char] = BORDERS[this.border]
-      for (let y = 0; y < viewport.contentSize.height; ++y) {
-        viewport.write(char, new Point(this.padding, y))
+    viewport.claim(this, writer => {
+      if (this.direction === 'vertical') {
+        const [char] = BORDERS[this.border]
+        for (let y = 0; y < viewport.contentSize.height; ++y) {
+          writer.write(char, new Point(this.padding, y))
+        }
+      } else {
+        const [, char] = BORDERS[this.border]
+        const pt = viewport.visibleRect.origin.mutableCopy()
+        pt.y += this.padding
+        writer.write(char.repeat(viewport.visibleRect.size.width), pt)
       }
-    } else {
-      const [, char] = BORDERS[this.border]
-      const pt = viewport.visibleRect.origin.mutableCopy()
-      pt.y += this.padding
-      viewport.write(char.repeat(viewport.visibleRect.size.width), pt)
-    }
+    })
   }
 }
 

@@ -23,6 +23,10 @@ export class MouseManager {
     this.#mouseListeners = new Map()
   }
 
+  /**
+   * Multiple views can claim the mouse.move event; they will all receive it.
+   * Only the last view to claim button or wheel events will receive those events.
+   */
   registerMouse(
     view: View,
     offset: Point,

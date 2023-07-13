@@ -156,6 +156,9 @@ export class Screen {
   //   this.#focusManager.nextFocus()
   // }
 
+  /**
+   * @see MouseManager.registerMouse
+   */
   registerMouse(
     view: View,
     offset: Point,

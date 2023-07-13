@@ -33,8 +33,8 @@ export class Style {
     this.bold = bold
     this.blink = blink
     this.invisible = invisible
-    this.foreground = foreground ?? this.foreground
-    this.background = background ?? this.background
+    this.foreground = foreground
+    this.background = background
   }
 
   invert(): Style {
@@ -44,26 +44,26 @@ export class Style {
     return style
   }
 
-  merge(style: Style): this {
-    this.underline = this.underline ?? style.underline
-    this.inverse = this.inverse ?? style.inverse
-    this.bold = this.bold ?? style.bold
-    this.blink = this.blink ?? style.blink
-    this.invisible = this.invisible ?? style.invisible
-
-    if (this.foreground === 'default' || this.background === undefined) {
-      this.foreground = style.foreground
-    }
-
-    return this.mergeBackground(style)
+  merge(style: Partial<Style>): Style {
+    return new Style({
+      underline: this.underline ?? style.underline,
+      inverse: this.inverse ?? style.inverse,
+      bold: this.bold ?? style.bold,
+      blink: this.blink ?? style.blink,
+      invisible: this.invisible ?? style.invisible,
+      foreground:
+        this.foreground === 'default' || this.foreground === undefined
+          ? style.foreground
+          : this.foreground,
+      background:
+        this.background === 'default' || this.background === undefined
+          ? style.background
+          : this.background,
+    })
   }
 
-  mergeBackground(style: Style): this {
-    if (this.background === 'default' || this.background === undefined) {
-      this.background = style.background
-    }
-
-    return this
+  mergeBackground(style: Style): Style {
+    return this.merge({background: style.background})
   }
 
   isEqual(style: Style) {
@@ -78,6 +78,25 @@ export class Style {
     )
   }
 
+  toDebug() {
+    return (
+      [
+        ['underline', this.underline],
+        ['inverse', this.inverse],
+        ['bold', this.bold],
+        ['blink', this.blink],
+        ['invisible', this.invisible],
+        ['foreground', this.foreground],
+        ['background', this.background],
+      ] as const
+    )
+      .filter(([name, value]) => value !== undefined)
+      .reduce((o: any, [name, value]) => {
+        o[name] = value
+        return o
+      }, {} as any)
+  }
+
   /**
    * @param prevStyle Used by the buffer to reset foreground/background colors and attrs
    */
@@ -90,28 +109,32 @@ export class Style {
     const parts: string[] = []
     if (this.underline && !prevStyle.underline) {
       parts.push('underline')
-    } else if (prevStyle.underline) {
+    } else if (!this.underline && prevStyle.underline) {
       parts.push('!underline')
     }
 
     if (this.bold && !prevStyle.bold) {
       parts.push('bold')
-    } else if (prevStyle.bold) {
+    } else if (!this.bold && prevStyle.bold) {
       parts.push('!bold')
     }
 
     if (this.inverse && !prevStyle.inverse) {
       parts.push('inverse')
-    } else if (prevStyle.inverse) {
+    } else if (!this.inverse && prevStyle.inverse) {
       parts.push('!inverse')
     }
 
     if (this.foreground) {
       parts.push(colorToSGR(this.foreground, 'fg'))
+    } else if (prevStyle.foreground && prevStyle.foreground !== 'default') {
+      parts.push(colorToSGR('default', 'fg'))
     }
 
     if (this.background) {
       parts.push(colorToSGR(this.background, 'bg'))
+    } else if (prevStyle.background && prevStyle.background !== 'default') {
+      parts.push(colorToSGR('default', 'bg'))
     }
 
     return globalProgram.style(parts.join(';'))

@@ -29,7 +29,6 @@ export class Input extends View {
 
   // Printable width
   #width: number
-  #visibleWidth: number = 0
   // Text drawing starts at this offset (if it can't fit on screen)
   #offset: number
   #cursor: Cursor
@@ -102,17 +101,20 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
-    viewport.registerMouse(this, 'mouse.button.left')
     viewport.registerFocus(this)
     viewport.registerTick(this)
     const hasFocus = viewport.hasFocus(this)
-    this.#visibleWidth = viewport.contentSize.width
-    if (this.#visibleWidth >= this.#width) {
+    const visibleWidth = viewport.contentSize.width
+    const quarter = ~~(visibleWidth / 4 + 0.5)
+    if (visibleWidth > this.#width) {
       this.#offset = 0
-    } else if (this.#cursor.end < this.#offset) {
-      this.#offset = this.#cursor.end
-    } else if (this.#cursor.end >= this.#offset + this.#visibleWidth) {
-      this.#offset = this.#cursor.end - this.#visibleWidth + 1
+    } else if (this.#cursor.end - quarter <= this.#offset) {
+      this.#offset = Math.max(0, this.#cursor.end - quarter)
+    } else if (this.#cursor.end + quarter >= this.#offset + visibleWidth) {
+      this.#offset = Math.min(
+        this.#chars.length - visibleWidth + 1,
+        this.#cursor.end - visibleWidth + quarter + 1,
+      )
     }
 
     const point = new Point(0, 0).mutableCopy()
@@ -123,7 +125,9 @@ export class Input extends View {
       maxSelected = this.maxSelected()
     const chars = this.#chars.concat(' ')
     let pen = Style.NONE
-    viewport.usingPen(() => {
+    viewport.claim(this, writer => {
+      writer.registerMouse(this, 'mouse.button.left')
+
       for (const char of chars) {
         const width = unicode.charWidth(char)
         if (width === 0) {
@@ -139,27 +143,40 @@ export class Input extends View {
         if (point.x >= minVisibleX && point.x + width - 1 < maxVisibleX) {
           if (hasFocus) {
             let style: Style
-            if (
-              index >= minSelected &&
-              index < maxSelected &&
-              this.#showCursor
-            ) {
+            if (index >= minSelected && index < maxSelected) {
               if (isEmptySelection(this.#cursor)) {
-                style = new Style({underline: true})
+                if (this.#showCursor) {
+                  style = new Style({underline: true})
+                } else {
+                  style = Style.NONE
+                }
               } else {
-                style = new Style({inverse: true})
+                if (index === this.#cursor.end && !this.#showCursor) {
+                  style = new Style({inverse: true, underline: true})
+                } else {
+                  style = new Style({inverse: true})
+                }
               }
             } else {
               style = Style.NONE
             }
 
             if (!pen.isEqual(style)) {
-              viewport.replacePen(style)
+              writer.replacePen(style)
               pen = style
             }
           }
 
-          viewport.write(char, point)
+          if (this.#offset > 0 && point.x === minVisibleX) {
+            writer.write('…', point)
+          } else if (
+            this.#offset + visibleWidth < this.#chars.length &&
+            point.x === maxVisibleX - 1
+          ) {
+            writer.write('…', point)
+          } else {
+            writer.write(char, point)
+          }
         }
 
         point.x += width

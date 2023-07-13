@@ -7,17 +7,17 @@ import {Style} from '../ansi'
 type Border = 'cool' | 'single' | 'bold' | 'double' | 'round'
 
 interface Props {
-  child: View
+  content: View
   border?: Border
 }
 
 export class Box extends Container {
   readonly border: Border
 
-  constructor({child, border}: Props) {
+  constructor({content, border}: Props) {
     super()
     this.border = border ?? 'single'
-    this.add(child)
+    this.add(content)
   }
 
   intrinsicSize(size: Size): Size {
@@ -32,11 +32,12 @@ export class Box extends Container {
       this.border === 'cool'
         ? new Style({foreground: [98, 196, 255], background: [34, 34, 37]})
         : new Style({foreground: 'white', background: 'default'})
-    const innerStyle = this.border === 'cool' ? borderStyle.invert() : undefined
+    const innerStyle =
+      this.border === 'cool' ? borderStyle.invert() : Style.NONE
 
-    viewport.usingPen(innerStyle, () => {
+    viewport.claim(this, innerStyle, writer => {
       for (let y = 1; y < maxY; ++y) {
-        viewport.write(' '.repeat(maxX - 1), new Point(1, y))
+        writer.write(' '.repeat(maxX - 1), new Point(1, y))
       }
     })
 
@@ -47,18 +48,18 @@ export class Box extends Container {
       },
     )
 
-    viewport.usingPen(borderStyle, () => {
+    viewport.claim(this, borderStyle, writer => {
       const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
-      viewport.write(top.repeat(maxX - 1), new Point(1, 0))
-      viewport.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
+      writer.write(top.repeat(maxX - 1), new Point(1, 0))
+      writer.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
       for (let y = 1; y < maxY; ++y) {
-        viewport.write(left, new Point(0, y))
-        viewport.write(right ?? left, new Point(maxX, y))
+        writer.write(left, new Point(0, y))
+        writer.write(right ?? left, new Point(maxX, y))
       }
-      viewport.write(tl, Point.zero)
-      viewport.write(tr, new Point(maxX, 0))
-      viewport.write(bl, new Point(0, maxY))
-      viewport.write(br, new Point(maxX, maxY))
+      writer.write(tl, Point.zero)
+      writer.write(tr, new Point(maxX, 0))
+      writer.write(bl, new Point(0, maxY))
+      writer.write(br, new Point(maxX, maxY))
     })
   }
 }

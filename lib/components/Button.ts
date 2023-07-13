@@ -15,15 +15,21 @@ import {
 
 interface TextProps {
   text: string
-  child?: undefined
+  content?: undefined
 }
 
 interface LinesProps {
   text?: undefined
-  child: View
+  content: View
 }
 
 interface StyleProps {
+  foreground?: Color
+  background?: Color
+  hoverForeground?: Color
+  hoverBackground?: Color
+  pressForeground?: Color
+  pressBackground?: Color
   onPress?: () => void
 }
 
@@ -32,26 +38,51 @@ type Props = StyleProps & (TextProps | LinesProps)
 export class Button extends Container {
   /**
    * When `text:` is used to label the button, `defaultStyle` adds brackets to the
-   * sides. If `child:` is used, no decorations are added.
+   * sides. If `content:` is used, no decorations are added.
    */
   defaultStyle: boolean
   onPress: StyleProps['onPress']
+  textView?: View
+  foreground?: Color
+  background?: Color
+  hoverForeground?: Color
+  hoverBackground: Color
+  pressForeground?: Color
+  pressBackground: Color
+
   #pressed = false
   #hover = false
-  textView?: View
-  fg: Color = 'black'
-  bg: Color = 'white'
-  hover: Color = 'gray'
-  hoverFg?: Color
 
-  constructor({text, child, onPress}: Props) {
+  constructor({
+    text,
+    content,
+    onPress,
+    foreground,
+    background,
+    hoverBackground,
+    hoverForeground,
+    pressForeground,
+    pressBackground,
+  }: Props) {
     super()
+    this.foreground = foreground ?? 'black'
+    this.background = background ?? 'gray'
+    this.hoverForeground = hoverForeground ?? this.foreground
+    this.hoverBackground = hoverBackground ?? 'white'
+    this.pressForeground = pressForeground ?? 'white'
+    this.pressBackground = pressBackground ?? 'green'
+
     if (text !== undefined) {
       this.defaultStyle = true
-      this.add((this.textView = new Text({text, alignment: 'center'})))
+      this.add(
+        (this.textView = new Text({
+          text,
+          alignment: 'center',
+        })),
+      )
     } else {
       this.defaultStyle = false
-      this.add(child)
+      this.add((this.textView = content))
     }
 
     this.onPress = onPress
@@ -84,33 +115,37 @@ export class Button extends Container {
   }
 
   render(viewport: Viewport) {
-    viewport.registerMouse(this, 'mouse.button.left', 'mouse.move')
+    viewport.claim(this, writer => {
+      writer.registerMouse(this, 'mouse.button.left', 'mouse.move')
 
-    const bg: Style = this.#pressed
-      ? new Style({foreground: 'black', background: 'green'})
-      : this.#hover
-      ? new Style({foreground: 'black', background: 'white'})
-      : new Style({foreground: 'black', background: 'gray'})
+      const style: Style = this.#pressed
+        ? new Style({
+            foreground: this.pressForeground,
+            background: this.pressBackground,
+          })
+        : this.#hover
+        ? new Style({
+            foreground: this.hoverForeground,
+            background: this.hoverBackground,
+          })
+        : new Style({foreground: this.foreground, background: this.background})
 
-    viewport.usingPen(bg, () => {
-      const minX = viewport.visibleRect.minX()
-      const maxX = viewport.visibleRect.maxX()
-      const maxY = viewport.visibleRect.maxY()
-      for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
-        viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
-      }
-    })
+      writer.usingPen(style, () => {
+        const minX = viewport.visibleRect.minX()
+        const maxX = viewport.visibleRect.maxX()
+        const maxY = viewport.visibleRect.maxY()
+        for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
+          writer.write(' '.repeat(maxX - minX), new Point(minX, y))
+        }
+      })
 
-    if (this.defaultStyle) {
       viewport.clipped(
         new Rect(new Point(1, 0), viewport.contentSize.shrink(2, 0)),
+        style,
         inside => {
-          inside.replacePen(bg)
           super.render(inside)
         },
       )
-    } else {
-      super.render(viewport)
-    }
+    })
   }
 }

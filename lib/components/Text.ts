@@ -2,7 +2,7 @@ import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
 import {View} from '../View'
-import {fromSGR} from '../ansi'
+import {Style, fromSGR} from '../ansi'
 import {Point, Size} from '../geometry'
 
 type Alignment = 'left' | 'right' | 'center'
@@ -18,6 +18,7 @@ interface LinesProps {
 }
 
 interface StyleProps {
+  style?: Style
   alignment: Alignment
   wrap: boolean
 }
@@ -25,25 +26,27 @@ interface StyleProps {
 type Props = Partial<StyleProps> & (TextProps | LinesProps)
 
 export class Text extends View {
-  lines: [string, number][]
-  alignment: StyleProps['alignment']
-  wrap: StyleProps['wrap']
+  #lines: [string, number][]
+  #style: StyleProps['style']
+  #alignment: StyleProps['alignment']
+  #wrap: StyleProps['wrap']
 
-  constructor({text, lines, alignment, wrap}: Props) {
+  constructor({text, lines, style, alignment, wrap}: Props) {
     super()
-    this.alignment = alignment ?? 'left'
-    this.lines = (lines ?? text.split('\n')).map(line => [
+    this.#style = style
+    this.#alignment = alignment ?? 'left'
+    this.#lines = (lines ?? text.split('\n')).map(line => [
       line,
       unicode.lineWidth(line),
     ])
-    this.wrap = wrap ?? false
+    this.#wrap = wrap ?? false
   }
 
   intrinsicSize(availableSize: Size): Size {
-    const [width, height] = this.lines.reduce(
+    const [width, height] = this.#lines.reduce(
       ([maxWidth, height], [, width]) => {
         let lineHeight: number = 1
-        if (this.wrap) {
+        if (this.#wrap) {
           lineHeight += ~~(width / availableSize.width)
         }
         return [Math.max(maxWidth, width), height + lineHeight]
@@ -54,9 +57,9 @@ export class Text extends View {
   }
 
   render(viewport: Viewport) {
-    const lines: [string, number][] = this.lines
+    const lines: [string, number][] = this.#lines
 
-    viewport.usingPen(() => {
+    viewport.claim(this, this.#style ?? Style.NONE, writer => {
       const point = new Point(0, 0).mutableCopy()
       for (const [line, width] of lines) {
         if (!line.length) {
@@ -66,9 +69,9 @@ export class Text extends View {
 
         let didWrap = false
         const offsetX =
-          this.alignment === 'left'
+          this.#alignment === 'left'
             ? 0
-            : this.alignment === 'center'
+            : this.#alignment === 'center'
             ? ~~((viewport.contentSize.width - width) / 2)
             : viewport.contentSize.width - width
         point.x = offsetX
@@ -76,11 +79,11 @@ export class Text extends View {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            viewport.replacePen(fromSGR(char))
+            writer.replacePen(fromSGR(char))
             continue
           }
 
-          if (this.wrap && point.x >= viewport.contentSize.width) {
+          if (this.#wrap && point.x >= viewport.contentSize.width) {
             didWrap = true
             point.x = 0
             point.y += 1
@@ -95,11 +98,11 @@ export class Text extends View {
             point.x >= viewport.visibleRect.minX() &&
             point.x + width - 1 < viewport.visibleRect.maxX()
           ) {
-            viewport.write(char, point)
+            writer.write(char, point)
           }
 
           point.x += width
-          if (!this.wrap && point.x >= viewport.visibleRect.maxX()) {
+          if (!this.#wrap && point.x >= viewport.visibleRect.maxX()) {
             break
           }
         }

@@ -35,8 +35,10 @@ export class ConsoleLog extends Flow {
 
   render(viewport: Viewport) {
     fetchLogs().forEach(([method, args]) => this.appendLog(method, args))
-    viewport.registerMouse(this, 'mouse.wheel')
-    super.render(viewport)
+    viewport.claim(this, writer => {
+      writer.registerMouse(this, 'mouse.wheel')
+      super.render(viewport)
+    })
   }
 }
 
