@@ -11,6 +11,10 @@ let _restoreBg: string | undefined
  */
 export class iTerm2 {
   static async setBackground(program: BlessedProgram, bg: Color) {
+    process.on('exit', () => {
+      iTerm2.restoreBg(program)
+    })
+
     return new Promise(resolve => {
       const hex = colorToHex(bg).slice(1)
 

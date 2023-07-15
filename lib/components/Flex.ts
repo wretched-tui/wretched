@@ -1,4 +1,5 @@
 import type {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
@@ -10,7 +11,7 @@ type FlexSize =
   | 'flex' // implies {flex: 1}
   | `flex${number}` // {flex: number} shorthand
 
-interface Props {
+interface Props extends ViewProps {
   children: ([FlexSize, View] | View)[]
   direction: Direction
 }
@@ -19,8 +20,8 @@ export class Flex extends Container {
   direction: Direction
   sizes: Map<View, FlexSize> = new Map()
 
-  constructor({children, direction}: Props) {
-    super()
+  constructor({children, direction, ...viewProps}: Props) {
+    super(viewProps)
     this.direction = direction
 
     for (const info of children) {
@@ -43,7 +44,7 @@ export class Flex extends Container {
     let hasFlex = false
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'intrinsic'
-      const childSize = child.intrinsicSize(availableSize)
+      const childSize = child.calculateIntrinsicSize(availableSize)
       if (flexSize === 'intrinsic') {
         if (isVertical(this.direction)) {
           remainingSize = Math.max(0, remainingSize - childSize.height)
@@ -90,9 +91,7 @@ export class Flex extends Container {
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'intrinsic'
       if (flexSize === 'intrinsic') {
-        const childSize = child
-          .intrinsicSize(viewport.contentSize)
-          .mutableCopy()
+        const childSize = child.calculateIntrinsicSize(viewport.contentSize)
         if (isVertical(this.direction)) {
           flexViews.push([flexSize, childSize.height, child])
           remainingSize = Math.max(0, remainingSize - childSize.height)

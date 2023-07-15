@@ -1,132 +1,187 @@
 import type {Viewport} from '../Viewport'
+import type {MouseEvent} from '../events'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Style} from '../Style'
 import {Rect, Point, Size} from '../geometry'
+import {isClicked, isMouseEnter, isMouseExit} from '../events'
 
-import {Button} from './Button'
-
-interface Props {
-  header?: View
+interface Props extends ViewProps {
   drawer: View
   content: View
 }
 
-const BUTTON_SIZE = new Size(5, 2)
-const DRAWER_WIDTH = 2
+const DRAWER_BTN_SIZE = new Size(3, 8)
+const GRAY_TEXT = 156
+const GRAY_HOVER = 255
 
 export class Drawer extends Container {
-  readonly header: View | undefined
   readonly drawer: View
   readonly content: View
 
-  #hamburgerButton: Button
-  #drawerButton: Button
+  #hover = false
+  #drawerWidth = 0
   #isOpen = false
+  #targetDx = 0
+  #currentDx = 0
 
-  constructor({content, drawer, header}: Props) {
-    super()
+  constructor({content, drawer, ...viewProps}: Props) {
+    super(viewProps)
 
-    this.#hamburgerButton = new Button({
-      style: {foreground: 'white', background: 'black'},
-      hover: {background: 'gray'},
-      text: new Array(BUTTON_SIZE.height)
-        .fill(' ' + '━'.repeat(BUTTON_SIZE.width - 2) + ' ')
-        .join('\n'),
-      onHover: value => {
-        this.#drawerButton.isHover = value
-      },
-      onPress: value => {
-        this.#drawerButton.isPressed = value
-      },
-      onClick: () => {
-        this.onClick()
-      },
-    })
-
-    this.#drawerButton = new Button({
-      style: {foreground: 'white', background: 'black'},
-      hover: {background: 'gray'},
-      text: '›',
-      onHover: value => {
-        this.#hamburgerButton.isHover = value
-      },
-      onPress: value => {
-        this.#hamburgerButton.isPressed = value
-      },
-      onClick: () => {
-        this.onClick()
-      },
-    })
-
-    this.header = header
-    if (header) {
-      this.add(header)
-    }
     this.add((this.drawer = drawer))
     this.add((this.content = content))
   }
 
-  onClick() {}
+  open() {
+    this.#setIsOpen(true)
+  }
+
+  close() {
+    this.#setIsOpen(false)
+  }
+
+  toggle() {
+    this.#setIsOpen(!this.#isOpen)
+  }
+
+  #setIsOpen(value: boolean) {
+    this.#isOpen = value
+    this.#targetDx = value ? this.#drawerWidth : 0
+  }
 
   intrinsicSize(size: Size): Size {
-    const intrinsicSize = this.content.intrinsicSize(size)
+    const drawerSize = this.drawer.calculateIntrinsicSize(
+      size.shrink(DRAWER_BTN_SIZE.width, 0),
+    )
+    this.#drawerWidth = drawerSize.width
+
+    const contentSize = this.content.calculateIntrinsicSize(
+      size.shrink(DRAWER_BTN_SIZE.width, 0),
+    )
+
     return new Size(
-      Math.max(intrinsicSize.width, BUTTON_SIZE.width),
-      Math.max(intrinsicSize.height, BUTTON_SIZE.height),
+      Math.max(drawerSize.width, contentSize.width + DRAWER_BTN_SIZE.width),
+      Math.max(contentSize.height, drawerSize.height + 2),
     )
   }
 
-  render(viewport: Viewport) {
-    let contentRect: Rect
-    if (this.header) {
-      contentRect = new Rect(
-        new Point(DRAWER_WIDTH, BUTTON_SIZE.height),
-        viewport.contentSize.shrink(DRAWER_WIDTH, BUTTON_SIZE.height),
-      )
-      const header = this.header
-      const headerRect = new Rect(
-        new Point(BUTTON_SIZE.width, 0),
-        new Size(
-          viewport.contentSize.width - BUTTON_SIZE.width,
-          BUTTON_SIZE.height,
-        ),
-      )
-      viewport.clipped(headerRect, inside => {
-        header.render(inside)
-      })
-    } else {
-      contentRect = new Rect(
-        new Point(DRAWER_WIDTH, 0),
-        viewport.contentSize.shrink(DRAWER_WIDTH, 0),
-      )
+  receiveTick(dt: number) {
+    const dx = (this.#targetDx > this.#currentDx ? 0.25 : -0.25) * dt
+    const nextDx = Math.max(
+      0,
+      Math.min(this.#drawerWidth, this.#currentDx + dx),
+    )
+    if (nextDx !== this.#currentDx) {
+      this.#currentDx = nextDx
+      return true
     }
+
+    return false
+  }
+
+  receiveMouse(event: MouseEvent) {
+    if (isMouseEnter(event)) {
+      this.#hover = true
+    } else if (isMouseExit(event)) {
+      this.#hover = false
+    }
+
+    if (isClicked(event)) {
+      this.toggle()
+    }
+  }
+
+  render(viewport: Viewport) {
+    if (this.#currentDx !== this.#targetDx) {
+      viewport.registerTick(this)
+    }
+
+    const drawerButtonRect = new Rect(
+      new Point(~~this.#currentDx, 0),
+      new Size(2, viewport.contentSize.height),
+    )
+    viewport.registerMouse(
+      this,
+      ['mouse.move', 'mouse.button.left'],
+      drawerButtonRect,
+    )
+
+    const contentRect = new Rect(
+      new Point(DRAWER_BTN_SIZE.width, 0),
+      viewport.contentSize.shrink(DRAWER_BTN_SIZE.width, 0),
+    )
+
     viewport.clipped(contentRect, inside => {
       this.content.render(inside)
     })
 
-    if (this.#isOpen) {
-    } else {
+    if (this.drawer && this.#currentDx > 0) {
       const drawerRect = new Rect(
-        new Point(0, BUTTON_SIZE.height),
-        new Size(
-          DRAWER_WIDTH,
-          viewport.contentSize.height - BUTTON_SIZE.height,
-        ),
+        new Point(this.#currentDx - this.#drawerWidth, 1),
+        new Size(this.#drawerWidth, drawerButtonRect.size.height - 2),
       )
+      for (let y = drawerRect.minY(); y < drawerRect.maxY(); y++)
+        for (let x = drawerRect.minX(); x < drawerRect.maxX(); x++) {
+          viewport.write(' ', new Point(x, y))
+        }
       viewport.clipped(drawerRect, inside => {
-        this.#drawerButton.text =
-          '››' + '\n››'.repeat(drawerRect.size.height - 1)
-        this.#drawerButton.render(inside)
+        this.drawer.render(inside)
       })
     }
 
-    const hamburgerButtonRect = new Rect(
-      new Point(0, 0),
-      new Size(BUTTON_SIZE.width, BUTTON_SIZE.height),
+    const style = new Style(
+      this.#hover
+        ? {foreground: {grayscale: GRAY_HOVER}}
+        : {foreground: {grayscale: GRAY_TEXT}},
     )
-    viewport.clipped(hamburgerButtonRect, inside => {
-      this.#hamburgerButton.render(inside)
+    this.#drawDrawer(viewport, style, drawerButtonRect)
+  }
+
+  #drawDrawer(viewport: Viewport, style: Style, rect: Rect) {
+    viewport.usingPen(style, () => {
+      const minY = 0,
+        drawerHeight = rect.size.height,
+        drawerX = rect.minX(),
+        maxY = rect.maxY(),
+        y0 = Math.max(minY, rect.minY()),
+        point = new Point(0, y0).mutableCopy(),
+        buttonHeight = Math.min(
+          drawerHeight - 2,
+          Math.max(DRAWER_BTN_SIZE.height, ~~(drawerHeight / 3)),
+        ),
+        button0 = y0 + Math.max(1, ~~((drawerHeight - buttonHeight) / 2)),
+        button1 = button0 + buttonHeight
+
+      for (; point.x < drawerX; point.x++) {
+        point.y = y0
+        viewport.write('─', point)
+        point.y = maxY - 1
+        viewport.write('─', point)
+      }
+
+      point.x = drawerX
+      for (point.y = y0; point.y < maxY; point.y++) {
+        const drawButton = point.y >= button0 && point.y < button1
+        let drawer: string
+        if (point.y === y0) {
+          drawer = '╮'
+        } else if (point.y === button0) {
+          drawer = '╰' + (this.#hover ? '─' : '') + '╮'
+        } else if (point.y === button1 - 1) {
+          drawer = '╭' + (this.#hover ? '─' : '') + '╯'
+        } else if (drawButton) {
+          drawer = this.#hover ? ' ' : ''
+          drawer += this.#isOpen ? '‹' : '›'
+          drawer += '│'
+        } else if (point.y === maxY - 1) {
+          drawer = '╯'
+        } else {
+          drawer = '│'
+        }
+
+        viewport.write(drawer, point)
+      }
     })
   }
 }

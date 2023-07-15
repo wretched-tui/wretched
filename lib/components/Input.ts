@@ -3,11 +3,12 @@ import {unicode} from '../sys'
 import type {KeyEvent} from '../events'
 import {isKeyPrintable} from '../events'
 import type {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 
-interface Props {
+interface Props extends ViewProps {
   text: string
 }
 
@@ -43,8 +44,8 @@ export class Input extends View {
       : Math.max(this.#cursor.start, this.#cursor.end)
   }
 
-  constructor({text}: Props) {
-    super()
+  constructor({text, ...viewProps}: Props) {
+    super(viewProps)
     text = unicode.removeAnsi(text)
     this.#chars = unicode.printableChars(text)
     this.#width = unicode.lineWidth(text)
@@ -97,7 +98,7 @@ export class Input extends View {
   }
 
   intrinsicSize(): Size {
-    return new Size(this.#width, 1)
+    return new Size(this.#width + 1, 1)
   }
 
   render(viewport: Viewport) {
@@ -124,9 +125,9 @@ export class Input extends View {
     const minSelected = this.minSelected(),
       maxSelected = this.maxSelected()
     const chars = this.#chars.concat(' ')
-    let pen = Style.NONE
-    viewport.claim(this, writer => {
-      writer.registerMouse(this, 'mouse.button.left')
+    let currentStyle = Style.NONE
+    viewport.usingPen(pen => {
+      viewport.registerMouse(this, 'mouse.button.left')
 
       for (const char of chars) {
         const width = unicode.charWidth(char)
@@ -161,21 +162,21 @@ export class Input extends View {
               style = Style.NONE
             }
 
-            if (!pen.isEqual(style)) {
-              writer.replacePen(style)
-              pen = style
+            if (!currentStyle.isEqual(style)) {
+              pen.replacePen(style)
+              currentStyle = style
             }
           }
 
           if (this.#offset > 0 && point.x === minVisibleX) {
-            writer.write('…', point)
+            viewport.write('…', point)
           } else if (
             this.#offset + visibleWidth < this.#chars.length &&
             point.x === maxVisibleX - 1
           ) {
-            writer.write('…', point)
+            viewport.write('…', point)
           } else {
-            writer.write(char, point)
+            viewport.write(char, point)
           }
         }
 
@@ -332,10 +333,10 @@ export class Input extends View {
 
   #receiveKeyDelete() {
     if (isEmptySelection(this.#cursor)) {
-      if (this.#cursor.start >= this.#chars.length - 1) {
+      if (this.#cursor.start > this.#chars.length - 1) {
         return
       }
-      this.#width -= unicode.charWidth(this.#chars[this.#cursor.start + 1])
+      this.#width -= unicode.charWidth(this.#chars[this.#cursor.start])
       this.#chars = this.#chars
         .slice(0, this.#cursor.start)
         .concat(this.#chars.slice(this.#cursor.start + 1))

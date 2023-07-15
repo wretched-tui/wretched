@@ -1,9 +1,10 @@
 import type {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 
-interface Props {
+interface Props extends ViewProps {
   cellAtIndex: (row: number) => View | undefined
 }
 
@@ -23,8 +24,8 @@ export class ScrollableList extends Container {
   contentSize: Size
   #viewCache: Map<number, View> = new Map()
 
-  constructor({cellAtIndex}: Props) {
-    super()
+  constructor({cellAtIndex, ...viewProps}: Props) {
+    super(viewProps)
     this.contentOffset = {row: 0, offset: 0}
     this.cellAtIndex = cellAtIndex
     this.contentSize = Size.zero
@@ -112,7 +113,7 @@ export class ScrollableList extends Container {
       return undefined
     }
 
-    const {height} = view.intrinsicSize(new Size(contentWidth, 0))
+    const {height} = view.calculateIntrinsicSize(new Size(contentWidth, 0))
     return height
   }
 

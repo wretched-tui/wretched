@@ -44,6 +44,14 @@ export class Size {
     this.height = Math.max(0, height)
   }
 
+  #toWH(args: [number, number] | [Size]): [number, number] {
+    if (args.length === 2) {
+      return args
+    } else {
+      return [args[0].width, args[0].height]
+    }
+  }
+
   copy() {
     return new Size(this.width, this.height)
   }
@@ -53,25 +61,31 @@ export class Size {
   }
 
   shrink(...args: [number, number] | [Size]): Size {
-    if (args.length === 2) {
-      return this.grow(-args[0], -args[1])
-    } else {
-      return this.grow(-args[0].width, -args[0].height)
-    }
+    const [w, h] = this.#toWH(args)
+    return this.grow(-w, -h)
   }
 
   grow(...args: [number, number] | [Size]): Size {
-    if (args.length === 2) {
-      return new Size(
-        Math.max(0, this.width + args[0]),
-        Math.max(0, this.height + args[1]),
-      )
-    } else {
-      return new Size(
-        Math.max(0, this.width + args[0].width),
-        Math.max(0, this.height + args[0].height),
-      )
-    }
+    const [w, h] = this.#toWH(args)
+    return new Size(Math.max(0, this.width + w), Math.max(0, this.height + h))
+  }
+
+  maxWidth(width: number): Size {
+    return new Size(Math.min(width, this.width), this.height)
+  }
+
+  maxHeight(height: number): Size {
+    return new Size(this.width, Math.min(height, this.height))
+  }
+
+  max(...args: [number, number] | [Size]): Size {
+    const [w, h] = this.#toWH(args)
+    return new Size(Math.min(w, this.width), Math.min(h, this.height))
+  }
+
+  min(...args: [number, number] | [Size]): Size {
+    const [w, h] = this.#toWH(args)
+    return new Size(Math.max(w, this.width), Math.max(h, this.height))
   }
 }
 
@@ -113,6 +127,14 @@ export class Rect {
     return this.size.width === 0 || this.size.height === 0
   }
 
+  intersection(rect: Rect): Rect {
+    const minX = Math.max(this.minX(), rect.minX())
+    const minY = Math.max(this.minY(), rect.minY())
+    const width = Math.min(this.maxX(), rect.maxX()) - minX
+    const height = Math.min(this.maxY(), rect.maxY()) - minY
+    return new Rect(new Point(minX, minY), new Size(width, height))
+  }
+
   min(): Point {
     return new Point(this.minX(), this.minY())
   }
@@ -148,4 +170,12 @@ export function size(w: number, h: number) {
 
 export function rect(x: number, y: number, w: number, h: number) {
   return new Rect(new Point(x, y), new Size(w, h))
+}
+
+export function interpolate(
+  x: number,
+  [x0, x1]: [number, number],
+  [y0, y1]: [number, number],
+): number {
+  return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0)
 }

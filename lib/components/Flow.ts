@@ -1,11 +1,12 @@
 import type {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 
-interface Props {
+interface Props extends ViewProps {
   children: View[]
   direction: Direction
 }
@@ -13,8 +14,8 @@ interface Props {
 export class Flow extends Container {
   direction: Direction
 
-  constructor({children, direction}: Props) {
-    super()
+  constructor({children, direction, ...viewProps}: Props) {
+    super(viewProps)
     this.direction = direction
 
     for (const child of children) {
@@ -26,7 +27,7 @@ export class Flow extends Container {
     const size = Size.zero.mutableCopy()
     const remainingSize = availableSize.mutableCopy()
     for (const child of this.children) {
-      const childSize = child.intrinsicSize(availableSize)
+      const childSize = child.calculateIntrinsicSize(availableSize)
       if (isVertical(this.direction)) {
         remainingSize.height = Math.max(
           0,
@@ -60,8 +61,10 @@ export class Flow extends Container {
         break
     }
 
+    const minVisibleX = viewport.visibleRect.minX(),
+      maxVisibleX = viewport.visibleRect.maxX()
     for (const child of this.children) {
-      const childSize = child.intrinsicSize(viewport.contentSize).mutableCopy()
+      const childSize = child.calculateIntrinsicSize(viewport.contentSize)
       if (isVertical(this.direction)) {
         childSize.width = viewport.contentSize.width
       } else {
@@ -74,9 +77,12 @@ export class Flow extends Container {
         origin.y -= childSize.height
       }
 
-      viewport.clipped(new Rect(origin, childSize), inside => {
-        child.render(inside)
-      })
+      const childRect = new Rect(origin, childSize)
+      if (childRect.minX() < maxVisibleX && childRect.maxX() >= minVisibleX) {
+        viewport.clipped(childRect, inside => {
+          child.render(inside)
+        })
+      }
 
       if (this.direction === 'leftToRight') {
         origin.x += childSize.width
@@ -91,6 +97,10 @@ export class Flow extends Container {
         )
       } else {
         remainingSize.width = Math.max(0, remainingSize.width - childSize.width)
+      }
+
+      if (remainingSize.width <= 0 || remainingSize.height <= 0) {
+        break
       }
     }
   }

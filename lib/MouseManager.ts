@@ -11,16 +11,65 @@ import type {
 import {isMouseButton, isMouseWheel} from './events'
 
 function mouseKey(x: number, y: number, event: string) {
-  return `${x},${y}:${event}`
+  return `${~~x},${~~y}:${event}`
 }
 
 export class MouseManager {
+  #prevListener?: MouseEventListener
   #mouseListeners: Map<string, MouseEventListener> = new Map()
   #mouseMoveViews: MouseEventTarget[] = []
   #mouseDownEvent: MouseDownEvent | undefined
+  #mousePosition?: Point
 
   reset() {
+    if (this.#mouseDownEvent || !this.#mousePosition) {
+      this.#prevListener = undefined
+    } else {
+      this.#prevListener = this.getMouseListener(
+        this.#mousePosition.x,
+        this.#mousePosition.y,
+        'mouse.move',
+      )
+    }
     this.#mouseListeners = new Map()
+  }
+
+  needsRender() {
+    if (this.#mouseDownEvent || !this.#mousePosition) {
+      return false
+    }
+
+    const listener = this.getMouseListener(
+      this.#mousePosition.x,
+      this.#mousePosition.y,
+      'mouse.move',
+    )
+    const prev = new Set(
+      this.#prevListener?.move.map(target => target.view) ?? [],
+    )
+    const next = new Set(listener?.move.map(target => target.view) ?? [])
+    let same = prev.size === next.size
+    if (same) {
+      for (const view of prev) {
+        if (!next.has(view)) {
+          same = false
+          break
+        }
+      }
+    }
+
+    if (!same) {
+      this.trigger({
+        type: 'mouse',
+        name: 'mouse.move.in',
+        button: 'unknown',
+        ctrl: false,
+        meta: false,
+        shift: false,
+        ...this.#mousePosition,
+      })
+    }
+    return !same
   }
 
   /**
@@ -42,6 +91,12 @@ export class MouseManager {
       } as const
       const listener = this.#mouseListeners.get(key) ?? {move: []}
       if (eventName === 'mouse.move') {
+        // search listener.move - only keep views that are in the current views
+        // ancestors
+        const ancestors = listener.move.reduce((ancestors, {view}) => {
+          return ancestors.add(view)
+        }, new Set<View>())
+        listener.move = listener.move.filter(({view}) => ancestors.has(view))
         listener.move.unshift(target)
         this.#mouseListeners.set(key, listener)
       } else if (eventName.startsWith('mouse.button.') && !listener.button) {
@@ -59,6 +114,8 @@ export class MouseManager {
   }
 
   trigger(systemEvent: SystemMouseEvent): void {
+    this.#mousePosition = new Point(systemEvent.x, systemEvent.y)
+
     if (systemEvent.name === 'mouse.move.in' && this.#mouseDownEvent) {
       return this.trigger({
         ...systemEvent,
@@ -68,6 +125,7 @@ export class MouseManager {
     }
 
     if (this.#mouseDownEvent) {
+      // ignore scroll wheel
       if (!isMouseButton(systemEvent)) {
         return
       }

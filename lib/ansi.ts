@@ -30,6 +30,8 @@ export type Color =
   // sgr = 16 + r * 36 + g * 6 + b
   // 232-255 are grayscale (232=black, 255=white)
   | {sgr: string | number}
+  // 0-255, these get mapped to 232-255
+  | {grayscale: number}
   // 0 - 255, these get mapped to the closest SGR color
   | [r: number, g: number, b: number]
   // 00-FF, also get mapped to the closest SGR color
@@ -40,8 +42,10 @@ export function colorToHex(color: Color): `#${string}` {
     return colors.RGBToHex(color)
   } else if (typeof color === 'string' && color.startsWith('#')) {
     return color as `#${string}`
-  } else if (typeof color === 'object') {
+  } else if (typeof color === 'object' && 'sgr' in color) {
     return colors.indexToHex(+color.sgr)
+  } else if (typeof color === 'object' && 'grayscale' in color) {
+    return colors.RGBToHex(color.grayscale, color.grayscale, color.grayscale)
   } else {
     const index = colors.nameToIndex(color)
     return index === -1 ? '#ffffff' : colors.indexToHex(index)
@@ -49,10 +53,13 @@ export function colorToHex(color: Color): `#${string}` {
 }
 
 export function colorToSGR(color: Color, fgbg: 'fg' | 'bg'): string {
-  if (Array.isArray(color)) {
-    return `${colors.RGBToHex(color)} ${fgbg}`
-  } else if (typeof color === 'object') {
+  if (typeof color === 'object' && 'sgr' in color) {
     return `${color.sgr} ${fgbg}`
+  } else if (
+    Array.isArray(color) ||
+    (typeof color === 'object' && 'grayscale' in color)
+  ) {
+    return `${colorToHex(color)} ${fgbg}`
   } else {
     return `${color} ${fgbg}`
   }

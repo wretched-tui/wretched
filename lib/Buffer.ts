@@ -35,6 +35,8 @@ export class Buffer implements Terminal {
    * wrapping behavior).
    */
   writeChar(char: string, x: number, y: number, style: Style) {
+    x = ~~x
+    y = ~~y
     if (char === '\n') {
       return
     }

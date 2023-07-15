@@ -1,6 +1,7 @@
 import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Style} from '../Style'
 import {Point, Size} from '../geometry'
@@ -23,7 +24,7 @@ interface StyleProps {
   wrap: boolean
 }
 
-type Props = Partial<StyleProps> & (TextProps | LinesProps)
+type Props = Partial<StyleProps> & (TextProps | LinesProps) & ViewProps
 
 export class Text extends View {
   #text: string
@@ -43,8 +44,8 @@ export class Text extends View {
   #alignment: StyleProps['alignment']
   #wrap: StyleProps['wrap']
 
-  constructor({text, lines, style, alignment, wrap}: Props) {
-    super()
+  constructor({text, lines, style, alignment, wrap, ...viewProps}: Props) {
+    super(viewProps)
 
     this.#style = style
     this.#alignment = alignment ?? 'left'
@@ -74,7 +75,7 @@ export class Text extends View {
   render(viewport: Viewport) {
     const lines: [string, number][] = this.#lines
 
-    viewport.claim(this, this.#style ?? Style.NONE, writer => {
+    viewport.usingPen(this.#style, pen => {
       const point = new Point(0, 0).mutableCopy()
       for (const [line, width] of lines) {
         if (!line.length) {
@@ -94,7 +95,7 @@ export class Text extends View {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            writer.replacePen(Style.fromSGR(char))
+            pen.replacePen(Style.fromSGR(char))
             continue
           }
 
@@ -113,7 +114,7 @@ export class Text extends View {
             point.x >= viewport.visibleRect.minX() &&
             point.x + width - 1 < viewport.visibleRect.maxX()
           ) {
-            writer.write(char, point)
+            viewport.write(char, point)
           }
 
           point.x += width

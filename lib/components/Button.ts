@@ -1,5 +1,6 @@
 import type {Viewport} from '../Viewport'
 import type {MouseEvent} from '../events'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Text} from './Text'
@@ -10,6 +11,7 @@ import {
   isMouseReleased,
   isMouseEnter,
   isMouseExit,
+  isClicked,
 } from '../events'
 
 interface TextProps {
@@ -31,7 +33,7 @@ interface StyleProps {
   onPress?: (value: boolean) => void
 }
 
-type Props = StyleProps & (TextProps | LinesProps)
+type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Button extends Container {
   /**
@@ -85,8 +87,9 @@ export class Button extends Container {
     style,
     hover,
     press,
+    ...viewProps
   }: Props) {
-    super()
+    super(viewProps)
 
     this.style = new Style({foreground: 'black', background: 'gray'}).merge(
       style,
@@ -135,7 +138,7 @@ export class Button extends Container {
       }
       this.#pressed = false
 
-      if (event.name === 'mouse.button.up') {
+      if (isClicked(event)) {
         this.onClick?.()
       }
     }
@@ -154,31 +157,29 @@ export class Button extends Container {
   }
 
   render(viewport: Viewport) {
-    viewport.claim(this, writer => {
-      writer.registerMouse(this, 'mouse.button.left', 'mouse.move')
+    viewport.registerMouse(this, ['mouse.button.left', 'mouse.move'])
 
-      const style: Style = this.isPressed
-        ? this.press
-        : this.isHover
-        ? this.hover
-        : this.style
+    const style: Style = this.isPressed
+      ? this.press
+      : this.isHover
+      ? this.hover
+      : this.style
 
-      writer.usingPen(style, () => {
-        const minX = viewport.visibleRect.minX()
-        const maxX = viewport.visibleRect.maxX()
-        const maxY = viewport.visibleRect.maxY()
-        for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
-          writer.write(' '.repeat(maxX - minX), new Point(minX, y))
-        }
-      })
-
-      viewport.clipped(
-        new Rect(new Point(1, 0), viewport.contentSize.shrink(2, 0)),
-        style,
-        inside => {
-          super.render(inside)
-        },
-      )
+    viewport.usingPen(style, () => {
+      const minX = viewport.visibleRect.minX()
+      const maxX = viewport.visibleRect.maxX()
+      const maxY = viewport.visibleRect.maxY()
+      for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
+        viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
+      }
     })
+
+    viewport.clipped(
+      new Rect(new Point(0, 0), viewport.contentSize),
+      style,
+      inside => {
+        super.render(inside)
+      },
+    )
   }
 }

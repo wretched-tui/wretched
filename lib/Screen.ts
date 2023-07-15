@@ -91,7 +91,7 @@ export class Screen {
 
       screen.trigger({
         ...data,
-        name: translateMouseAction(action, data.button),
+        name: translateMouseAction(action),
         type: 'mouse',
       })
     })
@@ -180,7 +180,7 @@ export class Screen {
     this.#mouseManager.reset()
     this.#focusManager.reset()
 
-    const size = this.view.intrinsicSize(screenSize)
+    const size = this.view.calculateIntrinsicSize(screenSize).max(screenSize)
     const viewport = new Viewport(
       this,
       this.buffer,
@@ -190,7 +190,11 @@ export class Screen {
 
     this.view.render(viewport)
 
-    if (this.#focusManager.needsRerender()) {
+    const focusNeedsRender = this.#focusManager.needsRerender()
+    const mouseNeedsRender = this.#mouseManager.needsRender()
+
+    // one -and only one- re-render if a change is detected to focus or mouse-hover
+    if (focusNeedsRender || mouseNeedsRender) {
       this.view.render(viewport)
     }
 
@@ -202,7 +206,6 @@ export class Screen {
 
 function translateMouseAction(
   action: 'mousemove' | 'mousedown' | 'mouseup' | 'wheeldown' | 'wheelup',
-  button: MouseButton,
 ): SystemMouseEventName {
   switch (action) {
     case 'mousemove':

@@ -1,4 +1,5 @@
 import type {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Point, Size} from '../geometry'
 
@@ -12,7 +13,7 @@ type Border =
   | 'dash4'
   | 'double'
 
-interface Props {
+interface Props extends ViewProps {
   direction: Direction
   padding?: number
   border?: Border
@@ -23,8 +24,8 @@ export class Separator extends View {
   readonly padding: number
   readonly border: Border
 
-  constructor({direction, padding, border}: Props) {
-    super()
+  constructor({direction, padding, border, ...viewProps}: Props) {
+    super(viewProps)
     this.direction = direction
     this.padding = padding ?? 0
     this.border = border ?? 'single'
@@ -39,19 +40,17 @@ export class Separator extends View {
   }
 
   render(viewport: Viewport) {
-    viewport.claim(this, writer => {
-      if (this.direction === 'vertical') {
-        const [char] = BORDERS[this.border]
-        for (let y = 0; y < viewport.contentSize.height; ++y) {
-          writer.write(char, new Point(this.padding, y))
-        }
-      } else {
-        const [, char] = BORDERS[this.border]
-        const pt = viewport.visibleRect.origin.mutableCopy()
-        pt.y += this.padding
-        writer.write(char.repeat(viewport.visibleRect.size.width), pt)
+    if (this.direction === 'vertical') {
+      const [char] = BORDERS[this.border]
+      for (let y = 0; y < viewport.contentSize.height; ++y) {
+        viewport.write(char, new Point(this.padding, y))
       }
-    })
+    } else {
+      const [, char] = BORDERS[this.border]
+      const pt = viewport.visibleRect.origin.mutableCopy()
+      pt.y += this.padding
+      viewport.write(char.repeat(viewport.visibleRect.size.width), pt)
+    }
   }
 }
 

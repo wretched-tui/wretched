@@ -16,10 +16,11 @@ import type {MouseEventListenerName} from './events'
 export class Viewport {
   readonly contentSize: Size
   readonly visibleRect: Rect
-  readonly #offset: Point
   readonly terminal: Terminal
+
+  #offset: Point
   #screen: Screen
-  #pen: Style
+  #style: Style
 
   constructor(
     screen: Screen,
@@ -27,7 +28,7 @@ export class Viewport {
     contentSize: Size,
     visibleRect: Rect,
     offset?: Point,
-    pen?: Style,
+    style?: Style,
   ) {
     this.#screen = screen
     if (terminal instanceof Viewport) {
@@ -39,7 +40,8 @@ export class Viewport {
     this.contentSize = contentSize
     this.visibleRect = visibleRect
     this.#offset = offset ?? Point.zero
-    this.#pen = pen ?? Style.NONE
+    this.#style = style ?? Style.NONE
+
     Object.defineProperty(this, 'terminal', {
       enumerable: false,
     })
@@ -60,16 +62,25 @@ export class Viewport {
   /**
    * @see MouseManager.registerMouse
    */
-  #registerMouse(view: View, eventNames: MouseEventListenerName[]) {
-    const maxX = this.visibleRect.maxX()
-    const maxY = this.visibleRect.maxY()
-    for (let y = this.visibleRect.minY(); y < maxY; ++y)
-      for (let x = this.visibleRect.minX(); x < maxX; ++x) {
+  registerMouse(
+    view: View,
+    eventNames: MouseEventListenerName | MouseEventListenerName[],
+    rect?: Rect,
+  ) {
+    if (rect) {
+      rect = this.visibleRect.intersection(rect)
+    } else {
+      rect = this.visibleRect
+    }
+    const maxX = rect.maxX()
+    const maxY = rect.maxY()
+    for (let y = rect.minY(); y < maxY; ++y)
+      for (let x = rect.minX(); x < maxX; ++x) {
         this.#screen.registerMouse(
           view,
           this.#offset,
           new Point(x, y),
-          eventNames,
+          typeof eventNames === 'string' ? [eventNames] : eventNames,
         )
       }
   }
@@ -78,46 +89,11 @@ export class Viewport {
     return this.#screen.registerTick(view)
   }
 
-  claim(view: View, draw: (writer: Writer) => void): void
-  claim(view: View, style: Style, draw: (writer: Writer) => void): void
-  claim(
-    ...args:
-      | [View, (writer: Writer) => void]
-      | [View, Style, (writer: Writer) => void]
-  ) {
-    let view: View
-    let style: Style
-    let draw: (writer: Writer) => void
-    if (args.length === 3) {
-      if (args[1] === Style.NONE) {
-        args[1] = this.#pen
-      }
-      ;[view, style, draw] = args
-    } else {
-      ;[view, draw] = args
-      style = this.#pen
-    }
-    const registerMouseArgs: [
-      view: View,
-      eventNames: MouseEventListenerName[],
-    ][] = []
-    draw(
-      new Writer(view, style, {
-        write: this.#write.bind(this),
-        registerMouse: (view: View, eventNames: MouseEventListenerName[]) =>
-          registerMouseArgs.unshift([view, eventNames]),
-      }),
-    )
-    for (const [view, eventNames] of registerMouseArgs) {
-      this.#registerMouse(view, eventNames)
-    }
-  }
-
   /**
    * Does not support newlines (no default wrapping behavior),
    * always prints left-to-right.
    */
-  #write(view: View, input: string, to: Point, pen: Style) {
+  write(input: string, to: Point, defaultStyle?: Style) {
     if (
       to.x >= this.visibleRect.maxX() ||
       to.y < this.visibleRect.minY() ||
@@ -126,8 +102,9 @@ export class Viewport {
       return
     }
 
+    defaultStyle ??= this.#style
     let x = to.x
-    let style = pen
+    let style = defaultStyle
     for (const char of unicode.printableChars(input)) {
       if (char === '\n') {
         break
@@ -135,7 +112,10 @@ export class Viewport {
 
       const width = unicode.charWidth(char)
       if (width === 0) {
-        style = char === RESET ? pen : pen.merge(Style.fromSGR(char))
+        style =
+          char === RESET
+            ? defaultStyle
+            : defaultStyle.merge(Style.fromSGR(char))
       } else if (
         x >= this.visibleRect.minX() &&
         x + width - 1 < this.visibleRect.maxX()
@@ -162,6 +142,27 @@ export class Viewport {
    */
   writeMeta(str: string) {
     this.terminal.writeMeta(str)
+  }
+
+  usingPen(style: Style | undefined, draw: (pen: Pen) => void): void
+  usingPen(draw: (pen: Pen) => void): void
+  usingPen(
+    ...args: [Style | undefined, (pen: Pen) => void] | [(pen: Pen) => void]
+  ): void {
+    const prevStyle = this.#style
+    const pen = new Pen((style?: Style) => {
+      this.#style = style ?? prevStyle
+    })
+
+    if (args.length === 2) {
+      if (args[0] && args[0] !== Style.NONE) {
+        pen.replacePen(args[0])
+      }
+      args[1](pen)
+    } else {
+      args[0](pen)
+    }
+    this.#style = prevStyle
   }
 
   clipped(clip: Rect, draw: (viewport: Viewport) => void): void
@@ -210,63 +211,28 @@ export class Viewport {
   }
 }
 
-class Writer {
-  #view: View
-  #pen: Style[]
-  #write: (view: View, input: string, to: Point, style: Style) => void
-  #registerMouse: (view: View, eventNames: MouseEventListenerName[]) => void
+class Pen {
+  #setter: (style?: Style) => void
+  #stack: Style[]
 
-  constructor(
-    view: View,
-    style: Style,
-    fns: {
-      write(view: View, input: string, to: Point, style: Style): void
-      registerMouse(view: View, eventNames: MouseEventListenerName[]): void
-    },
-  ) {
-    this.#view = view
-    this.#pen = [style]
-    this.#write = fns.write
-    this.#registerMouse = fns.registerMouse
-  }
-
-  write(input: string, to: Point) {
-    this.#write(this.#view, input, to, this.#pen[0])
+  constructor(setter: (style?: Style) => void) {
+    this.#setter = setter
+    this.#stack = []
   }
 
   replacePen(style: Style) {
-    this.#pen[0] = style
+    this.#stack[0] = style
+    this.#setter(style)
   }
 
-  usingPen(style: Style | undefined, draw: () => void): void
-  usingPen(draw: () => void): void
-  usingPen(...args: [Style | undefined, () => void] | [() => void]): void {
-    if (args.length === 2) {
-      if (args[0] && args[0] !== Style.NONE) {
-        this.#pushPen(args[0])
-      }
-      args[1]()
-      if (args[0]) {
-        this.#popPen()
-      }
-    } else {
-      args[0]()
-    }
+  pushPen(style: Style | undefined = undefined) {
+    style ??= this.#stack[0] ?? Style.NONE
+    // yeah I know I said pushPen but #style[0] is easier!
+    this.#stack.unshift(style)
+    this.#setter(style)
   }
 
-  #pushPen(style: Style | undefined = undefined): this {
-    style ??= this.#pen[0] ?? Style.NONE
-    // yeah I know I said pushPen but #pen[0] is easier!
-    this.#pen.unshift(style)
-    return this
-  }
-
-  #popPen(): this {
-    this.#pen.shift()
-    return this
-  }
-
-  registerMouse(view: View, ...eventNames: MouseEventListenerName[]) {
-    this.#registerMouse(view, eventNames)
+  popPen() {
+    this.#setter(this.#stack.shift())
   }
 }

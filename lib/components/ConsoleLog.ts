@@ -6,13 +6,14 @@ import {centerPad} from '../util'
 import {inspect} from '../inspect'
 import {styled} from '../ansi'
 import {Viewport} from '../Viewport'
+import type {Props as ViewProps} from '../View'
 
 import {Flow} from './Flow'
 import {Text} from './Text'
 
 export class ConsoleLog extends Flow {
-  constructor() {
-    super({direction: 'topToBottom', children: []})
+  constructor(viewProps: ViewProps = {}) {
+    super({direction: 'topToBottom', children: [], ...viewProps})
   }
 
   appendLog(method: Method, args: any[]) {
@@ -35,10 +36,8 @@ export class ConsoleLog extends Flow {
 
   render(viewport: Viewport) {
     fetchLogs().forEach(([method, args]) => this.appendLog(method, args))
-    viewport.claim(this, writer => {
-      writer.registerMouse(this, 'mouse.wheel')
-      super.render(viewport)
-    })
+    viewport.registerMouse(this, 'mouse.wheel')
+    super.render(viewport)
   }
 }
 

@@ -63,6 +63,10 @@ export type MouseEventListener = {
   wheel?: MouseEventTarget
 }
 
+export function isClicked(event: MouseEvent) {
+  return event.name === 'mouse.button.up'
+}
+
 export function isMousePressed(event: SystemMouseEvent | MouseEvent) {
   return (
     event.name.startsWith('mouse.button.') &&
@@ -92,7 +96,7 @@ export function isMouseExit(event: MouseEvent) {
   return event.name.endsWith('.exit')
 }
 
-export function isMouseButton(event: SystemMouseEvent | MouseEvent) {
+export function isMouseButton(event: SystemMouseEvent) {
   return event.name.startsWith('mouse.button.')
 }
 
