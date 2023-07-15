@@ -3,7 +3,7 @@ import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
-import {Color} from '../ansi'
+import {Color} from '../Color'
 import {Style} from '../Style'
 
 type Border = 'cool' | 'single' | 'bold' | 'double' | 'round'

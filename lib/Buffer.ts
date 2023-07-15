@@ -1,7 +1,7 @@
 import {unicode} from './sys'
 
 import type {Terminal, SGRTerminal} from './terminal'
-import type {Color} from './ansi'
+import type {Color} from './Color'
 import {Style} from './Style'
 import {Size} from './geometry'
 

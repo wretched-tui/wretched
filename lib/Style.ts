@@ -1,7 +1,7 @@
 import {program} from './sys'
 
-import type {Color} from './ansi'
-import {colorToSGR} from './ansi'
+import type {Color} from './Color'
+import {colorToSGR} from './Color'
 
 export class Style {
   underline?: boolean

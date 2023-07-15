@@ -1,8 +1,8 @@
 import type {BlessedProgram} from './sys'
 import {StringDecoder} from 'string_decoder'
 
-import type {Color} from './ansi'
-import {colorToHex} from './ansi'
+import type {Color} from './Color'
+import {colorToHex} from './Color'
 
 let _restoreBg: string | undefined
 

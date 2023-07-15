@@ -9,7 +9,11 @@ export function isDebugging(enabled?: boolean) {
   return _debug
 }
 
-export function inspect(value: any, wrap: boolean = true, recursion = 0): string {
+export function inspect(
+  value: any,
+  wrap: boolean = true,
+  recursion = 0,
+): string {
   if (recursion >= 10) {
     return red('...')
   }
@@ -25,7 +29,11 @@ export function inspect(value: any, wrap: boolean = true, recursion = 0): string
   const tab = '  '.repeat(recursion)
   const innerTab = tab + '  '
 
-  if (value instanceof Object && value.constructor !== Object && Object.keys(value).length === 0) {
+  if (
+    value instanceof Object &&
+    value.constructor !== Object &&
+    Object.keys(value).length === 0
+  ) {
     return nodeInspect(value).replace('\n', `\n${innerTab}`)
   } else if (typeof value === 'string') {
     return colorize.string(value, recursion > 0)
@@ -79,5 +87,7 @@ export function inspect(value: any, wrap: boolean = true, recursion = 0): string
     inner = values.join(', ')
   }
 
-  return newline ? `${name}{\n${innerTab}${inner}\n${tab}}` : `${name}{ ${inner} }`
+  return newline
+    ? `${name}{\n${innerTab}${inner}\n${tab}}`
+    : `${name}{ ${inner} }`
 }

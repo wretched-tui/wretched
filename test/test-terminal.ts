@@ -1,5 +1,5 @@
 import type {SGRTerminal} from '../lib/terminal'
-import type {Color} from '../lib/ansi'
+import type {Color} from '../lib/Color'
 
 export class TestTerminal implements SGRTerminal {
   chars = ''
