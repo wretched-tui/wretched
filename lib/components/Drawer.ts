@@ -51,7 +51,7 @@ export class Drawer extends Container {
   }
 
   intrinsicSize(size: Size): Size {
-    const drawerSize = this.drawer.calculateIntrinsicSize(
+    const drawerSize = this.drawer.intrinsicSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
     this.#drawerWidth = drawerSize.width
@@ -59,7 +59,7 @@ export class Drawer extends Container {
       this.#targetDx = this.#drawerWidth
     }
 
-    const contentSize = this.content.calculateIntrinsicSize(
+    const contentSize = this.content.intrinsicSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
 

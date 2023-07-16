@@ -174,7 +174,7 @@ export class Screen {
     this.#mouseManager.reset()
     this.#focusManager.reset()
 
-    const size = this.view.calculateIntrinsicSize(screenSize).max(screenSize)
+    const size = this.view.intrinsicSize(screenSize).max(screenSize)
     const viewport = new Viewport(
       this,
       this.buffer,

@@ -113,7 +113,7 @@ export class ScrollableList extends Container {
       return undefined
     }
 
-    const {height} = view.calculateIntrinsicSize(new Size(contentWidth, 0))
+    const {height} = view.intrinsicSize(new Size(contentWidth, 0))
     return height
   }
 

@@ -10,7 +10,7 @@ export abstract class Container extends View {
     let width = 0
     let height = 0
     for (const child of this.children) {
-      const intrinsicSize = child.calculateIntrinsicSize(size)
+      const intrinsicSize = child.intrinsicSize(size)
       width = Math.max(width, intrinsicSize.width)
       height = Math.max(height, intrinsicSize.height)
     }

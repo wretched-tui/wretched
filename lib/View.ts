@@ -53,6 +53,8 @@ export abstract class View {
 
     const render = this.render.bind(this)
     this.render = this.#render(render).bind(this)
+    const intrinsicSize = this.intrinsicSize.bind(this)
+    this.intrinsicSize = this.#intrinsicSize(intrinsicSize).bind(this)
   }
 
   get screen(): Screen | null {
@@ -73,46 +75,51 @@ export abstract class View {
     }
   }
 
-  calculateIntrinsicSize(availableSize: Size): Mutable<Size> {
-    let size: Mutable<Size>
-    if (this.#width !== undefined && this.#height !== undefined) {
-      size = new Size(this.#width, this.#height).mutableCopy()
-    } else {
-      size = this.intrinsicSize(availableSize).mutableCopy()
-      if (
-        !this.#x &&
-        !this.#y &&
-        this.#minWidth === undefined &&
-        this.#minHeight === undefined &&
-        this.#maxWidth === undefined &&
-        this.#maxHeight === undefined
-      ) {
-        return size
+  // intrinsicSize(availableSize: Size): Mutable<Size> {
+  #intrinsicSize(
+    intrinsicSize: (availableSize: Size) => Mutable<Size>,
+  ): (availableSize: Size) => Mutable<Size> {
+    return availableSize => {
+      let size: Mutable<Size>
+      if (this.#width !== undefined && this.#height !== undefined) {
+        size = new Size(this.#width, this.#height).mutableCopy()
+      } else {
+        size = intrinsicSize(availableSize).mutableCopy()
+        if (
+          !this.#x &&
+          !this.#y &&
+          this.#minWidth === undefined &&
+          this.#minHeight === undefined &&
+          this.#maxWidth === undefined &&
+          this.#maxHeight === undefined
+        ) {
+          return size
+        }
+
+        if (this.#minWidth !== undefined) {
+          size.width = Math.max(this.#minWidth, size.width)
+        }
+        if (this.#minHeight !== undefined) {
+          size.height = Math.max(this.#minHeight, size.height)
+        }
+
+        if (this.#maxWidth !== undefined) {
+          size.width = Math.min(this.#maxWidth, size.width)
+        }
+        if (this.#maxHeight !== undefined) {
+          size.height = Math.min(this.#maxHeight, size.height)
+        }
       }
 
-      if (this.#minWidth !== undefined) {
-        size.width = Math.max(this.#minWidth, size.width)
+      if (this.#x) {
+        size.width += this.#x
       }
-      if (this.#minHeight !== undefined) {
-        size.height = Math.max(this.#minHeight, size.height)
+      if (this.#y) {
+        size.width += this.#y
       }
 
-      if (this.#maxWidth !== undefined) {
-        size.width = Math.min(this.#maxWidth, size.width)
-      }
-      if (this.#maxHeight !== undefined) {
-        size.height = Math.min(this.#maxHeight, size.height)
-      }
+      return size
     }
-
-    if (this.#x) {
-      size.width += this.#x
-    }
-    if (this.#y) {
-      size.width += this.#y
-    }
-
-    return size
   }
 
   abstract intrinsicSize(availableSize: Size): Size

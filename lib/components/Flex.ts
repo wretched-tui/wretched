@@ -44,7 +44,7 @@ export class Flex extends Container {
     let hasFlex = false
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'intrinsic'
-      const childSize = child.calculateIntrinsicSize(availableSize)
+      const childSize = child.intrinsicSize(availableSize)
       if (flexSize === 'intrinsic') {
         if (isVertical(this.direction)) {
           remainingSize = Math.max(0, remainingSize - childSize.height)
@@ -91,7 +91,7 @@ export class Flex extends Container {
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'intrinsic'
       if (flexSize === 'intrinsic') {
-        const childSize = child.calculateIntrinsicSize(viewport.contentSize)
+        const childSize = child.intrinsicSize(viewport.contentSize)
         if (isVertical(this.direction)) {
           flexViews.push([flexSize, childSize.height, child])
           remainingSize = Math.max(0, remainingSize - childSize.height)
