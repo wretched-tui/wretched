@@ -2,22 +2,19 @@ import type {MouseButton} from '../sys'
 import {View} from '../View'
 import {Point} from '../geometry'
 
-// export namespace Screen {
-//   export type MouseEvent = Omit<WretchedMouseEvent, 'action' | 'name'> & {
-//     type: 'mouse'
-//     action: 'mousemove' | 'mousedown' | 'mouseup' | 'wheeldown' | 'wheelup'
-//   }
-// }
-
-export type MouseMove = 'enter' | 'in' | 'below' | 'exit'
+export type MouseMove =
+  | 'enter' // mouse move enters area
+  | 'in' // mouse moving inside
+  | 'below' // mouse moving inside, but this is not the topmost view
+  | 'exit' // mouse exiting
 export type MouseClick =
-  | 'down'
-  | 'enter'
-  | 'drag'
-  | 'up'
-  | 'exit'
-  | 'dragOutside'
-  | 'cancel'
+  | 'down' // mouse down, inside target area
+  | 'enter' // dragging from outside into area
+  | 'drag' // dragging inside
+  | 'up' // mouse released inside area
+  | 'exit' // mouse dragged from inside to outside
+  | 'dragOutside' // mouse dragged outside
+  | 'cancel' // mouse released outside
 export type MouseWheel = 'down' | 'up'
 
 export type MouseEventListenerName =
@@ -36,8 +33,7 @@ export type MouseEventName =
   | `mouse.button.${MouseClick}`
   | `mouse.wheel.${MouseWheel}`
 export type MouseEvent = {
-  x: number
-  y: number
+  position: Point
   type: 'mouse'
   name: MouseEventName
   ctrl: boolean
@@ -46,8 +42,10 @@ export type MouseEvent = {
   button: MouseButton
 }
 
-export type SystemMouseEvent = Omit<MouseEvent, 'name'> & {
+export type SystemMouseEvent = Omit<MouseEvent, 'name' | 'position'> & {
   name: SystemMouseEventName
+  x: number
+  y: number
 }
 export type MouseDownEvent = {
   target?: MouseEventTarget & {wasInside: boolean}
@@ -59,11 +57,14 @@ export type MouseEventTarget = {
 }
 export type MouseEventListener = {
   move: MouseEventTarget[]
-  button?: MouseEventTarget
+  buttonAll?: MouseEventTarget
+  buttonLeft?: MouseEventTarget
+  buttonMiddle?: MouseEventTarget
+  buttonRight?: MouseEventTarget
   wheel?: MouseEventTarget
 }
 
-export function isClicked(event: MouseEvent) {
+export function isMouseClicked(event: MouseEvent) {
   return event.name === 'mouse.button.up'
 }
 

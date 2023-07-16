@@ -10,8 +10,8 @@ import type {
 } from './events'
 import {isMouseButton, isMouseWheel} from './events'
 
-function mouseKey(x: number, y: number, event: string) {
-  return `${~~x},${~~y}:${event}`
+function mouseKey(x: number, y: number) {
+  return `${~~x},${~~y}`
 }
 
 export class MouseManager {
@@ -28,7 +28,6 @@ export class MouseManager {
       this.#prevListener = this.getMouseListener(
         this.#mousePosition.x,
         this.#mousePosition.y,
-        'mouse.move',
       )
     }
     this.#mouseListeners = new Map()
@@ -42,7 +41,6 @@ export class MouseManager {
     const listener = this.getMouseListener(
       this.#mousePosition.x,
       this.#mousePosition.y,
-      'mouse.move',
     )
     const prev = new Set(
       this.#prevListener?.move.map(target => target.view) ?? [],
@@ -84,7 +82,7 @@ export class MouseManager {
   ) {
     const resolved = offset.offset(point)
     for (const eventName of eventNames) {
-      const key = mouseKey(resolved.x, resolved.y, eventName)
+      const key = mouseKey(resolved.x, resolved.y)
       const target = {
         view,
         offset,
@@ -93,24 +91,69 @@ export class MouseManager {
       if (eventName === 'mouse.move') {
         // search listener.move - only keep views that are in the current views
         // ancestors
-        const ancestors = listener.move.reduce((ancestors, {view}) => {
-          return ancestors.add(view)
-        }, new Set<View>())
-        listener.move = listener.move.filter(({view}) => ancestors.has(view))
         listener.move.unshift(target)
-        this.#mouseListeners.set(key, listener)
-      } else if (eventName.startsWith('mouse.button.') && !listener.button) {
-        listener.button = target
-        this.#mouseListeners.set(key, listener)
-      } else if (eventName === 'mouse.wheel' && !listener.wheel) {
+      } else if (eventName.startsWith('mouse.button.')) {
+        switch (eventName) {
+          case 'mouse.button.left':
+            listener.buttonLeft = target
+            break
+          case 'mouse.button.middle':
+            listener.buttonMiddle = target
+            break
+          case 'mouse.button.right':
+            listener.buttonRight = target
+            break
+          case 'mouse.button.all':
+            listener.buttonAll = target
+            break
+        }
+      } else if (eventName === 'mouse.wheel') {
         listener.wheel = target
-        this.#mouseListeners.set(key, listener)
       }
+      this.#mouseListeners.set(key, listener)
     }
   }
 
-  getMouseListener(x: number, y: number, event: MouseEventListenerName) {
-    return this.#mouseListeners.get(mouseKey(x, y, event))
+  checkMouse(view: View, x: number, y: number) {
+    function foo(view: any) {
+      return view.constructor.name === 'Button'
+        ? {name: view.constructor.name, text: (view as any).text}
+        : view.constructor.name
+    }
+
+    const debug = x === 25 && y === 5
+    const listener = this.getMouseListener(x, y)
+    if (!listener) {
+      return
+    }
+
+    const ancestors = new Set<View>([view])
+    for (let parent = view.parent; !!parent; parent = parent!.parent) {
+      ancestors.add(parent)
+    }
+
+    ;(
+      [
+        'buttonAll',
+        'buttonLeft',
+        'buttonMiddle',
+        'buttonRight',
+        'wheel',
+      ] as const
+    ).forEach(prop => {
+      const target = listener[prop]
+      if (!target) {
+        return
+      }
+      listener[prop] = ancestors.has(target.view) ? target : undefined
+    })
+    listener.move = listener.move.filter(({view}) => ancestors.has(view))
+
+    this.#mouseListeners.set(mouseKey(x, y), listener)
+  }
+
+  getMouseListener(x: number, y: number) {
+    return this.#mouseListeners.get(mouseKey(x, y))
   }
 
   trigger(systemEvent: SystemMouseEvent): void {
@@ -132,7 +175,7 @@ export class MouseManager {
       this.#dragMouse(systemEvent, this.#mouseDownEvent)
 
       if (systemEvent.name === 'mouse.button.up') {
-        this.#moveMouse(systemEvent)
+        this.#moveMouse({...systemEvent, name: 'mouse.move.in'})
       }
     } else if (isMouseButton(systemEvent)) {
       this.#pressMouse(systemEvent)
@@ -144,24 +187,37 @@ export class MouseManager {
   }
 
   #getListener(systemEvent: SystemMouseEvent): MouseEventTarget | undefined {
-    return this.#getListeners(systemEvent)?.[0]
+    return this.#getListeners(systemEvent)[0]
   }
 
-  #getListeners(systemEvent: SystemMouseEvent): MouseEventTarget[] | undefined {
-    let listener: MouseEventListener | undefined
-    for (const eventName of checkEventNames(systemEvent)) {
-      listener = this.getMouseListener(systemEvent.x, systemEvent.y, eventName)
-      if (listener) {
-        if (isMouseButton(systemEvent)) {
-          return listener.button ? [listener.button] : undefined
-        } else if (isMouseWheel(systemEvent)) {
-          return listener.wheel ? [listener.wheel] : undefined
-        } else {
-          return listener.move
-        }
-      }
+  #getListeners(systemEvent: SystemMouseEvent): MouseEventTarget[] {
+    const listener = this.getMouseListener(systemEvent.x, systemEvent.y)
+    if (!listener) {
+      return []
     }
-    return undefined
+
+    if (isMouseButton(systemEvent)) {
+      let target: MouseEventTarget | undefined
+      switch (systemEvent.button) {
+        case 'left':
+          target = listener.buttonLeft ?? listener.buttonAll
+          break
+        case 'middle':
+          target = listener.buttonMiddle ?? listener.buttonAll
+          break
+        case 'right':
+          target = listener.buttonRight ?? listener.buttonAll
+          break
+        default:
+          return []
+      }
+
+      return target ? [target] : []
+    } else if (isMouseWheel(systemEvent)) {
+      return listener.wheel ? [listener.wheel] : []
+    } else {
+      return listener.move
+    }
   }
 
   #sendMouse(
@@ -172,8 +228,7 @@ export class MouseManager {
     const event = {
       ...systemEvent,
       name: eventName,
-      x: systemEvent.x - target.offset.x,
-      y: systemEvent.y - target.offset.y,
+      position: target.offset.offset(systemEvent.x, systemEvent.y),
     }
     target.view.receiveMouse(event)
   }
@@ -230,7 +285,7 @@ export class MouseManager {
   }
 
   #moveMouse(systemEvent: SystemMouseEvent) {
-    const listeners = this.#getListeners(systemEvent) ?? []
+    const listeners = this.#getListeners(systemEvent)
     let prevListeners = this.#mouseMoveViews
     let index = 0
     for (const listener of listeners) {

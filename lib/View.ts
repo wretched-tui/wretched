@@ -18,6 +18,7 @@ export interface Props {
 export abstract class View {
   parent: View | null = null
   #screen: Screen | null = null
+  #currentRender: View | null = null
 
   #x: number | undefined
   #y: number | undefined
@@ -47,36 +48,49 @@ export abstract class View {
     this.#maxWidth = maxWidth
     this.#maxHeight = maxHeight
 
-    Object.defineProperty(this, 'parent', {
-      enumerable: false,
-    })
-
     const render = this.render.bind(this)
-    this.render = this.#render(render).bind(this)
+    this.render = this.#renderWrap(render).bind(this)
     const intrinsicSize = this.intrinsicSize.bind(this)
-    this.intrinsicSize = this.#intrinsicSize(intrinsicSize).bind(this)
+    this.intrinsicSize = this.#intrinsicSizeWrap(intrinsicSize).bind(this)
+
+    Object.defineProperties(this, {
+      render: {
+        enumerable: false,
+      },
+      intrinsicSize: {
+        enumerable: false,
+      },
+      parent: {
+        enumerable: false,
+      },
+    })
   }
 
   get screen(): Screen | null {
     return this.#screen
   }
 
-  #render(render: (viewport: Viewport) => void): (viewport: Viewport) => void {
-    return (viewport: Viewport) => {
+  #renderWrap(
+    render: (viewport: Viewport) => void,
+  ): (viewport: Viewport) => void {
+    return viewport => {
+      const prevRender = viewport._currentRender
+      viewport._currentRender = this
       if (this.#x || this.#y) {
         const [x, y] = [this.#x ?? 0, this.#y ?? 0]
-        viewport.clipped(
-          new Rect(new Point(x, y), viewport.contentSize.shrink(x, y)),
-          render,
+        const rect = new Rect(
+          new Point(x, y),
+          viewport.contentSize.shrink(x, y),
         )
+        viewport.clipped(rect, render)
       } else {
         render(viewport)
       }
+      viewport._currentRender = prevRender
     }
   }
 
-  // intrinsicSize(availableSize: Size): Mutable<Size> {
-  #intrinsicSize(
+  #intrinsicSizeWrap(
     intrinsicSize: (availableSize: Size) => Mutable<Size>,
   ): (availableSize: Size) => Mutable<Size> {
     return availableSize => {
@@ -85,29 +99,27 @@ export abstract class View {
         size = new Size(this.#width, this.#height).mutableCopy()
       } else {
         size = intrinsicSize(availableSize).mutableCopy()
-        if (
-          !this.#x &&
-          !this.#y &&
-          this.#minWidth === undefined &&
-          this.#minHeight === undefined &&
-          this.#maxWidth === undefined &&
-          this.#maxHeight === undefined
-        ) {
-          return size
+
+        if (this.#width !== undefined) {
+          size.width = this.#width
+        } else {
+          if (this.#minWidth !== undefined) {
+            size.width = Math.max(this.#minWidth, size.width)
+          }
+          if (this.#maxWidth !== undefined) {
+            size.width = Math.min(this.#maxWidth, size.width)
+          }
         }
 
-        if (this.#minWidth !== undefined) {
-          size.width = Math.max(this.#minWidth, size.width)
-        }
-        if (this.#minHeight !== undefined) {
-          size.height = Math.max(this.#minHeight, size.height)
-        }
-
-        if (this.#maxWidth !== undefined) {
-          size.width = Math.min(this.#maxWidth, size.width)
-        }
-        if (this.#maxHeight !== undefined) {
-          size.height = Math.min(this.#maxHeight, size.height)
+        if (this.#height !== undefined) {
+          size.height = this.#height
+        } else {
+          if (this.#minHeight !== undefined) {
+            size.height = Math.max(this.#minHeight, size.height)
+          }
+          if (this.#maxHeight !== undefined) {
+            size.height = Math.min(this.#maxHeight, size.height)
+          }
         }
       }
 
@@ -115,7 +127,7 @@ export abstract class View {
         size.width += this.#x
       }
       if (this.#y) {
-        size.width += this.#y
+        size.height += this.#y
       }
 
       return size
@@ -125,16 +137,16 @@ export abstract class View {
   abstract intrinsicSize(availableSize: Size): Size
   abstract render(viewport: Viewport): void
 
-  willMoveTo(parent: View) {}
-  didMoveFrom(parent: View) {}
-  didMount(screen: Screen) {}
-  didUnmount(screen: Screen) {}
-
   receiveKey(event: KeyEvent) {}
   receiveMouse(event: MouseEvent) {}
   receiveTick(dt: number): boolean | undefined {
     return
   }
+
+  willMoveTo(parent: View) {}
+  didMoveFrom(parent: View) {}
+  didMount(screen: Screen) {}
+  didUnmount(screen: Screen) {}
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {

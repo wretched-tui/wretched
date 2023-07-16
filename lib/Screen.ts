@@ -162,6 +162,10 @@ export class Screen {
     this.#mouseManager.registerMouse(view, offset, point, eventNames)
   }
 
+  checkMouse(view: View, x: number, y: number) {
+    this.#mouseManager.checkMouse(view, x, y)
+  }
+
   triggerMouse(systemEvent: SystemMouseEvent): void {
     this.#mouseManager.trigger(systemEvent)
   }

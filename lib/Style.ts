@@ -230,17 +230,6 @@ export class Style {
     })
   }
 
-  defaultBackground(style: Partial<Style>): Style {
-    if (style.inverse) {
-      return this.defaultBackground({background: style.foreground})
-    }
-
-    if (this.background === undefined || this.background === 'default') {
-      return this.merge({background: style.background})
-    }
-    return this
-  }
-
   isEqual(style: Style) {
     return (
       this.underline === style.underline &&

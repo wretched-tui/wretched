@@ -1,10 +1,11 @@
 import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
+import type {MouseEvent} from '../events'
 import {View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
-import {Color} from '../Color'
 import {Style} from '../Style'
+import {isMouseEnter, isMouseExit} from '../events'
 
 type Border = 'cool' | 'single' | 'bold' | 'double' | 'round'
 
@@ -18,13 +19,14 @@ interface ContentProps {
 }
 interface StyleProps extends ViewProps {
   border?: Border
-  highlight?: Color
+  highlight?: Style
 }
 type Props = StyleProps & (ChildrenProps | ContentProps)
 
 export class Box extends Container {
   readonly border: Border
-  readonly highlight?: Color
+  readonly highlight?: Style
+  #hover = false
 
   constructor({content, children, border, highlight, ...viewProps}: Props) {
     super(viewProps)
@@ -42,14 +44,18 @@ export class Box extends Container {
     return intrinsicSize.grow(2, 2)
   }
 
-  render(viewport: Viewport) {
-    if (this.highlight) {
-      viewport.registerMouse(this, 'mouse.move')
+  receiveMouse(event: MouseEvent) {
+    if (isMouseEnter(event)) {
+      this.#hover = true
+    } else if (isMouseExit(event)) {
+      this.#hover = false
     }
+  }
 
+  render(viewport: Viewport) {
     const maxX = viewport.contentSize.width - 1
     const maxY = viewport.contentSize.height - 1
-    const borderStyle =
+    let borderStyle =
       this.border === 'cool'
         ? new Style({foreground: [98, 196, 255], background: [34, 34, 37]})
         : new Style({foreground: 'white', background: 'default'})
@@ -69,6 +75,12 @@ export class Box extends Container {
       },
     )
 
+    if (this.highlight) {
+      borderStyle = this.#hover
+        ? this.highlight.merge(borderStyle)
+        : borderStyle
+      viewport.registerMouse(this, 'mouse.move')
+    }
     viewport.usingPen(borderStyle, () => {
       const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
       viewport.write(top.repeat(maxX - 1), new Point(1, 0))

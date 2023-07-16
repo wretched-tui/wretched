@@ -50,8 +50,6 @@ export class Buffer implements Terminal {
     }
 
     let line = this.#canvas.get(y)
-    const prevStyle = line?.get(x)?.style
-    style = prevStyle ? style.defaultBackground(prevStyle) : style
     if (x >= 0) {
       if (line) {
         const prev = line.get(x - 1)

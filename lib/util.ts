@@ -1,5 +1,14 @@
 import {unicode} from './sys'
-import {Size} from './geometry'
+
+let _debug = false
+/**
+ * A global function to turn debugging on/off, useful to test things that would
+ * otherwise output way too much, ie console.log in render()
+ */
+export function debug(value?: boolean): boolean {
+  _debug = value ?? _debug
+  return _debug
+}
 
 export function leftPad(str: string, length: number): string {
   const lines = str.split('\n')

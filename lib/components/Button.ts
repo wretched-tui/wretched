@@ -11,7 +11,7 @@ import {
   isMouseReleased,
   isMouseEnter,
   isMouseExit,
-  isClicked,
+  isMouseClicked,
 } from '../events'
 
 interface TextProps {
@@ -55,7 +55,6 @@ export class Button extends Container {
     return this.#pressedOverride || this.#pressed
   }
   set isPressed(value: boolean) {
-    const wasPressed = this.isPressed
     this.#pressedOverride = value
   }
 
@@ -65,7 +64,6 @@ export class Button extends Container {
     return this.#hoverOverride || this.#hover
   }
   set isHover(value: boolean) {
-    const wasHover = this.isHover
     this.#hoverOverride = value
   }
 
@@ -138,7 +136,7 @@ export class Button extends Container {
       }
       this.#pressed = false
 
-      if (isClicked(event)) {
+      if (isMouseClicked(event)) {
         this.onClick?.()
       }
     }
@@ -174,8 +172,9 @@ export class Button extends Container {
       }
     })
 
+    const offset = viewport.contentSize.height === 1 ? 0 : 1
     viewport.clipped(
-      new Rect(new Point(0, 0), viewport.contentSize),
+      new Rect(new Point(0, offset), viewport.contentSize.shrink(0, offset)),
       style,
       inside => {
         super.render(inside)

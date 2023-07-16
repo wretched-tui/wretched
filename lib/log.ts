@@ -23,11 +23,7 @@ export function interceptConsoleLog() {
 }
 
 function appendLog([method, args]: [Method, any[]]) {
-  if ((inspect_methods as readonly string[]).includes(method)) {
-    logs.push([method, args.map(arg => inspect(arg, false))])
-  } else {
-    logs.push([method, args])
-  }
+  logs.push([method, args])
 }
 
 export function fetchLogs() {
@@ -38,7 +34,10 @@ export function fetchLogs() {
 
 export function flushLogs() {
   logs.forEach(([method, args]) => {
-    builtin[method].apply(console, args)
+    builtin[method].apply(
+      console,
+      args.map(arg => inspect(arg, true)),
+    )
   })
   logs.splice(0, logs.length)
   methods.forEach(method => {

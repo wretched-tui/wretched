@@ -17,6 +17,7 @@ export class Viewport {
   readonly contentSize: Size
   readonly visibleRect: Rect
   readonly terminal: Terminal
+  _currentRender: View | null = null
 
   #offset: Point
   #screen: Screen
@@ -33,6 +34,7 @@ export class Viewport {
     this.#screen = screen
     if (terminal instanceof Viewport) {
       this.terminal = terminal.terminal
+      this._currentRender = terminal._currentRender
     } else {
       this.terminal = terminal
     }
@@ -94,17 +96,17 @@ export class Viewport {
    * always prints left-to-right.
    */
   write(input: string, to: Point, defaultStyle?: Style) {
-    if (
-      to.x >= this.visibleRect.maxX() ||
-      to.y < this.visibleRect.minY() ||
-      to.y >= this.visibleRect.maxY()
-    ) {
+    const minX = this.visibleRect.minX(),
+      maxX = this.visibleRect.maxX(),
+      minY = this.visibleRect.minY(),
+      maxY = this.visibleRect.maxY()
+    if (to.x >= maxX || to.y < minY || to.y >= maxY) {
       return
     }
 
     defaultStyle ??= this.#style
-    let x = to.x
-    let style = defaultStyle
+    let x = to.x,
+      style = defaultStyle
     for (const char of unicode.printableChars(input)) {
       if (char === '\n') {
         break
@@ -116,22 +118,26 @@ export class Viewport {
           char === RESET
             ? defaultStyle
             : defaultStyle.merge(Style.fromSGR(char))
-      } else if (
-        x >= this.visibleRect.minX() &&
-        x + width - 1 < this.visibleRect.maxX()
-      ) {
+      } else if (x >= minX && x + width - 1 < maxX) {
         this.terminal.writeChar(
           char,
           this.#offset.x + x,
           this.#offset.y + to.y,
           style,
         )
+        if (this._currentRender) {
+          this.#screen.checkMouse(
+            this._currentRender,
+            this.#offset.x + x,
+            this.#offset.y + to.y,
+          )
+        }
       }
 
       x += width
 
       // no need to consider characters after this; newline/wrap isn't supported here
-      if (x >= this.visibleRect.maxX()) {
+      if (x >= maxX) {
         break
       }
     }

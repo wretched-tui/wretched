@@ -5,7 +5,7 @@ import {View} from '../View'
 import {Container} from '../Container'
 import {Style} from '../Style'
 import {Rect, Point, Size} from '../geometry'
-import {isClicked, isMouseEnter, isMouseExit} from '../events'
+import {isMouseClicked, isMouseEnter, isMouseExit} from '../events'
 
 interface Props extends ViewProps {
   drawer: View
@@ -90,7 +90,7 @@ export class Drawer extends Container {
       this.#hover = false
     }
 
-    if (isClicked(event)) {
+    if (isMouseClicked(event)) {
       this.toggle()
     }
   }
@@ -103,11 +103,6 @@ export class Drawer extends Container {
     const drawerButtonRect = new Rect(
       new Point(~~this.#currentDx, 0),
       new Size(2, viewport.contentSize.height),
-    )
-    viewport.registerMouse(
-      this,
-      ['mouse.move', 'mouse.button.left'],
-      drawerButtonRect,
     )
 
     const contentRect = new Rect(
@@ -142,6 +137,7 @@ export class Drawer extends Container {
   }
 
   #drawDrawer(viewport: Viewport, style: Style, rect: Rect) {
+    viewport.registerMouse(this, ['mouse.move', 'mouse.button.left'], rect)
     viewport.usingPen(style, () => {
       const minY = 0,
         drawerHeight = rect.size.height,
