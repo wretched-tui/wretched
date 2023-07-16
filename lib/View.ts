@@ -1,11 +1,14 @@
-import type {BlessedProgram} from './sys'
-import type {MutableSize} from './geometry'
-import {Size} from './geometry'
+import type {Mutable} from './geometry'
+import {Point, Size, Rect} from './geometry'
 import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
 import type {KeyEvent, MouseEvent} from './events'
 
 export interface Props {
+  x?: number
+  y?: number
+  width?: number
+  height?: number
   minWidth?: number
   minHeight?: number
   maxWidth?: number
@@ -16,12 +19,29 @@ export abstract class View {
   parent: View | null = null
   #screen: Screen | null = null
 
+  #x: number | undefined
+  #y: number | undefined
+  #width: number | undefined
+  #height: number | undefined
   #minWidth: number | undefined
   #minHeight: number | undefined
   #maxWidth: number | undefined
   #maxHeight: number | undefined
 
-  constructor({minWidth, minHeight, maxWidth, maxHeight}: Props = {}) {
+  constructor({
+    x,
+    y,
+    width,
+    height,
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
+  }: Props = {}) {
+    this.#x = x
+    this.#y = y
+    this.#width = width
+    this.#height = height
     this.#minWidth = minWidth
     this.#minHeight = minHeight
     this.#maxWidth = maxWidth
@@ -30,34 +50,68 @@ export abstract class View {
     Object.defineProperty(this, 'parent', {
       enumerable: false,
     })
+
+    const render = this.render.bind(this)
+    this.render = this.#render(render).bind(this)
   }
 
   get screen(): Screen | null {
     return this.#screen
   }
 
-  calculateIntrinsicSize(availableSize: Size): MutableSize {
-    const size = this.intrinsicSize(availableSize).mutableCopy()
-    if (
-      this.#minWidth === undefined &&
-      this.#minHeight === undefined &&
-      this.#maxWidth === undefined &&
-      this.#maxHeight === undefined
-    ) {
-      return size
+  #render(render: (viewport: Viewport) => void): (viewport: Viewport) => void {
+    return (viewport: Viewport) => {
+      if (this.#x || this.#y) {
+        const [x, y] = [this.#x ?? 0, this.#y ?? 0]
+        viewport.clipped(
+          new Rect(new Point(x, y), viewport.contentSize.shrink(x, y)),
+          render,
+        )
+      } else {
+        render(viewport)
+      }
     }
-    if (this.#minWidth !== undefined) {
-      size.width = Math.max(this.#minWidth, size.width)
+  }
+
+  calculateIntrinsicSize(availableSize: Size): Mutable<Size> {
+    let size: Mutable<Size>
+    if (this.#width !== undefined && this.#height !== undefined) {
+      size = new Size(this.#width, this.#height).mutableCopy()
+    } else {
+      size = this.intrinsicSize(availableSize).mutableCopy()
+      if (
+        !this.#x &&
+        !this.#y &&
+        this.#minWidth === undefined &&
+        this.#minHeight === undefined &&
+        this.#maxWidth === undefined &&
+        this.#maxHeight === undefined
+      ) {
+        return size
+      }
+
+      if (this.#minWidth !== undefined) {
+        size.width = Math.max(this.#minWidth, size.width)
+      }
+      if (this.#minHeight !== undefined) {
+        size.height = Math.max(this.#minHeight, size.height)
+      }
+
+      if (this.#maxWidth !== undefined) {
+        size.width = Math.min(this.#maxWidth, size.width)
+      }
+      if (this.#maxHeight !== undefined) {
+        size.height = Math.min(this.#maxHeight, size.height)
+      }
     }
-    if (this.#minHeight !== undefined) {
-      size.height = Math.max(this.#minHeight, size.height)
+
+    if (this.#x) {
+      size.width += this.#x
     }
-    if (this.#maxWidth !== undefined) {
-      size.width = Math.min(this.#maxWidth, size.width)
+    if (this.#y) {
+      size.width += this.#y
     }
-    if (this.#maxHeight !== undefined) {
-      size.height = Math.min(this.#maxHeight, size.height)
-    }
+
     return size
   }
 

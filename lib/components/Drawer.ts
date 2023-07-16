@@ -55,13 +55,16 @@ export class Drawer extends Container {
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
     this.#drawerWidth = drawerSize.width
+    if (this.#isOpen) {
+      this.#targetDx = this.#drawerWidth
+    }
 
     const contentSize = this.content.calculateIntrinsicSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
 
     return new Size(
-      Math.max(drawerSize.width, contentSize.width + DRAWER_BTN_SIZE.width),
+      Math.max(drawerSize.width, contentSize.width) + DRAWER_BTN_SIZE.width,
       Math.max(contentSize.height, drawerSize.height + 2),
     )
   }

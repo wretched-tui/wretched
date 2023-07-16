@@ -1,5 +1,3 @@
-import {EventEmitter} from 'events'
-
 import type {BlessedProgram} from './sys'
 import {program as blessedProgram} from './sys'
 import {SGRTerminal} from './terminal'
@@ -10,7 +8,6 @@ import {flushLogs} from './log'
 import {Buffer} from './Buffer'
 import type {
   KeyEvent,
-  MouseButton,
   MouseEventListenerName,
   SystemEvent,
   SystemMouseEvent,
@@ -19,9 +16,6 @@ import type {
 import {FocusManager} from './FocusManager'
 import {MouseManager} from './MouseManager'
 import {TickManager} from './TickManager'
-import type {Opaque} from './opaque'
-
-type Listener<T extends 'start' | 'exit'> = Opaque<T>
 
 export class Screen {
   program: SGRTerminal

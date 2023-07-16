@@ -57,7 +57,28 @@ export class Size {
   }
 
   mutableCopy() {
-    return this.copy() as MutableSize
+    const copy = this.copy() as MutableSize
+    let width = copy.width
+    let height = copy.height
+    Object.defineProperty(copy, 'width', {
+      enumerable: true,
+      get() {
+        return width
+      },
+      set(value: number) {
+        width = value
+      },
+    })
+    Object.defineProperty(copy, 'height', {
+      enumerable: true,
+      get() {
+        return height
+      },
+      set(value: number) {
+        height = value
+      },
+    })
+    return copy
   }
 
   shrink(...args: [number, number] | [Size]): Size {
@@ -89,7 +110,7 @@ export class Size {
   }
 }
 
-export interface MutableSize extends Size {
+interface MutableSize extends Size {
   width: number
   height: number
 }
@@ -179,3 +200,11 @@ export function interpolate(
 ): number {
   return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0)
 }
+
+export type Mutable<T extends Point | Size | Rect> = T extends Point
+  ? MutablePoint
+  : T extends Size
+  ? MutableSize
+  : T extends Rect
+  ? MutableRect
+  : never

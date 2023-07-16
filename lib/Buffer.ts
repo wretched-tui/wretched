@@ -107,6 +107,8 @@ export class Buffer implements Terminal {
       for (let x = 0; x < this.size.width; x += dx) {
         const chrInfo = line.get(x) ?? {char: ' ', style: Style.NONE, width: 1}
         const prevInfo = prevLine.get(x)
+        dx = chrInfo.width
+
         if (prevInfo && isCharEqual(chrInfo, prevInfo)) {
           didWrite = false
           continue
@@ -117,7 +119,7 @@ export class Buffer implements Terminal {
           terminal.move(x, y)
         }
 
-        const {char, width, style} = chrInfo
+        const {char, style} = chrInfo
 
         if (prevStyle !== style) {
           terminal.write(style.toSGR(prevStyle) + char)
@@ -126,8 +128,6 @@ export class Buffer implements Terminal {
           terminal.write(char)
         }
         prevLine.set(x, chrInfo)
-
-        dx = width
       }
     }
 

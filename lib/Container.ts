@@ -23,6 +23,13 @@ export abstract class Container extends View {
     }
   }
 
+  addAll(children: View[], at?: number) {
+    for (const view of children) {
+      this.add(view, at)
+      at = at !== undefined ? at + 1 : undefined
+    }
+  }
+
   add(child: View, at?: number) {
     // don't call 'remove' - we don't want to call didUnmount, and only call
     // didMoveFrom if we changed from one parent view to another

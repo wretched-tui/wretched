@@ -8,21 +8,33 @@ import {Style} from '../Style'
 
 type Border = 'cool' | 'single' | 'bold' | 'double' | 'round'
 
-interface Props extends ViewProps {
-  content: View
+interface ChildrenProps {
+  children: View[]
+  content?: undefined
+}
+interface ContentProps {
+  content?: View
+  children?: undefined
+}
+interface StyleProps extends ViewProps {
   border?: Border
   highlight?: Color
 }
+type Props = StyleProps & (ChildrenProps | ContentProps)
 
 export class Box extends Container {
   readonly border: Border
   readonly highlight?: Color
 
-  constructor({content, border, highlight, ...viewProps}: Props) {
+  constructor({content, children, border, highlight, ...viewProps}: Props) {
     super(viewProps)
     this.border = border ?? 'single'
     this.highlight = highlight
-    this.add(content)
+    if (children) {
+      this.addAll(children)
+    } else if (content) {
+      this.add(content)
+    }
   }
 
   intrinsicSize(size: Size): Size {
