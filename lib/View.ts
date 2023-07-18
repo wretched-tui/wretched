@@ -1,10 +1,12 @@
 import type {Mutable} from './geometry'
-import {Point, Size, Rect} from './geometry'
 import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
+import {Theme} from './Theme'
 import type {KeyEvent, MouseEvent} from './events'
+import {Point, Size, Rect} from './geometry'
 
 export interface Props {
+  theme?: Theme
   x?: number
   y?: number
   width?: number
@@ -18,7 +20,7 @@ export interface Props {
 export abstract class View {
   parent: View | null = null
   #screen: Screen | null = null
-  #currentRender: View | null = null
+  #theme: Theme | undefined
 
   #x: number | undefined
   #y: number | undefined
@@ -30,6 +32,7 @@ export abstract class View {
   #maxHeight: number | undefined
 
   constructor({
+    theme,
     x,
     y,
     width,
@@ -39,6 +42,7 @@ export abstract class View {
     maxWidth,
     maxHeight,
   }: Props = {}) {
+    this.#theme = theme
     this.#x = x
     this.#y = y
     this.#width = width
@@ -66,8 +70,65 @@ export abstract class View {
     })
   }
 
+  get theme(): Theme {
+    return this.#theme ?? this.parent?.theme ?? Theme.default
+  }
+
   get screen(): Screen | null {
     return this.#screen
+  }
+
+  #restrictSize(availableSize: () => Size): Mutable<Size> {
+    if (this.#width !== undefined && this.#height !== undefined) {
+      return new Size(this.#width, this.#height).mutableCopy()
+    }
+
+    const size = availableSize().mutableCopy()
+
+    if (this.#width !== undefined) {
+      size.width = this.#width
+    } else {
+      if (this.#minWidth !== undefined) {
+        size.width = Math.max(this.#minWidth, size.width)
+      }
+      if (this.#maxWidth !== undefined) {
+        size.width = Math.min(this.#maxWidth, size.width)
+      }
+    }
+
+    if (this.#height !== undefined) {
+      size.height = this.#height
+    } else {
+      if (this.#minHeight !== undefined) {
+        size.height = Math.max(this.#minHeight, size.height)
+      }
+      if (this.#maxHeight !== undefined) {
+        size.height = Math.min(this.#maxHeight, size.height)
+      }
+    }
+
+    return size
+  }
+
+  #intrinsicSizeWrap(
+    intrinsicSize: (availableSize: Size) => Mutable<Size>,
+  ): (availableSize: Size) => Mutable<Size> {
+    return availableSize => {
+      if (this.#x || this.#y) {
+        availableSize = availableSize.shrink(this.#x ?? 0, this.#y ?? 0)
+      }
+      const size = this.#restrictSize(() => intrinsicSize(availableSize))
+
+      if (this.#x) {
+        size.width += this.#x
+      }
+
+      if (this.#y) {
+        size.height += this.#y
+      }
+
+      return size
+    }
   }
 
   #renderWrap(
@@ -76,61 +137,21 @@ export abstract class View {
     return viewport => {
       const prevRender = viewport._currentRender
       viewport._currentRender = this
+
+      let origin: Point
+      const contentSize: Size = viewport.contentSize
       if (this.#x || this.#y) {
-        const [x, y] = [this.#x ?? 0, this.#y ?? 0]
-        const rect = new Rect(
-          new Point(x, y),
-          viewport.contentSize.shrink(x, y),
-        )
-        viewport.clipped(rect, render)
+        origin = new Point(this.#x ?? 0, this.#y ?? 0)
       } else {
-        render(viewport)
+        origin = Point.zero
       }
+
+      const renderSize = this.#restrictSize(() => contentSize)
+
+      const rect = new Rect(origin, renderSize)
+      viewport.clipped(rect, render)
+
       viewport._currentRender = prevRender
-    }
-  }
-
-  #intrinsicSizeWrap(
-    intrinsicSize: (availableSize: Size) => Mutable<Size>,
-  ): (availableSize: Size) => Mutable<Size> {
-    return availableSize => {
-      let size: Mutable<Size>
-      if (this.#width !== undefined && this.#height !== undefined) {
-        size = new Size(this.#width, this.#height).mutableCopy()
-      } else {
-        size = intrinsicSize(availableSize).mutableCopy()
-
-        if (this.#width !== undefined) {
-          size.width = this.#width
-        } else {
-          if (this.#minWidth !== undefined) {
-            size.width = Math.max(this.#minWidth, size.width)
-          }
-          if (this.#maxWidth !== undefined) {
-            size.width = Math.min(this.#maxWidth, size.width)
-          }
-        }
-
-        if (this.#height !== undefined) {
-          size.height = this.#height
-        } else {
-          if (this.#minHeight !== undefined) {
-            size.height = Math.max(this.#minHeight, size.height)
-          }
-          if (this.#maxHeight !== undefined) {
-            size.height = Math.min(this.#maxHeight, size.height)
-          }
-        }
-      }
-
-      if (this.#x) {
-        size.width += this.#x
-      }
-      if (this.#y) {
-        size.height += this.#y
-      }
-
-      return size
     }
   }
 

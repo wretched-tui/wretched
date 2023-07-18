@@ -1,6 +1,9 @@
 import type {Viewport} from '../Viewport'
 import type {MouseEvent} from '../events'
 import type {Props as ViewProps} from '../View'
+import type {Color} from '../Color'
+import type {ThemeType} from '../Theme'
+
 import {View} from '../View'
 import {Container} from '../Container'
 import {Text} from './Text'
@@ -25,9 +28,10 @@ interface LinesProps {
 }
 
 interface StyleProps {
+  type?: ThemeType
   style?: Partial<Style>
   hover?: Partial<Style>
-  press?: Partial<Style>
+  pressed?: Partial<Style>
   onClick?: () => void
   onHover?: (value: boolean) => void
   onPress?: (value: boolean) => void
@@ -44,64 +48,59 @@ export class Button extends Container {
   onClick: StyleProps['onClick']
   onHover: StyleProps['onHover']
   onPress: StyleProps['onPress']
-  style: Style
-  hover: Style
-  press: Style
 
+  #type: ThemeType
+  #style: Partial<Style> | undefined
+  #hoverStyle: Partial<Style> | undefined
+  #pressedStyle: Partial<Style> | undefined
   #textView?: Text
-  #pressed = false
-  #pressedOverride = false
+
+  #isPressed = false
+  #isPressedOverride = false
   get isPressed() {
-    return this.#pressedOverride || this.#pressed
+    return this.#isPressedOverride || this.#isPressed
   }
   set isPressed(value: boolean) {
-    this.#pressedOverride = value
+    this.#isPressedOverride = value
   }
 
-  #hover = false
-  #hoverOverride = false
+  #isHover = false
+  #isHoverOverride = false
   get isHover() {
-    return this.#hoverOverride || this.#hover
+    return this.#isHoverOverride || this.#isHover
   }
   set isHover(value: boolean) {
-    this.#hoverOverride = value
+    this.#isHoverOverride = value
   }
 
   get text() {
-    return this.#textView?.text
+    return this.#textView?.text.replace(/^< | >$/g, '')
   }
   set text(value: string | undefined) {
     if (this.#textView) {
-      this.#textView.text = value ?? ''
+      this.#textView.text = `< ${value} >` ?? ''
     }
   }
 
   constructor({
     text,
+    type,
     content,
     onClick,
     onHover,
     onPress,
     style,
     hover,
-    press,
+    pressed,
     ...viewProps
   }: Props) {
     super(viewProps)
-
-    this.style = new Style({foreground: 'black', background: 'gray'}).merge(
-      style,
-    )
-    this.hover = this.style.merge({background: 'white'}).merge(hover)
-    this.press = this.style
-      .merge({foreground: 'gray', background: 'green'})
-      .merge(press)
 
     if (text !== undefined) {
       this.defaultStyle = true
       this.add(
         (this.#textView = new Text({
-          text,
+          text: `< ${text} >`,
           alignment: 'center',
         })),
       )
@@ -109,6 +108,11 @@ export class Button extends Container {
       this.defaultStyle = false
       this.add(content)
     }
+
+    this.#type = type ?? 'default'
+    this.#style = style
+    this.#hoverStyle = hover
+    this.#pressedStyle = pressed
 
     this.onClick = onClick
     this.onHover = onHover
@@ -118,7 +122,7 @@ export class Button extends Container {
   intrinsicSize(availableSize: Size): Size {
     const size = super.intrinsicSize(availableSize).mutableCopy()
     if (this.defaultStyle) {
-      return size.grow(2, 0)
+      return size.grow(4, 0)
     } else {
       return size
     }
@@ -129,12 +133,12 @@ export class Button extends Container {
       if (!this.isPressed) {
         this.onPress?.(true)
       }
-      this.#pressed = true
+      this.#isPressed = true
     } else if (isMouseReleased(event)) {
       if (this.isPressed) {
         this.onPress?.(false)
       }
-      this.#pressed = false
+      this.#isPressed = false
 
       if (isMouseClicked(event)) {
         this.onClick?.()
@@ -145,30 +149,73 @@ export class Button extends Container {
       if (!this.isHover) {
         this.onHover?.(true)
       }
-      this.#hover = true
+      this.#isHover = true
     } else if (isMouseExit(event)) {
       if (this.isHover) {
         this.onHover?.(false)
       }
-      this.#hover = false
+      this.#isHover = false
     }
+  }
+
+  #currentStyle() {
+    const fg = this.theme[this.#type].foreground,
+      bg = this.theme[this.#type].background,
+      highlightBg = this.theme[this.#type].highlight,
+      pressFg = this.theme[this.#type].active
+
+    let style = new Style({
+      foreground: fg,
+      background: bg,
+    }).merge(this.#style)
+    const hoverStyle = style
+      .merge({background: highlightBg})
+      .merge(this.#hoverStyle)
+
+    if (this.isPressed) {
+      style = style
+        .merge({foreground: pressFg, background: highlightBg})
+        .merge(this.#pressedStyle)
+    } else if (this.isHover) {
+      style = hoverStyle
+    }
+
+    let highlightStyle: Style
+    if (this.isHover) {
+      highlightStyle = style.merge({
+        foreground: hoverStyle.background,
+        background: hoverStyle.background,
+      })
+    } else {
+      highlightStyle = style.merge({
+        foreground: hoverStyle.background,
+      })
+    }
+
+    return [style, highlightStyle]
   }
 
   render(viewport: Viewport) {
     viewport.registerMouse(this, ['mouse.button.left', 'mouse.move'])
 
-    const style: Style = this.isPressed
-      ? this.press
-      : this.isHover
-      ? this.hover
-      : this.style
+    const [style, highlightStyle] = this.#currentStyle()
 
     viewport.usingPen(style, () => {
-      const minX = viewport.visibleRect.minX()
-      const maxX = viewport.visibleRect.maxX()
-      const maxY = viewport.visibleRect.maxY()
-      for (let y = viewport.visibleRect.minY(); y < maxY; ++y) {
-        viewport.write(' '.repeat(maxX - minX), new Point(minX, y))
+      const startX = Math.max(1, viewport.visibleRect.minX()),
+        endX = Math.min(
+          viewport.contentSize.width - 1,
+          viewport.visibleRect.maxX(),
+        ),
+        minY = viewport.visibleRect.minY(),
+        maxY = viewport.visibleRect.maxY()
+      for (let y = minY; y < maxY; ++y) {
+        viewport.usingPen(highlightStyle, () => {
+          viewport.write('▌', new Point(0, y))
+          viewport.write('▐', new Point(viewport.contentSize.width - 1, y))
+        })
+        if (endX - startX > 2) {
+          viewport.write(' '.repeat(endX - startX), new Point(startX, y))
+        }
       }
     })
 

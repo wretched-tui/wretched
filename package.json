@@ -13,8 +13,10 @@
     "url": "http://github.com/colinta/wretched/issues"
   },
   "scripts": {
-    "demo": "rm -f dist/**/*.js && tsc && node --enable-source-maps dist/demo.js",
-    "test": "rm -f dist/**/*.js && tsc && node --enable-source-maps dist/test.js"
+    "clean": "rm -f dist/**/*.js",
+    "cp-usr": "mkdir -p dist/sys/ && cp -r lib/sys/usr dist/sys/",
+    "demo": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/demo.js",
+    "test": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/test.js"
   },
   "keywords": [
     "curses",

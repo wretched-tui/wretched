@@ -185,7 +185,7 @@ export class Viewport {
       ;[clip, style, draw] = args
     } else {
       ;[clip, draw] = args
-      style = Style.NONE
+      style = this.#style
     }
 
     const offsetX = this.#offset.x + clip.origin.x

@@ -589,6 +589,7 @@ export const colors: {
   indexToRGB(index: number): [number, number, number]
   indexToHex(index: number): `#{string}`
   reduce(input: number, total: number): number
+  toHex(input: number): string
 }
 
 export const unicode: {
