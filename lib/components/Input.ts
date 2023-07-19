@@ -102,9 +102,11 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
-    viewport.registerFocus(this)
-    viewport.registerTick(this)
-    const hasFocus = viewport.hasFocus(this)
+    const hasFocus = viewport.registerFocus(this)
+    if (hasFocus) {
+      viewport.registerTick(this)
+    }
+
     const visibleWidth = viewport.contentSize.width
     const quarter = ~~(visibleWidth / 4 + 0.5)
     if (visibleWidth > this.#width) {

@@ -134,7 +134,7 @@ export class Screen {
   triggerTick(dt: number) {}
 
   registerFocus(view: View) {
-    this.#focusManager.registerFocus(view)
+    return this.#focusManager.registerFocus(view)
   }
 
   triggerKeyboard(event: KeyEvent) {

@@ -28,6 +28,7 @@ export class FocusManager {
   registerFocus(view: View) {
     this.#focusRing.push(view)
     this.#currentFocus ??= view
+    return this.#currentFocus === view
   }
 
   needsRerender() {
