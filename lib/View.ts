@@ -22,14 +22,14 @@ export abstract class View {
   #screen: Screen | null = null
   #theme: Theme | undefined
 
-  #x: number | undefined
-  #y: number | undefined
-  #width: number | undefined
-  #height: number | undefined
-  #minWidth: number | undefined
-  #minHeight: number | undefined
-  #maxWidth: number | undefined
-  #maxHeight: number | undefined
+  #x: Props['x']
+  #y: Props['y']
+  #width: Props['width']
+  #height: Props['height']
+  #minWidth: Props['minWidth']
+  #minHeight: Props['minHeight']
+  #maxWidth: Props['maxWidth']
+  #maxHeight: Props['maxHeight']
 
   constructor({
     theme,
@@ -117,12 +117,11 @@ export abstract class View {
       if (this.#x || this.#y) {
         availableSize = availableSize.shrink(this.#x ?? 0, this.#y ?? 0)
       }
-      const size = this.#restrictSize(() => intrinsicSize(availableSize))
 
+      const size = this.#restrictSize(() => intrinsicSize(availableSize))
       if (this.#x) {
         size.width += this.#x
       }
-
       if (this.#y) {
         size.height += this.#y
       }
@@ -139,9 +138,10 @@ export abstract class View {
       viewport._currentRender = this
 
       let origin: Point
-      const contentSize: Size = viewport.contentSize
+      let contentSize: Size = viewport.contentSize
       if (this.#x || this.#y) {
         origin = new Point(this.#x ?? 0, this.#y ?? 0)
+        contentSize = contentSize.shrink(origin.x, origin.y)
       } else {
         origin = Point.zero
       }

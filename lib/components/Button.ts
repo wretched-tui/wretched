@@ -57,30 +57,8 @@ export class Button extends Container {
 
   #isPressed = false
   #isPressedOverride = false
-  get isPressed() {
-    return this.#isPressedOverride || this.#isPressed
-  }
-  set isPressed(value: boolean) {
-    this.#isPressedOverride = value
-  }
-
   #isHover = false
   #isHoverOverride = false
-  get isHover() {
-    return this.#isHoverOverride || this.#isHover
-  }
-  set isHover(value: boolean) {
-    this.#isHoverOverride = value
-  }
-
-  get text() {
-    return this.#textView?.text.replace(/^< | >$/g, '')
-  }
-  set text(value: string | undefined) {
-    if (this.#textView) {
-      this.#textView.text = `< ${value} >` ?? ''
-    }
-  }
 
   constructor({
     text,
@@ -117,6 +95,29 @@ export class Button extends Container {
     this.onClick = onClick
     this.onHover = onHover
     this.onPress = onPress
+  }
+
+  get isPressed() {
+    return this.#isPressedOverride || this.#isPressed
+  }
+  set isPressed(value: boolean) {
+    this.#isPressedOverride = value
+  }
+
+  get isHover() {
+    return this.#isHoverOverride || this.#isHover
+  }
+  set isHover(value: boolean) {
+    this.#isHoverOverride = value
+  }
+
+  get text() {
+    return this.#textView?.text.replace(/^< | >$/g, '')
+  }
+  set text(value: string | undefined) {
+    if (this.#textView) {
+      this.#textView.text = `< ${value} >` ?? ''
+    }
   }
 
   intrinsicSize(availableSize: Size): Size {
@@ -159,46 +160,45 @@ export class Button extends Container {
   }
 
   #currentStyle() {
-    const fg = this.theme[this.#type].foreground,
+    const text = this.theme.text,
       bg = this.theme[this.#type].background,
-      highlightBg = this.theme[this.#type].highlight,
-      pressFg = this.theme[this.#type].active
+      highlightBg = this.theme[this.#type].highlight
 
-    let style = new Style({
-      foreground: fg,
-      background: bg,
-    }).merge(this.#style)
+    let borderStyle: Style,
+      style = new Style({
+        foreground: text,
+        background: bg,
+      }).merge(this.#style)
+
     const hoverStyle = style
       .merge({background: highlightBg})
       .merge(this.#hoverStyle)
 
     if (this.isPressed) {
-      style = style
-        .merge({foreground: pressFg, background: highlightBg})
-        .merge(this.#pressedStyle)
+      style = style.merge({background: bg}).merge(this.#pressedStyle)
+      borderStyle = style.merge({
+        foreground: bg,
+        background: bg,
+      })
     } else if (this.isHover) {
       style = hoverStyle
-    }
-
-    let highlightStyle: Style
-    if (this.isHover) {
-      highlightStyle = style.merge({
+      borderStyle = style.merge({
         foreground: hoverStyle.background,
         background: hoverStyle.background,
       })
     } else {
-      highlightStyle = style.merge({
+      borderStyle = style.merge({
         foreground: hoverStyle.background,
       })
     }
 
-    return [style, highlightStyle]
+    return [style, borderStyle]
   }
 
   render(viewport: Viewport) {
     viewport.registerMouse(this, ['mouse.button.left', 'mouse.move'])
 
-    const [style, highlightStyle] = this.#currentStyle()
+    const [style, borderStyle] = this.#currentStyle()
 
     viewport.usingPen(style, () => {
       const startX = Math.max(1, viewport.visibleRect.minX()),
@@ -209,7 +209,7 @@ export class Button extends Container {
         minY = viewport.visibleRect.minY(),
         maxY = viewport.visibleRect.maxY()
       for (let y = minY; y < maxY; ++y) {
-        viewport.usingPen(highlightStyle, () => {
+        viewport.usingPen(borderStyle, () => {
           viewport.write('▌', new Point(0, y))
           viewport.write('▐', new Point(viewport.contentSize.width - 1, y))
         })
