@@ -158,9 +158,6 @@ export abstract class View {
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
-      const prevRender = viewport._currentRender
-      viewport._currentRender = this
-
       let origin: Point
       let contentSize: Size = viewport.contentSize
       if (this.#x || this.#y) {
@@ -181,9 +178,7 @@ export abstract class View {
       }
 
       const rect = new Rect(origin, contentSize)
-      viewport.clipped(rect, render)
-
-      viewport._currentRender = prevRender
+      viewport._render(this, rect, render)
     }
   }
 

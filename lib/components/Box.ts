@@ -79,7 +79,7 @@ export class Box extends Container {
       borderStyle = this.#hover
         ? this.highlight.merge(borderStyle)
         : borderStyle
-      viewport.registerMouse(this, 'mouse.move')
+      viewport.registerMouse('mouse.move')
     }
     viewport.usingPen(borderStyle, () => {
       const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]

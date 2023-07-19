@@ -102,7 +102,7 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
-    const hasFocus = viewport.registerFocus(this)
+    const hasFocus = viewport.registerFocus()
     if (hasFocus) {
       viewport.registerTick(this)
     }
@@ -129,7 +129,7 @@ export class Input extends View {
     const chars = this.#chars.concat(' ')
     let currentStyle = Style.NONE
     viewport.usingPen(pen => {
-      viewport.registerMouse(this, 'mouse.button.left')
+      viewport.registerMouse('mouse.button.left')
 
       for (const char of chars) {
         const width = unicode.charWidth(char)

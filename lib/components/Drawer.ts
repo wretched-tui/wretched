@@ -137,7 +137,7 @@ export class Drawer extends Container {
   }
 
   #drawDrawer(viewport: Viewport, style: Style, rect: Rect) {
-    viewport.registerMouse(this, ['mouse.move', 'mouse.button.left'], rect)
+    viewport.registerMouse(['mouse.move', 'mouse.button.left'], rect)
     viewport.usingPen(style, () => {
       const minY = 0,
         drawerHeight = rect.size.height,

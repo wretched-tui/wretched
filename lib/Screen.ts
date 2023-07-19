@@ -127,12 +127,6 @@ export class Screen {
     this.render()
   }
 
-  registerTick(view: View) {
-    this.#tickManager.registerTick(view)
-  }
-
-  triggerTick(dt: number) {}
-
   registerFocus(view: View) {
     return this.#focusManager.registerFocus(view)
   }
@@ -145,10 +139,6 @@ export class Screen {
   hasFocus(view: View) {
     return this.#focusManager.hasFocus(view)
   }
-
-  // nextFocus() {
-  //   this.#focusManager.nextFocus()
-  // }
 
   /**
    * @see MouseManager.registerMouse
@@ -169,6 +159,12 @@ export class Screen {
   triggerMouse(systemEvent: SystemMouseEvent): void {
     this.#mouseManager.trigger(systemEvent)
   }
+
+  registerTick(view: View) {
+    this.#tickManager.registerTick(view)
+  }
+
+  triggerTick(dt: number) {}
 
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)

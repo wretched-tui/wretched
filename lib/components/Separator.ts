@@ -46,20 +46,22 @@ export class Separator extends View {
   }
 
   render(viewport: Viewport) {
-    viewport.usingPen(this.#style, () => {
-      if (this.#direction === 'vertical') {
-        const [char] = BORDERS[this.#border],
-          minY = viewport.visibleRect.minY(),
-          maxY = viewport.visibleRect.maxY()
-        for (let y = minY; y < maxY; ++y) {
-          viewport.write(char, new Point(this.#padding, y))
-        }
-      } else {
-        const [, char] = BORDERS[this.#border]
-        const pt = viewport.visibleRect.origin.offset(0, this.#padding)
-        viewport.write(char.repeat(viewport.visibleRect.size.width), pt)
+    if (this.#direction === 'vertical') {
+      const [char] = BORDERS[this.#border],
+        minY = viewport.visibleRect.minY(),
+        maxY = viewport.visibleRect.maxY()
+      for (let y = minY; y < maxY; ++y) {
+        viewport.write(char, new Point(this.#padding, y), this.#style)
       }
-    })
+    } else {
+      const [, char] = BORDERS[this.#border]
+      const pt = viewport.visibleRect.origin.offset(0, this.#padding)
+      viewport.write(
+        char.repeat(viewport.visibleRect.size.width),
+        pt,
+        this.#style,
+      )
+    }
   }
 }
 

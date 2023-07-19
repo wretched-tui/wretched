@@ -14,47 +14,52 @@ import type {MouseEventListenerName} from './events'
  * outside the rect will be clipped)
  */
 export class Viewport {
-  readonly contentSize: Size
-  readonly visibleRect: Rect
   readonly terminal: Terminal
-  _currentRender: View | null = null
+  get contentSize() {
+    return this.#contentSize
+  }
+  get visibleRect() {
+    return this.#visibleRect
+  }
+  #currentRender: View | null = null
 
+  #contentSize: Size
+  #visibleRect: Rect
   #offset: Point
   #screen: Screen
   #style: Style
 
   constructor(
     screen: Screen,
-    terminal: Terminal | Viewport,
+    terminal: Terminal,
     contentSize: Size,
     visibleRect: Rect,
-    offset?: Point,
-    style?: Style,
   ) {
+    this.terminal = terminal
     this.#screen = screen
-    if (terminal instanceof Viewport) {
-      this.terminal = terminal.terminal
-      this._currentRender = terminal._currentRender
-    } else {
-      this.terminal = terminal
-    }
-
-    this.contentSize = contentSize
-    this.visibleRect = visibleRect
-    this.#offset = offset ?? Point.zero
-    this.#style = style ?? Style.NONE
+    this.#contentSize = contentSize
+    this.#visibleRect = visibleRect
+    this.#offset = Point.zero
+    this.#style = Style.NONE
 
     Object.defineProperty(this, 'terminal', {
       enumerable: false,
     })
   }
 
-  registerFocus(view: View) {
-    return this.#screen.registerFocus(view)
+
+  registerFocus() {
+    if (!this.#currentRender) {
+      return false
+    }
+    return this.#screen.registerFocus(this.#currentRender)
   }
 
-  hasFocus(view: View) {
-    return this.#screen.hasFocus(view)
+  hasFocus() {
+    if (!this.#currentRender) {
+      return false
+    }
+    return this.#screen.hasFocus(this.#currentRender)
   }
 
   // nextFocus() {
@@ -65,21 +70,24 @@ export class Viewport {
    * @see MouseManager.registerMouse
    */
   registerMouse(
-    view: View,
     eventNames: MouseEventListenerName | MouseEventListenerName[],
     rect?: Rect,
   ) {
+    if (!this.#currentRender) {
+      return
+    }
+
     if (rect) {
-      rect = this.visibleRect.intersection(rect)
+      rect = this.#visibleRect.intersection(rect)
     } else {
-      rect = this.visibleRect
+      rect = this.#visibleRect
     }
     const maxX = rect.maxX()
     const maxY = rect.maxY()
     for (let y = rect.minY(); y < maxY; ++y)
       for (let x = rect.minX(); x < maxX; ++x) {
         this.#screen.registerMouse(
-          view,
+          this.#currentRender,
           this.#offset,
           new Point(x, y),
           typeof eventNames === 'string' ? [eventNames] : eventNames,
@@ -96,10 +104,10 @@ export class Viewport {
    * always prints left-to-right.
    */
   write(input: string, to: Point, defaultStyle?: Style) {
-    const minX = this.visibleRect.minX(),
-      maxX = this.visibleRect.maxX(),
-      minY = this.visibleRect.minY(),
-      maxY = this.visibleRect.maxY()
+    const minX = this.#visibleRect.minX(),
+      maxX = this.#visibleRect.maxX(),
+      minY = this.#visibleRect.minY(),
+      maxY = this.#visibleRect.maxY()
     if (to.x >= maxX || to.y < minY || to.y >= maxY) {
       return
     }
@@ -125,9 +133,9 @@ export class Viewport {
           this.#offset.y + to.y,
           style,
         )
-        if (this._currentRender) {
+        if (this.#currentRender) {
           this.#screen.checkMouse(
-            this._currentRender,
+            this.#currentRender,
             this.#offset.x + x,
             this.#offset.y + to.y,
           )
@@ -171,6 +179,13 @@ export class Viewport {
     this.#style = prevStyle
   }
 
+  _render(view: View, clip: Rect, draw: (viewport: Viewport) => void): void {
+    const prevRender = this.#currentRender
+    this.#currentRender = view
+    this.clipped(clip, draw)
+    this.#currentRender = prevRender
+  }
+
   clipped(clip: Rect, draw: (viewport: Viewport) => void): void
   clipped(clip: Rect, style: Style, draw: (viewport: Viewport) => void): void
   clipped(
@@ -193,15 +208,17 @@ export class Viewport {
     const contentWidth = Math.max(0, clip.size.width)
     const contentHeight = Math.max(0, clip.size.height)
 
-    const visibleMinX = Math.max(0, this.visibleRect.origin.x - clip.origin.x)
-    const visibleMinY = Math.max(0, this.visibleRect.origin.y - clip.origin.y)
+    const visibleMinX = Math.max(0, this.#visibleRect.origin.x - clip.origin.x)
+    const visibleMinY = Math.max(0, this.#visibleRect.origin.y - clip.origin.y)
     const visibleMaxX = Math.min(
       clip.size.width,
-      this.visibleRect.origin.x + this.visibleRect.size.width - clip.origin.x,
+      this.#visibleRect.origin.x + this.#visibleRect.size.width - clip.origin.x,
     )
     const visibleMaxY = Math.min(
       clip.size.height,
-      this.visibleRect.origin.y + this.visibleRect.size.height - clip.origin.y,
+      this.#visibleRect.origin.y +
+        this.#visibleRect.size.height -
+        clip.origin.y,
     )
 
     const contentSize = new Size(contentWidth, contentHeight)
@@ -211,9 +228,21 @@ export class Viewport {
     )
     const offset = new Point(offsetX, offsetY)
 
-    draw(
-      new Viewport(this.#screen, this, contentSize, visibleRect, offset, style),
-    )
+    const prevContentSize = this.#contentSize
+    const prevVisibleRect = this.#visibleRect
+    const prevOffset = this.#offset
+    const prevStyle = this.#style
+
+    this.#contentSize = contentSize
+    this.#visibleRect = visibleRect
+    this.#offset = offset
+    this.#style = style
+    draw(this)
+
+    this.#contentSize = prevContentSize
+    this.#visibleRect = prevVisibleRect
+    this.#offset = prevOffset
+    this.#style = prevStyle
   }
 }
 

@@ -1,7 +1,6 @@
 import type {Viewport} from '../Viewport'
 import type {MouseEvent} from '../events'
 import type {Props as ViewProps} from '../View'
-import type {Color} from '../Color'
 import type {ThemeType} from '../Theme'
 
 import {View} from '../View'
@@ -196,7 +195,7 @@ export class Button extends Container {
   }
 
   render(viewport: Viewport) {
-    viewport.registerMouse(this, ['mouse.button.left', 'mouse.move'])
+    viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     const [style, borderStyle] = this.#currentStyle()
 
