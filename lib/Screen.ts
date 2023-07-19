@@ -20,7 +20,7 @@ import {TickManager} from './TickManager'
 export class Screen {
   program: SGRTerminal
   buffer: Buffer
-  view: View
+  rootView: View
   #focusManager = new FocusManager()
   #mouseManager = new MouseManager()
   #tickManager = new TickManager(() => this.render())
@@ -41,11 +41,11 @@ export class Screen {
     const fn = function () {}
     program.on('keypress', fn)
 
-    const view =
+    const rootView =
       viewConstructor instanceof View
         ? viewConstructor
         : await viewConstructor(program)
-    const screen = new Screen(program, view)
+    const screen = new Screen(program, rootView)
     program.off('keypress', fn)
 
     program.on('focus', function () {
@@ -95,20 +95,20 @@ export class Screen {
     return [screen, program]
   }
 
-  constructor(program: SGRTerminal, view: View) {
+  constructor(program: SGRTerminal, rootView: View) {
     this.program = program
     this.buffer = new Buffer()
-    this.view = view
+    this.rootView = rootView
   }
 
   start() {
-    this.view.moveToScreen(this)
+    this.rootView.moveToScreen(this)
     this.render()
   }
 
   exit() {
     this.#tickManager.stop()
-    this.view.moveToScreen(null)
+    this.rootView.moveToScreen(null)
   }
 
   trigger(event: SystemEvent) {
@@ -174,7 +174,7 @@ export class Screen {
     this.#mouseManager.reset()
     this.#focusManager.reset()
 
-    const size = this.view.intrinsicSize(screenSize).max(screenSize)
+    const size = this.rootView.intrinsicSize(screenSize).max(screenSize)
     const viewport = new Viewport(
       this,
       this.buffer,
@@ -182,14 +182,14 @@ export class Screen {
       new Rect(Point.zero, size),
     )
 
-    this.view.render(viewport)
+    this.rootView.render(viewport)
 
     const focusNeedsRender = this.#focusManager.needsRerender()
     const mouseNeedsRender = this.#mouseManager.needsRender()
 
     // one -and only one- re-render if a change is detected to focus or mouse-hover
     if (focusNeedsRender || mouseNeedsRender) {
-      this.view.render(viewport)
+      this.rootView.render(viewport)
     }
 
     this.#tickManager.endRender()
