@@ -9,12 +9,22 @@ export interface Props {
   theme?: Theme
   x?: number
   y?: number
+  //
   width?: number
   height?: number
   minWidth?: number
   minHeight?: number
   maxWidth?: number
   maxHeight?: number
+  //
+  padding?: number | Partial<Edges>
+}
+
+interface Edges {
+  top: number
+  right: number
+  bottom: number
+  left: number
 }
 
 export abstract class View {
@@ -30,6 +40,7 @@ export abstract class View {
   #minHeight: Props['minHeight']
   #maxWidth: Props['maxWidth']
   #maxHeight: Props['maxHeight']
+  #padding: Edges | undefined
 
   constructor({
     theme,
@@ -41,6 +52,7 @@ export abstract class View {
     minHeight,
     maxWidth,
     maxHeight,
+    padding,
   }: Props = {}) {
     this.#theme = theme
     this.#x = x
@@ -51,6 +63,8 @@ export abstract class View {
     this.#minHeight = minHeight
     this.#maxWidth = maxWidth
     this.#maxHeight = maxHeight
+
+    this.#padding = toEdges(padding)
 
     const render = this.render.bind(this)
     this.render = this.#renderWrap(render).bind(this)
@@ -118,7 +132,17 @@ export abstract class View {
         availableSize = availableSize.shrink(this.#x ?? 0, this.#y ?? 0)
       }
 
-      const size = this.#restrictSize(() => intrinsicSize(availableSize))
+      const size = this.#restrictSize(() => {
+        let contentSize = intrinsicSize(availableSize)
+        if (this.#padding) {
+          contentSize = contentSize.grow(
+            this.#padding.left + this.#padding.right,
+            this.#padding.top + this.#padding.bottom,
+          )
+        }
+        return contentSize
+      })
+
       if (this.#x) {
         size.width += this.#x
       }
@@ -146,9 +170,17 @@ export abstract class View {
         origin = Point.zero
       }
 
-      const renderSize = this.#restrictSize(() => contentSize)
+      contentSize = this.#restrictSize(() => contentSize)
 
-      const rect = new Rect(origin, renderSize)
+      if (this.#padding) {
+        origin = origin.offset(this.#padding.left, this.#padding.top)
+        contentSize = contentSize.shrink(
+          this.#padding.left + this.#padding.right,
+          this.#padding.top + this.#padding.bottom,
+        )
+      }
+
+      const rect = new Rect(origin, contentSize)
       viewport.clipped(rect, render)
 
       viewport._currentRender = prevRender
@@ -183,5 +215,29 @@ export abstract class View {
         this.didUnmount(prev!)
       }
     }
+  }
+}
+
+function toEdges(
+  edges: number | Partial<Edges> | undefined,
+): Edges | undefined {
+  if (!edges) {
+    return
+  }
+
+  if (typeof edges === 'number') {
+    return {
+      top: edges,
+      right: edges,
+      bottom: edges,
+      left: edges,
+    }
+  }
+
+  return {
+    top: edges.top ?? 0,
+    right: edges.right ?? 0,
+    bottom: edges.bottom ?? 0,
+    left: edges.left ?? 0,
   }
 }
