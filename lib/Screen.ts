@@ -19,8 +19,9 @@ import {TickManager} from './TickManager'
 
 export class Screen {
   program: SGRTerminal
-  buffer: Buffer
   rootView: View
+
+  #buffer: Buffer
   #focusManager = new FocusManager()
   #mouseManager = new MouseManager()
   #tickManager = new TickManager(() => this.render())
@@ -97,7 +98,7 @@ export class Screen {
 
   constructor(program: SGRTerminal, rootView: View) {
     this.program = program
-    this.buffer = new Buffer()
+    this.#buffer = new Buffer()
     this.rootView = rootView
   }
 
@@ -168,7 +169,7 @@ export class Screen {
 
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
-    this.buffer.resize(screenSize)
+    this.#buffer.resize(screenSize)
 
     this.#tickManager.reset()
     this.#mouseManager.reset()
@@ -177,7 +178,7 @@ export class Screen {
     const size = this.rootView.intrinsicSize(screenSize).max(screenSize)
     const viewport = new Viewport(
       this,
-      this.buffer,
+      this.#buffer,
       size,
       new Rect(Point.zero, size),
     )
@@ -193,8 +194,7 @@ export class Screen {
     }
 
     this.#tickManager.endRender()
-
-    this.buffer.flush(this.program)
+    this.#buffer.flush(this.program)
   }
 }
 

@@ -19,16 +19,17 @@ export class ScrollableList extends Container {
    * function will be cached until you call `scrollableList.invalidateCache()` or
    * `scrollableList.invalidateRow(row)`.
    */
-  readonly cellAtIndex: (row: number) => View | undefined
-  contentOffset: ContentOffset
-  contentSize: Size
+  cellAtIndex: (row: number) => View | undefined
+
+  #contentOffset: ContentOffset
+  #contentSize: Size
   #viewCache: Map<number, View> = new Map()
 
   constructor({cellAtIndex, ...viewProps}: Props) {
     super(viewProps)
-    this.contentOffset = {row: 0, offset: 0}
+    this.#contentOffset = {row: 0, offset: 0}
     this.cellAtIndex = cellAtIndex
-    this.contentSize = Size.zero
+    this.#contentSize = Size.zero
   }
 
   /**
@@ -61,11 +62,11 @@ export class ScrollableList extends Container {
       return
     }
 
-    const {row, offset: currentOffset} = this.contentOffset
+    const {row, offset: currentOffset} = this.#contentOffset
 
-    let height = this.heightForRow(row, this.contentSize.width)
+    let height = this.heightForRow(row, this.#contentSize.width)
     if (height === undefined) {
-      this.contentOffset = {row: 0, offset: 0}
+      this.#contentOffset = {row: 0, offset: 0}
       return
     }
 
@@ -83,11 +84,11 @@ export class ScrollableList extends Container {
 
     let nextOffset = currentOffset - offset
     if (nextOffset <= -height) {
-      this.contentOffset = this.#scrollDownToNextRow(row, nextOffset, height)
+      this.#contentOffset = this.#scrollDownToNextRow(row, nextOffset, height)
     } else if (nextOffset > 0) {
-      this.contentOffset = this.#scrollUpToPrevRow(row, nextOffset, height)
+      this.#contentOffset = this.#scrollUpToPrevRow(row, nextOffset, height)
     } else {
-      this.contentOffset = {row: row, offset: nextOffset}
+      this.#contentOffset = {row: row, offset: nextOffset}
     }
   }
 
@@ -118,8 +119,8 @@ export class ScrollableList extends Container {
   }
 
   intrinsicSize(size: Size): Size {
-    let row = Math.max(0, this.contentOffset.row)
-    let y = this.contentOffset.offset
+    let row = Math.max(0, this.#contentOffset.row)
+    let y = this.#contentOffset.offset
     while (y < size.height) {
       const view = this.viewForRow(row)
       if (!view) {
@@ -140,10 +141,10 @@ export class ScrollableList extends Container {
   render(viewport: Viewport) {
     const prevRows = new Set(this.children)
     const visibleRows = new Set<View>()
-    let row = Math.max(0, this.contentOffset.row)
-    this.contentSize = viewport.contentSize
+    let row = Math.max(0, this.#contentOffset.row)
+    this.#contentSize = viewport.contentSize
 
-    let y = this.contentOffset.offset
+    let y = this.#contentOffset.offset
     while (y < viewport.contentSize.height) {
       const view = this.viewForRow(row)
       if (!view) {
@@ -201,10 +202,10 @@ export class ScrollableList extends Container {
     let nextHeight: number | undefined = height
     while (nextHeight !== undefined) {
       y += nextHeight
-      if (y > this.contentSize.height) {
+      if (y > this.#contentSize.height) {
         return true
       }
-      nextHeight = this.heightForRow(++nextRow, this.contentSize.width)
+      nextHeight = this.heightForRow(++nextRow, this.#contentSize.width)
       if (nextHeight === undefined) {
         return false
       }
@@ -214,7 +215,7 @@ export class ScrollableList extends Container {
   #scrollDownToNextRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset <= -height) {
-      const nextHeight = this.heightForRow(nextRow + 1, this.contentSize.width)
+      const nextHeight = this.heightForRow(nextRow + 1, this.#contentSize.width)
       if (nextHeight === undefined) {
         nextOffset = -height
         break
@@ -230,7 +231,7 @@ export class ScrollableList extends Container {
   #scrollUpToPrevRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset > 0) {
-      const nextHeight = this.heightForRow(nextRow - 1, this.contentSize.width)
+      const nextHeight = this.heightForRow(nextRow - 1, this.#contentSize.width)
       if (nextHeight === undefined) {
         nextOffset = 0
         break

@@ -14,15 +14,15 @@ import type {MouseEventListenerName} from './events'
  * outside the rect will be clipped)
  */
 export class Viewport {
-  readonly terminal: Terminal
   get contentSize() {
     return this.#contentSize
   }
   get visibleRect() {
     return this.#visibleRect
   }
-  #currentRender: View | null = null
 
+  #terminal: Terminal
+  #currentRender: View | null = null
   #contentSize: Size
   #visibleRect: Rect
   #offset: Point
@@ -35,18 +35,13 @@ export class Viewport {
     contentSize: Size,
     visibleRect: Rect,
   ) {
-    this.terminal = terminal
+    this.#terminal = terminal
     this.#screen = screen
     this.#contentSize = contentSize
     this.#visibleRect = visibleRect
     this.#offset = Point.zero
     this.#style = Style.NONE
-
-    Object.defineProperty(this, 'terminal', {
-      enumerable: false,
-    })
   }
-
 
   registerFocus() {
     if (!this.#currentRender) {
@@ -127,7 +122,7 @@ export class Viewport {
             ? defaultStyle
             : defaultStyle.merge(Style.fromSGR(char))
       } else if (x >= minX && x + width - 1 < maxX) {
-        this.terminal.writeChar(
+        this.#terminal.writeChar(
           char,
           this.#offset.x + x,
           this.#offset.y + to.y,
@@ -155,7 +150,7 @@ export class Viewport {
    * Forwards 'meta' ANSI sequences (see ITerm) to the terminal
    */
   writeMeta(str: string) {
-    this.terminal.writeMeta(str)
+    this.#terminal.writeMeta(str)
   }
 
   usingPen(style: Style | undefined, draw: (pen: Pen) => void): void

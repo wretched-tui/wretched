@@ -7,7 +7,7 @@ import {Rect, Point, Size} from '../geometry'
 import {Style} from '../Style'
 import {isMouseEnter, isMouseExit} from '../events'
 
-type Border = 'cool' | 'single' | 'bold' | 'double' | 'round'
+type Border = 'single' | 'bold' | 'double' | 'round'
 
 interface ChildrenProps {
   children: View[]
@@ -24,14 +24,14 @@ interface StyleProps extends ViewProps {
 type Props = StyleProps & (ChildrenProps | ContentProps)
 
 export class Box extends Container {
-  readonly border: Border
-  readonly highlight?: Style
+  #border: Border
+  #highlight?: Style
   #hover = false
 
   constructor({content, children, border, highlight, ...viewProps}: Props) {
     super(viewProps)
-    this.border = border ?? 'single'
-    this.highlight = highlight
+    this.#border = border ?? 'single'
+    this.#highlight = highlight
     if (children) {
       this.addAll(children)
     } else if (content) {
@@ -55,18 +55,18 @@ export class Box extends Container {
   render(viewport: Viewport) {
     const maxX = viewport.contentSize.width - 1
     const maxY = viewport.contentSize.height - 1
-    let borderStyle =
-      this.border === 'cool'
-        ? new Style({foreground: [98, 196, 255], background: [34, 34, 37]})
-        : new Style({foreground: 'white', background: 'default'})
-    const innerStyle =
-      this.border === 'cool' ? borderStyle.invert() : Style.NONE
+    let borderStyle = new Style({foreground: 'white', background: 'default'})
+    if (this.#highlight) {
+      borderStyle = this.#hover
+        ? this.#highlight.merge(borderStyle)
+        : borderStyle
+      viewport.registerMouse('mouse.move')
+    }
 
-    viewport.usingPen(innerStyle, () => {
-      for (let y = 1; y < maxY; ++y) {
-        viewport.write(' '.repeat(maxX - 1), new Point(1, y))
-      }
-    })
+    const innerStyle = new Style({background: borderStyle.background})
+    for (let y = 1; y < maxY; ++y) {
+      viewport.write(' '.repeat(maxX - 1), new Point(1, y), innerStyle)
+    }
 
     viewport.clipped(
       new Rect(new Point(1, 1), viewport.contentSize.shrink(2, 2)),
@@ -75,14 +75,8 @@ export class Box extends Container {
       },
     )
 
-    if (this.highlight) {
-      borderStyle = this.#hover
-        ? this.highlight.merge(borderStyle)
-        : borderStyle
-      viewport.registerMouse('mouse.move')
-    }
     viewport.usingPen(borderStyle, () => {
-      const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.border]
+      const [top, left, tl, tr, bl, br, bottom, right] = BORDERS[this.#border]
       viewport.write(top.repeat(maxX - 1), new Point(1, 0))
       viewport.write((bottom ?? top).repeat(maxX - 1), new Point(1, maxY))
       for (let y = 1; y < maxY; ++y) {
@@ -101,7 +95,6 @@ type Chars =
   | [string, string, string, string, string, string]
   | [string, string, string, string, string, string, string, string]
 const BORDERS: Record<Border, Chars> = {
-  cool: ['▄', ' ', '▗', '▖', '▝', '▘', '▀', ' '],
   single: ['─', '│', '┌', '┐', '└', '┘'],
   bold: ['━', '┃', '┏', '┓', '┗', '┛'],
   double: ['═', '║', '╔', '╗', '╚', '╝'],

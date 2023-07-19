@@ -9,12 +9,7 @@ type Char = {char: string; width: 1 | 2; style: Style; hiding?: Char}
 
 export class Buffer implements Terminal {
   size: Size = Size.zero
-  get cols() {
-    return this.size.width
-  }
-  get rows() {
-    return this.size.height
-  }
+
   #meta: string = ''
   #canvas: Map<number, Map<number, Char>> = new Map()
   #prev: Map<number, Map<number, Char>> = new Map()

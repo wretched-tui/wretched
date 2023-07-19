@@ -2,8 +2,6 @@ import type {BlessedProgram} from './sys'
 import type {Style} from './Style'
 
 export interface Terminal {
-  cols: number
-  rows: number
   writeChar(char: string, x: number, y: number, style: Style): void
   writeMeta(str: string): void
 }
