@@ -39,11 +39,6 @@ interface StyleProps {
 type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Button extends Container {
-  /**
-   * When `text:` is used to label the button, `defaultStyle` adds brackets to the
-   * sides. If `content:` is used, no decorations are added.
-   */
-  defaultStyle: boolean
   onClick: StyleProps['onClick']
   onHover: StyleProps['onHover']
   onPress: StyleProps['onPress']
@@ -74,19 +69,17 @@ export class Button extends Container {
     super(viewProps)
 
     if (text !== undefined) {
-      this.defaultStyle = true
       this.add(
         (this.#textView = new Text({
-          text: `< ${text} >`,
+          text,
           alignment: 'center',
         })),
       )
     } else {
-      this.defaultStyle = false
       this.add(content)
     }
 
-    this.#type = type ?? 'default'
+    this.#type = type ?? 'primary'
     this.#style = style
     this.#hoverStyle = hover
     this.#pressedStyle = pressed
@@ -111,7 +104,7 @@ export class Button extends Container {
   }
 
   get text() {
-    return this.#textView?.text.replace(/^< | >$/g, '')
+    return this.#textView?.text
   }
   set text(value: string | undefined) {
     if (this.#textView) {
@@ -120,12 +113,7 @@ export class Button extends Container {
   }
 
   intrinsicSize(availableSize: Size): Size {
-    const size = super.intrinsicSize(availableSize).mutableCopy()
-    if (this.defaultStyle) {
-      return size.grow(4, 0)
-    } else {
-      return size
-    }
+    return super.intrinsicSize(availableSize).grow(2, 0)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -159,7 +147,7 @@ export class Button extends Container {
   }
 
   #currentStyle() {
-    const text = this.theme.text,
+    const text = this.theme[this.#type].text,
       bg = this.theme[this.#type].background,
       highlightBg = this.theme[this.#type].highlight
 
@@ -218,9 +206,10 @@ export class Button extends Container {
       }
     })
 
-    const offset = viewport.contentSize.height === 1 ? 0 : 1
+    const intrinsicSize = this.intrinsicSize(viewport.contentSize)
+    const offset = ~~((viewport.contentSize.height - intrinsicSize.height) / 2)
     viewport.clipped(
-      new Rect(new Point(0, offset), viewport.contentSize.shrink(0, offset)),
+      new Rect(new Point(1, offset), viewport.contentSize.shrink(1, offset)),
       style,
       inside => {
         super.render(inside)

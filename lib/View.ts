@@ -29,8 +29,12 @@ interface Edges {
 
 export abstract class View {
   parent: View | null = null
+
   #screen: Screen | null = null
   #theme: Theme | undefined
+  #invalidateSize = true
+  #prevAvailableSize?: Size
+  #prevSize?: Size
 
   #x: Props['x']
   #y: Props['y']
@@ -125,9 +129,17 @@ export abstract class View {
   }
 
   #intrinsicSizeWrap(
-    intrinsicSize: (availableSize: Size) => Mutable<Size>,
-  ): (availableSize: Size) => Mutable<Size> {
+    intrinsicSize: (availableSize: Size) => Size,
+  ): (availableSize: Size) => Size {
     return availableSize => {
+      if (
+        this.#prevSize &&
+        this.#prevAvailableSize === availableSize &&
+        !this.#invalidateSize
+      ) {
+        return this.#prevSize
+      }
+
       if (this.#x || this.#y) {
         availableSize = availableSize.shrink(this.#x ?? 0, this.#y ?? 0)
       }
@@ -150,6 +162,9 @@ export abstract class View {
         size.height += this.#y
       }
 
+      this.#prevSize = size
+      this.#prevAvailableSize = availableSize
+      this.#invalidateSize = false
       return size
     }
   }
@@ -158,6 +173,12 @@ export abstract class View {
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
+      if (!this.#prevSize) {
+        throw new Error(
+          'It is guaranteed that intrinsicSize is called before render(), even if the result is ignored',
+        )
+      }
+
       let origin: Point
       let contentSize: Size = viewport.contentSize
       if (this.#x || this.#y) {
@@ -184,6 +205,14 @@ export abstract class View {
 
   abstract intrinsicSize(availableSize: Size): Size
   abstract render(viewport: Viewport): void
+  /**
+   * Called from a view when a property change could affect intrinsicSize
+   */
+  invalidateSize() {
+    this.#invalidateSize = true
+    this.#prevSize = undefined
+    this.#prevAvailableSize = undefined
+  }
 
   receiveKey(event: KeyEvent) {}
   receiveMouse(event: MouseEvent) {}

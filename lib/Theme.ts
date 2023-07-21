@@ -1,46 +1,68 @@
 import type {Color} from './Color'
 
 export interface ColorGroup {
+  text: Color
   background: Color
   highlight: Color
 }
 
-export type ThemeType = 'default' | 'confirm' | 'destroy' | 'action'
+export type ThemeType =
+  | 'primary'
+  | 'secondary'
+  | 'confirm'
+  | 'destroy'
+  | 'selected'
+  | 'blank'
 
 const text = '#E2E2E2'
 
 export class Theme {
-  text: Color
-  default: ColorGroup
+  primary: ColorGroup
+  secondary: ColorGroup
   confirm: ColorGroup
   destroy: ColorGroup
-  action: ColorGroup
+  selected: ColorGroup
+  blank: ColorGroup
 
   static default = new Theme({
-    text,
-    default: {
+    primary: {
+      text,
       background: '#0032FA',
       highlight: '#0070FF',
     },
+    secondary: {
+      text,
+      background: '#D0851C',
+      highlight: '#F39614',
+    },
     confirm: {
+      text,
       background: '#108040',
       highlight: '#1EB317',
     },
     destroy: {
+      text,
       background: '#981618',
       highlight: '#C51B1E',
     },
-    action: {
-      background: '#D0851C',
-      highlight: '#F39614',
+    selected: {
+      text: '#383838',
+      background: '#BDBDBD',
+      highlight: '#E6E6E6',
+    },
+    blank: {
+      text,
+      background: '#383838',
+      highlight: '#616161',
     },
   })
 
-  constructor({text, default: _default, confirm, destroy, action}: Theme) {
-    this.text = text
-    this.default = _default
+  constructor({primary, secondary, confirm, destroy, selected, blank}: Theme) {
+    this.primary = primary
+    this.secondary = secondary
     this.confirm = confirm
     this.destroy = destroy
-    this.action = action
+    this.selected = selected
+    this.blank = blank
   }
 }

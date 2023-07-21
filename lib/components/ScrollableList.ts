@@ -2,10 +2,13 @@ import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Container} from '../Container'
-import {Rect, Point, Size} from '../geometry'
+import {Style} from '../Style'
+import {Rect, Point, Size, interpolate} from '../geometry'
+import type {MouseEvent} from '../events'
 
 interface Props extends ViewProps {
   cellAtIndex: (row: number) => View | undefined
+  showScrollbars?: boolean
 }
 
 interface ContentOffset {
@@ -21,12 +24,17 @@ export class ScrollableList extends Container {
    */
   cellAtIndex: (row: number) => View | undefined
 
+  #showScrollbars: boolean
+  #heights: [number, number, number] = [0, 0, 0]
   #contentOffset: ContentOffset
   #contentSize: Size
+  #maxWidth: number = 0
   #viewCache: Map<number, View> = new Map()
+  #sizeCache: Map<number, Size> = new Map()
 
-  constructor({cellAtIndex, ...viewProps}: Props) {
+  constructor({cellAtIndex, showScrollbars, ...viewProps}: Props) {
     super(viewProps)
+    this.#showScrollbars = showScrollbars ?? true
     this.#contentOffset = {row: 0, offset: 0}
     this.cellAtIndex = cellAtIndex
     this.#contentSize = Size.zero
@@ -37,6 +45,7 @@ export class ScrollableList extends Container {
    */
   invalidateCache() {
     this.#viewCache = new Map()
+    this.#sizeCache = new Map()
   }
 
   /**
@@ -44,6 +53,15 @@ export class ScrollableList extends Container {
    */
   invalidateRow(row: number) {
     this.#viewCache.delete(row)
+    this.#sizeCache.delete(row)
+  }
+
+  receiveMouse(event: MouseEvent) {
+    if (event.name === 'mouse.wheel.up') {
+      this.scrollBy(-1)
+    } else if (event.name === 'mouse.wheel.down') {
+      this.scrollBy(1)
+    }
   }
 
   /**
@@ -62,9 +80,11 @@ export class ScrollableList extends Container {
       return
     }
 
+    this.invalidateSize()
+
     const {row, offset: currentOffset} = this.#contentOffset
 
-    let height = this.heightForRow(row, this.#contentSize.width)
+    let height = this.sizeForRow(row, this.#contentSize.width)?.height
     if (height === undefined) {
       this.#contentOffset = {row: 0, offset: 0}
       return
@@ -104,45 +124,70 @@ export class ScrollableList extends Container {
     return view
   }
 
-  heightForRow(
-    row: number,
-    contentWidth: number,
-    view?: View,
-  ): number | undefined {
+  sizeForRow(row: number, contentWidth: number, view: View): Size
+  sizeForRow(row: number, contentWidth: number): Size | undefined
+  sizeForRow(row: number, contentWidth: number, view?: View): Size | undefined {
+    if (contentWidth === this.#contentSize.width) {
+      const size = this.#sizeCache.get(row)
+      if (size !== undefined) {
+        return size
+      }
+    }
+
     view = view ?? this.viewForRow(row)
     if (view === undefined) {
       return undefined
     }
 
-    const {height} = view.intrinsicSize(new Size(contentWidth, 0))
-    return height
+    const size = view.intrinsicSize(new Size(contentWidth, 0))
+    if (contentWidth === this.#contentSize.width) {
+      this.#sizeCache.set(row, size)
+    }
+    return size
   }
 
   intrinsicSize(size: Size): Size {
     let row = Math.max(0, this.#contentOffset.row)
     let y = this.#contentOffset.offset
+
     while (y < size.height) {
       const view = this.viewForRow(row)
       if (!view) {
         break
       }
 
-      let height = this.heightForRow(row, size.width, view)
-      if (height === undefined) {
-        break
-      }
-      y += height
+      const rowSize = this.sizeForRow(row, size.width, view)
+      this.#maxWidth = Math.max(this.#maxWidth, rowSize.width)
+      y += rowSize.height
       row += 1
     }
 
-    return new Size(size.width, Math.max(y, size.height))
+    return new Size(
+      this.#maxWidth + (this.#showScrollbars ? 1 : 0),
+      size.height,
+    )
   }
 
   render(viewport: Viewport) {
+    viewport.registerMouse('mouse.wheel')
+
     const prevRows = new Set(this.children)
     const visibleRows = new Set<View>()
     let row = Math.max(0, this.#contentOffset.row)
     this.#contentSize = viewport.contentSize
+    if (this.#showScrollbars) {
+      this.#contentSize = this.#contentSize.shrink(1, 0)
+    }
+    const cellWidth = this.#contentSize.width
+
+    let heights: [number, number, number] = [0, 0, 0]
+
+    if (this.#showScrollbars) {
+      for (let i = 0; i < row; i++) {
+        heights[0] += this.sizeForRow(i, cellWidth)?.height ?? 0
+      }
+      heights[1] = heights[0]
+    }
 
     let y = this.#contentOffset.offset
     while (y < viewport.contentSize.height) {
@@ -151,10 +196,9 @@ export class ScrollableList extends Container {
         break
       }
 
-      let height = this.heightForRow(row, viewport.contentSize.width, view)
-      if (height === undefined) {
-        break
-      }
+      const height = this.sizeForRow(row, cellWidth, view)?.height
+      row += 1
+      heights[1] += height
 
       if (view.parent !== this) {
         this.add(view)
@@ -166,10 +210,7 @@ export class ScrollableList extends Container {
         y < viewport.visibleRect.maxY() &&
         y + height >= viewport.visibleRect.minY()
       ) {
-        const rect = new Rect(
-          new Point(0, y),
-          new Size(viewport.contentSize.width, height),
-        )
+        const rect = new Rect(new Point(0, y), new Size(cellWidth, height))
         viewport.clipped(rect, inside => {
           view.render(inside)
         })
@@ -179,13 +220,44 @@ export class ScrollableList extends Container {
       if (y >= viewport.contentSize.height) {
         break
       }
-
-      row += 1
     }
 
     for (const prevRow of prevRows) {
       if (!visibleRows.has(prevRow)) {
         this.remove(prevRow)
+      }
+    }
+
+    if (this.#showScrollbars) {
+      heights[2] = heights[1]
+      for (let i = row; i < 100000; i++) {
+        const rowHeight = this.sizeForRow(i, cellWidth)?.height
+        if (rowHeight === undefined) {
+          break
+        }
+        heights[2] += rowHeight
+      }
+
+      for (let y = 0; y < viewport.contentSize.height; y++) {
+        const h = interpolate(
+          y,
+          [0, viewport.contentSize.height - 1],
+          [0, heights[2]],
+        )
+        const inRange = ~~h >= heights[0] && ~~h <= heights[1]
+        viewport.write(
+          inRange ? '█' : '▒',
+          new Point(cellWidth, y),
+          new Style(
+            inRange
+              ? {
+                  foreground: this.theme.blank.highlight,
+                }
+              : {
+                  foreground: this.theme.blank.background,
+                },
+          ),
+        )
       }
     }
   }
@@ -205,7 +277,7 @@ export class ScrollableList extends Container {
       if (y > this.#contentSize.height) {
         return true
       }
-      nextHeight = this.heightForRow(++nextRow, this.#contentSize.width)
+      nextHeight = this.sizeForRow(++nextRow, this.#contentSize.width)?.height
       if (nextHeight === undefined) {
         return false
       }
@@ -215,7 +287,10 @@ export class ScrollableList extends Container {
   #scrollDownToNextRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset <= -height) {
-      const nextHeight = this.heightForRow(nextRow + 1, this.#contentSize.width)
+      const nextHeight = this.sizeForRow(
+        nextRow + 1,
+        this.#contentSize.width,
+      )?.height
       if (nextHeight === undefined) {
         nextOffset = -height
         break
@@ -231,7 +306,10 @@ export class ScrollableList extends Container {
   #scrollUpToPrevRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset > 0) {
-      const nextHeight = this.heightForRow(nextRow - 1, this.#contentSize.width)
+      const nextHeight = this.sizeForRow(
+        nextRow - 1,
+        this.#contentSize.width,
+      )?.height
       if (nextHeight === undefined) {
         nextOffset = 0
         break

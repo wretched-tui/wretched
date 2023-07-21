@@ -1,5 +1,5 @@
-import {View} from './View'
-import {Point} from './geometry'
+import {View} from '../View'
+import {Point} from '../geometry'
 import type {
   MouseDownEvent,
   MouseEventListener,
@@ -7,8 +7,8 @@ import type {
   MouseEventName,
   MouseEventTarget,
   SystemMouseEvent,
-} from './events'
-import {isMouseButton, isMouseWheel} from './events'
+} from '../events'
+import {isMouseButton, isMouseWheel} from '../events'
 
 function mouseKey(x: number, y: number) {
   return `${~~x},${~~y}`

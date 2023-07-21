@@ -29,18 +29,37 @@ export class Viewport {
   #screen: Screen
   #style: Style
 
-  constructor(
-    screen: Screen,
-    terminal: Terminal,
-    contentSize: Size,
-    visibleRect: Rect,
-  ) {
+  /**
+   * For modals, this offset points to the Rect of the view that presented the modal
+   */
+  parentRect: Rect
+
+  constructor(screen: Screen, terminal: Terminal, contentSize: Size) {
+    const rect = new Rect(Point.zero, contentSize)
     this.#terminal = terminal
     this.#screen = screen
     this.#contentSize = contentSize
-    this.#visibleRect = visibleRect
+    this.parentRect = rect
+    this.#visibleRect = rect
     this.#offset = Point.zero
     this.#style = Style.NONE
+  }
+
+  requestModal(modal: View, onClose: () => void) {
+    if (!this.#currentRender) {
+      return null
+    }
+
+    return this.#screen.requestModal(
+      this.#currentRender,
+      modal,
+      onClose,
+      new Rect(this.#offset, this.#contentSize),
+    )
+  }
+
+  registerShortcut() {
+    // registers keyboard shortcut
   }
 
   registerFocus() {
@@ -56,10 +75,6 @@ export class Viewport {
     }
     return this.#screen.hasFocus(this.#currentRender)
   }
-
-  // nextFocus() {
-  //   this.#screen.nextFocus()
-  // }
 
   /**
    * @see MouseManager.registerMouse
@@ -232,6 +247,7 @@ export class Viewport {
     this.#visibleRect = visibleRect
     this.#offset = offset
     this.#style = style
+
     draw(this)
 
     this.#contentSize = prevContentSize

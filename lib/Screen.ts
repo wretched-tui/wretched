@@ -13,9 +13,10 @@ import type {
   SystemMouseEvent,
   SystemMouseEventName,
 } from './events'
-import {FocusManager} from './FocusManager'
-import {MouseManager} from './MouseManager'
-import {TickManager} from './TickManager'
+import {FocusManager} from './managers/FocusManager'
+import {ModalManager} from './managers/ModalManager'
+import {MouseManager} from './managers/MouseManager'
+import {TickManager} from './managers/TickManager'
 
 export class Screen {
   program: SGRTerminal
@@ -23,6 +24,7 @@ export class Screen {
 
   #buffer: Buffer
   #focusManager = new FocusManager()
+  #modalManager = new ModalManager()
   #mouseManager = new MouseManager()
   #tickManager = new TickManager(() => this.render())
 
@@ -128,6 +130,16 @@ export class Screen {
     this.render()
   }
 
+  /**
+   * Requests a modal. A modal will be created if:
+   * (a) no modal is already displayed
+   * or
+   * (b) a modal is requesting a nested modal
+   */
+  requestModal(parent: View, modal: View, onClose: () => void, rect: Rect) {
+    return this.#modalManager.requestModal(parent, modal, onClose, rect)
+  }
+
   registerFocus(view: View) {
     return this.#focusManager.registerFocus(view)
   }
@@ -167,33 +179,36 @@ export class Screen {
 
   triggerTick(dt: number) {}
 
+  preRender() {
+    this.#modalManager.reset()
+    this.#tickManager.reset()
+    this.#mouseManager.reset()
+    this.#focusManager.reset()
+  }
+
   render() {
     const screenSize = new Size(this.program.cols, this.program.rows)
     this.#buffer.resize(screenSize)
 
-    this.#tickManager.reset()
-    this.#mouseManager.reset()
-    this.#focusManager.reset()
+    // this may be called again by renderModals, before the last modal renders
+    this.preRender()
 
     const size = this.rootView.intrinsicSize(screenSize).max(screenSize)
-    const viewport = new Viewport(
-      this,
-      this.#buffer,
-      size,
-      new Rect(Point.zero, size),
-    )
-
+    const viewport = new Viewport(this, this.#buffer, size)
     this.rootView.render(viewport)
+    const rerenderView =
+      this.#modalManager.renderModals(this, viewport) ?? this.rootView
 
     const focusNeedsRender = this.#focusManager.needsRerender()
     const mouseNeedsRender = this.#mouseManager.needsRender()
 
     // one -and only one- re-render if a change is detected to focus or mouse-hover
     if (focusNeedsRender || mouseNeedsRender) {
-      this.rootView.render(viewport)
+      rerenderView.render(viewport)
     }
 
     this.#tickManager.endRender()
+
     this.#buffer.flush(this.program)
   }
 }

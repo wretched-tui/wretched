@@ -174,6 +174,20 @@ export class Rect {
   maxY(): number {
     return this.origin.y + this.size.height
   }
+
+  forEachPoint(fn: (point: Point) => void) {
+    const minX = this.minX(),
+      maxX = this.maxX(),
+      minY = this.minY(),
+      maxY = this.maxY()
+    let pt = Point.zero.mutableCopy()
+    for (let x = minX; x < maxX; ++x)
+      for (let y = minY; y < maxY; ++y) {
+        pt.x = x
+        pt.y = y
+        fn(pt)
+      }
+  }
 }
 
 export interface MutableRect extends Rect {

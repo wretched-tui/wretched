@@ -1,5 +1,5 @@
-import {View} from './View'
-import type {KeyEvent} from './events'
+import {View} from '../View'
+import type {KeyEvent} from '../events'
 
 export class TickManager {
   #render: () => void
