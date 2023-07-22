@@ -13,6 +13,7 @@ export class Style {
   background?: Color
 
   static NONE = new Style()
+  static underlined = new Style({underline: true})
 
   static fromSGR(ansi: string): Style {
     let match = ansi.match(/^\x1b\[([\d;]*)m$/)

@@ -46,15 +46,13 @@ class LogLine extends Text {
     const header =
       styled(centerPad(method.toUpperCase(), 7), 'black fg;white bg') + ' '
     const lines = args.flatMap(arg => {
-      return inspect(arg, false)
-        .split('\n')
-        .map((line, index) => {
-          if (index === 0) {
-            return header + line
-          } else {
-            return ' '.repeat(unicode.lineWidth(header)) + line
-          }
-        })
+      return `${arg}`.split('\n').map((line, index) => {
+        if (index === 0) {
+          return header + line
+        } else {
+          return ' '.repeat(unicode.lineWidth(header)) + line
+        }
+      })
     })
 
     super({lines, wrap: true})

@@ -33,23 +33,20 @@ export interface MutablePoint extends Point {
   y: number
 }
 
+type SizeArgs = [number, number] | [Pick<Size, 'width' | 'height'>]
+
 export class Size {
   readonly width: number
   readonly height: number
 
   static zero = new Size(0, 0)
 
-  constructor(width: number, height: number) {
+  constructor(size: Pick<Size, 'width' | 'height'>)
+  constructor(width: number, height: number)
+  constructor(...args: SizeArgs) {
+    const [width, height] = toWH(args)
     this.width = Math.max(0, width)
     this.height = Math.max(0, height)
-  }
-
-  #toWH(args: [number, number] | [Size]): [number, number] {
-    if (args.length === 2) {
-      return args
-    } else {
-      return [args[0].width, args[0].height]
-    }
   }
 
   copy() {
@@ -81,13 +78,13 @@ export class Size {
     return copy
   }
 
-  shrink(...args: [number, number] | [Size]): Size {
-    const [w, h] = this.#toWH(args)
+  shrink(...args: SizeArgs): Size {
+    const [w, h] = toWH(args)
     return this.grow(-w, -h)
   }
 
-  grow(...args: [number, number] | [Size]): Size {
-    const [w, h] = this.#toWH(args)
+  grow(...args: SizeArgs): Size {
+    const [w, h] = toWH(args)
     return new Size(Math.max(0, this.width + w), Math.max(0, this.height + h))
   }
 
@@ -99,13 +96,13 @@ export class Size {
     return new Size(this.width, Math.min(height, this.height))
   }
 
-  max(...args: [number, number] | [Size]): Size {
-    const [w, h] = this.#toWH(args)
+  max(...args: SizeArgs): Size {
+    const [w, h] = toWH(args)
     return new Size(Math.min(w, this.width), Math.min(h, this.height))
   }
 
-  min(...args: [number, number] | [Size]): Size {
-    const [w, h] = this.#toWH(args)
+  min(...args: SizeArgs): Size {
+    const [w, h] = toWH(args)
     return new Size(Math.max(w, this.width), Math.max(h, this.height))
   }
 }
@@ -222,3 +219,11 @@ export type Mutable<T extends Point | Size | Rect> = T extends Point
   : T extends Rect
   ? MutableRect
   : never
+
+function toWH(args: SizeArgs): [number, number] {
+  if (args.length === 2) {
+    return args
+  } else {
+    return [args[0].width, args[0].height]
+  }
+}

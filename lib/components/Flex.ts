@@ -5,11 +5,7 @@ import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
-type FlexSize =
-  | 'intrinsic'
-  | {flex: number}
-  | 'flex' // implies {flex: 1}
-  | `flex${number}` // {flex: number} shorthand
+type FlexSize = 'intrinsic' | {flex: number} | `flex${number}` // {flex: number} shorthand
 
 interface Props extends ViewProps {
   children: ([FlexSize, View] | View)[]
@@ -101,9 +97,7 @@ export class Flex extends Container {
         }
       } else {
         let flex: number
-        if (flexSize === 'flex') {
-          flex = 1
-        } else if (typeof flexSize === 'string') {
+        if (typeof flexSize === 'string') {
           flex = +flexSize.slice(4) // 'flexN'
         } else {
           flex = flexSize.flex

@@ -251,10 +251,10 @@ export class ScrollableList extends Container {
           new Style(
             inRange
               ? {
-                  foreground: this.theme.blank.highlight,
+                  foreground: this.theme.plain.highlight,
                 }
               : {
-                  foreground: this.theme.blank.background,
+                  foreground: this.theme.plain.background,
                 },
           ),
         )

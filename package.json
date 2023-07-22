@@ -15,7 +15,9 @@
   "scripts": {
     "clean": "rm -f dist/**/*.js",
     "cp-usr": "mkdir -p dist/sys/ && cp -r lib/sys/usr dist/sys/",
-    "demo": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/demo.js",
+    "demo": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/demos/$1.js",
+    "drawer": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/demos/drawer.js",
+    "buttons": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/demos/buttons.js",
     "test": "yarn clean && yarn cp-usr && tsc && node --enable-source-maps dist/test.js"
   },
   "keywords": [

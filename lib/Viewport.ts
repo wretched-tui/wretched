@@ -14,13 +14,6 @@ import type {MouseEventListenerName} from './events'
  * outside the rect will be clipped)
  */
 export class Viewport {
-  get contentSize() {
-    return this.#contentSize
-  }
-  get visibleRect() {
-    return this.#visibleRect
-  }
-
   #terminal: Terminal
   #currentRender: View | null = null
   #contentSize: Size
@@ -43,7 +36,24 @@ export class Viewport {
     this.#visibleRect = rect
     this.#offset = Point.zero
     this.#style = Style.NONE
+
+    Object.defineProperty(this, 'contentSize', {
+      enumerable: true,
+      get: () => {
+        return this.#contentSize
+      },
+    })
+
+    Object.defineProperty(this, 'visibleRect', {
+      enumerable: true,
+      get: () => {
+        return this.#visibleRect
+      },
+    })
   }
+
+  declare contentSize: Size
+  declare visibleRect: Rect
 
   requestModal(modal: View, onClose: () => void) {
     if (!this.#currentRender) {

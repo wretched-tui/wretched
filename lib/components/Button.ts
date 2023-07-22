@@ -16,6 +16,8 @@ import {
   isMouseClicked,
 } from '../events'
 
+type Border = 'default' | 'none'
+
 interface TextProps {
   text: string
   content?: undefined
@@ -27,6 +29,7 @@ interface LinesProps {
 }
 
 interface StyleProps {
+  border?: Border
   type?: ThemeType
   style?: Partial<Style>
   hover?: Partial<Style>
@@ -44,6 +47,7 @@ export class Button extends Container {
   onPress: StyleProps['onPress']
 
   #type: ThemeType
+  #border: Border
   #style: Partial<Style> | undefined
   #hoverStyle: Partial<Style> | undefined
   #pressedStyle: Partial<Style> | undefined
@@ -57,6 +61,7 @@ export class Button extends Container {
   constructor({
     text,
     type,
+    border,
     content,
     onClick,
     onHover,
@@ -79,7 +84,8 @@ export class Button extends Container {
       this.add(content)
     }
 
-    this.#type = type ?? 'primary'
+    this.#type = type ?? 'plain'
+    this.#border = border ?? 'default'
     this.#style = style
     this.#hoverStyle = hover
     this.#pressedStyle = pressed
@@ -186,6 +192,7 @@ export class Button extends Container {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     const [style, borderStyle] = this.#currentStyle()
+    const [left, right] = this.#border === 'default' ? ['▌', '▐'] : [' ', ' ']
 
     viewport.usingPen(style, () => {
       const startX = Math.max(1, viewport.visibleRect.minX()),
@@ -197,8 +204,8 @@ export class Button extends Container {
         maxY = viewport.visibleRect.maxY()
       for (let y = minY; y < maxY; ++y) {
         viewport.usingPen(borderStyle, () => {
-          viewport.write('▌', new Point(0, y))
-          viewport.write('▐', new Point(viewport.contentSize.width - 1, y))
+          viewport.write(left, new Point(0, y))
+          viewport.write(right, new Point(viewport.contentSize.width - 1, y))
         })
         if (endX - startX > 2) {
           viewport.write(' '.repeat(endX - startX), new Point(startX, y))
@@ -206,7 +213,7 @@ export class Button extends Container {
       }
     })
 
-    const intrinsicSize = this.intrinsicSize(viewport.contentSize)
+    const intrinsicSize = super.intrinsicSize(viewport.contentSize)
     const offset = ~~((viewport.contentSize.height - intrinsicSize.height) / 2)
     viewport.clipped(
       new Rect(new Point(1, offset), viewport.contentSize.shrink(1, offset)),

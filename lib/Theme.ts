@@ -12,7 +12,7 @@ export type ThemeType =
   | 'confirm'
   | 'destroy'
   | 'selected'
-  | 'blank'
+  | 'plain'
 
 const text = '#E2E2E2'
 
@@ -22,7 +22,7 @@ export class Theme {
   confirm: ColorGroup
   destroy: ColorGroup
   selected: ColorGroup
-  blank: ColorGroup
+  plain: ColorGroup
 
   static default = new Theme({
     primary: {
@@ -50,19 +50,19 @@ export class Theme {
       background: '#BDBDBD',
       highlight: '#E6E6E6',
     },
-    blank: {
+    plain: {
       text,
-      background: '#383838',
+      background: '#4F4F4F',
       highlight: '#616161',
     },
   })
 
-  constructor({primary, secondary, confirm, destroy, selected, blank}: Theme) {
+  constructor({primary, secondary, confirm, destroy, selected, plain}: Theme) {
     this.primary = primary
     this.secondary = secondary
     this.confirm = confirm
     this.destroy = destroy
     this.selected = selected
-    this.blank = blank
+    this.plain = plain
   }
 }

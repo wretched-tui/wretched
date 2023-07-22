@@ -74,14 +74,18 @@ export class Input extends View {
       return
     }
 
-    if (event.name === 'up' || event.name === 'home') {
-      this.#receiveKeyUp(event)
-    } else if (event.name === 'down' || event.name === 'end') {
-      this.#receiveKeyDown(event)
+    if (event.name === 'up' || event.name === 'home' || event.full === 'C-a') {
+      this.#receiveKeyUpArrow(event)
+    } else if (
+      event.name === 'down' ||
+      event.name === 'end' ||
+      event.full === 'C-e'
+    ) {
+      this.#receiveKeyDownArrow(event)
     } else if (event.name === 'left') {
-      this.#receiveKeyLeft(event)
+      this.#receiveKeyLeftArrow(event)
     } else if (event.name === 'right') {
-      this.#receiveKeyRight(event)
+      this.#receiveKeyRightArrow(event)
     } else if (event.name === 'backspace') {
       this.#receiveKeyBackspace()
     } else if (event.name === 'delete') {
@@ -206,7 +210,7 @@ export class Input extends View {
     }
   }
 
-  #receiveKeyUp({shift}: KeyEvent) {
+  #receiveKeyUpArrow({shift}: KeyEvent) {
     if (shift) {
       this.#cursor.end = 0
     } else {
@@ -214,7 +218,7 @@ export class Input extends View {
     }
   }
 
-  #receiveKeyDown({shift}: KeyEvent) {
+  #receiveKeyDownArrow({shift}: KeyEvent) {
     if (shift) {
       this.#cursor.end = this.#chars.length
     } else {
@@ -264,7 +268,7 @@ export class Input extends View {
     return nextWordOffset
   }
 
-  #receiveKeyLeft({shift, meta}: KeyEvent) {
+  #receiveKeyLeftArrow({shift, meta}: KeyEvent) {
     if (meta) {
       const prevWordOffset = this.#prevWordOffset(shift)
       if (shift) {
@@ -284,7 +288,7 @@ export class Input extends View {
     }
   }
 
-  #receiveKeyRight({shift, meta}: KeyEvent) {
+  #receiveKeyRightArrow({shift, meta}: KeyEvent) {
     if (meta) {
       const nextWordOffset = this.#nextWordOffset(shift)
       if (shift) {

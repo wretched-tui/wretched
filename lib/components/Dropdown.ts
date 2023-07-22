@@ -3,13 +3,12 @@ import type {Props as ViewProps} from '../View'
 import type {MouseEvent} from '../events'
 import {unicode} from '../sys'
 import {View} from '../View'
-import {Container} from '../Container'
 import {Style} from '../Style'
+import {Container} from '../Container'
 import {Point, Size, Rect} from '../geometry'
 import {isMouseEnter, isMouseExit, isMouseClicked} from '../events'
-import {ScrollableList} from '../components/ScrollableList'
-import {Text} from '../components/Text'
-import {Button} from '../components/Button'
+import {Box, Button, Flex, ScrollableList, Separator, Text} from '../components'
+import type {BorderChars} from '../components/Box'
 
 interface Props<T> extends ViewProps {
   choices: [string, T][]
@@ -20,6 +19,7 @@ export class Dropdown<T> extends View {
   #dropdown: DropdownSelector<T>
   #isHover = false
   #showModal = false
+  #selectedSize = Size.zero
 
   constructor({choices, selected, ...viewProps}: Props<T>) {
     super(viewProps)
@@ -35,8 +35,15 @@ export class Dropdown<T> extends View {
   }
 
   intrinsicSize(size: Size): Size {
-    const {width, height} = unicode.stringSize(this.#dropdown.selectedText)
-    return new Size(width + 1, height + 2)
+    this.#selectedSize = new Size(
+      unicode.stringSize(this.#dropdown.selectedText),
+    )
+    //12      345 width += 5
+    //╭─......┬─╮1
+    //│ .text.│ │
+    //...txt2....
+    //╰─......┴─╯2 height += 1
+    return this.#selectedSize.grow(5, 2)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -60,36 +67,57 @@ export class Dropdown<T> extends View {
 
     viewport.registerMouse(['mouse.move', 'mouse.button.left'])
     const lines = this.#dropdown.selectedText
-    viewport.write(
-      ' '.repeat(viewport.contentSize.width),
-      new Point(0, viewport.contentSize.height - 1),
-    )
+    const [top, side, tl, tr, bl, br, ct, cb] =
+      this.#isHover || this.#showModal
+        ? ['━', '┃', '┏', '┓', '┗', '┛', '┳', '┻']
+        : ['─', '│', '┌', '┐', '└', '┘', '┬', '┴']
 
-    viewport.write(
-      '╭' + '─'.repeat(viewport.contentSize.width - 4) + '┬─╮',
-      new Point(0, 0),
-    )
-    let pt: Point
-    for (let y = 1; y < viewport.contentSize.height - 1; y++) {
-      pt = new Point(0, y)
-      viewport.write('│' + ' '.repeat(viewport.contentSize.width - 4), pt)
-      if (y - 1 < lines.length) {
-        viewport.write(lines[y - 1], pt.offset(1, 0))
+    if (viewport.contentSize.height === 1) {
+      viewport.write(
+        ' '.repeat(viewport.contentSize.width),
+        Point.zero,
+        Style.underlined,
+      )
+      viewport.clipped(
+        new Rect(Point.zero, viewport.contentSize.shrink(3, 0)),
+        Style.underlined,
+        () => {
+          viewport.write(side + lines[0], Point.zero, Style.underlined)
+        },
+      )
+      viewport.write(
+        `${side}${this.#showModal ? '⦿' : this.#isHover ? '◯' : '◌'}${side}`,
+        new Point(viewport.contentSize.width - 3, 0),
+      )
+    } else {
+      viewport.write(
+        tl + top.repeat(viewport.contentSize.width - 4) + `${ct}${top}${tr}`,
+        new Point(0, 0),
+      )
+      const pt = new Point(0, 1).mutableCopy()
+      for (; pt.y < viewport.contentSize.height - 1; pt.y++) {
+        viewport.write(side + ' '.repeat(viewport.contentSize.width - 4), pt)
+        if (pt.y - 1 < lines.length) {
+          viewport.write(lines[pt.y - 1], pt.offset(1, 0))
+        }
+        viewport.write(
+          `${side} ${side}`,
+          pt.offset(viewport.contentSize.width - 3, 0),
+        )
       }
-      pt = new Point(viewport.contentSize.width - 3, y)
-      viewport.write('│ │', pt)
+      viewport.write(
+        bl + top.repeat(viewport.contentSize.width - 4) + `${cb}${top}${br}`,
+        new Point(0, viewport.contentSize.height - 1),
+      )
+
+      viewport.write(
+        this.#showModal ? '⦿' : this.#isHover ? '◯' : '◌',
+        new Point(
+          viewport.contentSize.width - 2,
+          viewport.contentSize.height - 2,
+        ),
+      )
     }
-    viewport.write(
-      '╰' + '─'.repeat(viewport.contentSize.width - 4) + '┴─╯',
-      new Point(0, viewport.contentSize.height - 1),
-    )
-    viewport.write(
-      this.#showModal ? '▼' : this.#isHover ? '◀︎' : '◁',
-      new Point(
-        viewport.contentSize.width - 2,
-        viewport.contentSize.height - 2,
-      ),
-    )
   }
 }
 
@@ -102,10 +130,9 @@ class DropdownSelector<T> extends Container {
   #selected: number
   #onSelect: () => void
   #scrollView = new ScrollableList({
-    maxHeight: 20,
-    padding: {left: 1, right: 1},
     cellAtIndex: row => this.cellAtIndex(row),
   })
+  #box = new Box({maxHeight: 24, border: belowChars})
 
   constructor({choices, selected, onSelect, ...viewProps}: SelectorProps<T>) {
     super({...viewProps})
@@ -116,7 +143,8 @@ class DropdownSelector<T> extends Container {
     ])
     this.#selected = selected
     this.#onSelect = onSelect
-    this.add(this.#scrollView)
+    this.#box.add(this.#scrollView)
+    this.add(this.#box)
   }
 
   get selectedText() {
@@ -134,12 +162,13 @@ class DropdownSelector<T> extends Container {
 
     const lines: string[] = this.#choices[row][0]
     const selected = this.#selected === row
-    return new Button({
-      type: selected ? 'selected' : 'blank',
+    const button = new Button({
+      type: selected ? 'selected' : 'plain',
+      border: 'none',
       content: new Text({
         lines: lines.map((line, index) => {
           const prefix =
-            index === 0 ? (row === this.#selected ? '● ' : '○ ') : '  '
+            index === 0 ? (this.#selected === row ? '⦿ ' : '◯ ') : '  '
           return prefix + line
         }),
       }),
@@ -150,6 +179,14 @@ class DropdownSelector<T> extends Container {
         this.#onSelect()
       },
     })
+
+    return new Flex({
+      direction: 'leftToRight',
+      children: [
+        ['flex1', button],
+        new Separator({direction: 'vertical', border: 'bold'}),
+      ],
+    })
   }
 
   render(viewport: Viewport) {
@@ -159,9 +196,7 @@ class DropdownSelector<T> extends Container {
     const fitsBelow =
       viewport.parentRect.maxY() + intrinsicSize.height <
       viewport.contentSize.height
-    const fitsAbove =
-      viewport.parentRect.minY() - intrinsicSize.height >=
-      viewport.contentSize.height
+    const fitsAbove = intrinsicSize.height <= viewport.parentRect.minY()
 
     // 1. doesn't fit above or below, pick the side that has more room
     // 2. prefer below
@@ -170,30 +205,60 @@ class DropdownSelector<T> extends Container {
     let height = intrinsicSize.height
     if (!fitsBelow && !fitsAbove) {
       const spaceBelow =
-        viewport.contentSize.height - viewport.parentRect.maxY()
-      const spaceAbove = viewport.parentRect.minY()
-      placement = spaceAbove > spaceBelow ? 'above' : 'below'
-      height = placement === 'above' ? spaceAbove : spaceBelow
+        viewport.contentSize.height - viewport.parentRect.maxY() + 1
+      const spaceAbove = viewport.parentRect.minY() + 1
+      if (spaceAbove > spaceBelow) {
+        placement = 'above'
+        height = spaceAbove
+      } else {
+        placement = 'below'
+        height = spaceBelow
+      }
     } else if (fitsBelow) {
       placement = 'below'
     } else {
       placement = 'above'
     }
 
+    // const width = Math.min(intrinsicSize.width, viewport.contentSize.width - x)
+    const width = viewport.parentRect.size.width
     const x = Math.max(
       0,
-      viewport.parentRect.maxX() - intrinsicSize.width - 2,
+      viewport.parentRect.maxX() - width,
       viewport.parentRect.minX(),
     )
-    const width = Math.min(intrinsicSize.width, viewport.contentSize.width - x)
     let y: number
     if (placement === 'below') {
-      y = viewport.parentRect.maxY()
+      y = viewport.parentRect.maxY() - 1
     } else {
-      y = viewport.parentRect.minY() - height
+      y = viewport.parentRect.minY() - height + 1
     }
+
+    const border: BorderChars = [
+      ...(placement === 'below' ? belowChars : aboveChars),
+    ]
+    if (viewport.parentRect.size.height === 1) {
+      if (placement === 'below') {
+        y += 1
+        height -= 1
+        border[6] = border[0] // bottom
+        border[0] = '' // top
+        border[2] = '' // top left
+        border[3] = '' // top right
+      } else {
+        height -= 1
+        border[4] = '' // bottom left
+        border[5] = '' // bottom right
+        border[6] = '' // bottom
+      }
+    }
+    this.#box.border = border
 
     const rect = new Rect(new Point(x, y), new Size(width, height))
     viewport.clipped(rect, inside => super.render(inside))
   }
 }
+
+//                  top  left  tl    tr    bl   br
+const belowChars = ['━', '┃', '┣', '╋━┫', '┗', '┻━┛'] as BorderChars
+const aboveChars = ['━', '┃', '┏', '┳━┓', '┣', '╋━┫'] as BorderChars

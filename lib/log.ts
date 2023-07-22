@@ -1,4 +1,3 @@
-import {EventEmitter} from 'events'
 import {inspect} from './inspect'
 
 const inspect_methods = ['debug', 'error', 'info', 'log', 'warn'] as const
@@ -16,7 +15,7 @@ methods.forEach(method => {
 export function interceptConsoleLog() {
   methods.forEach(method => {
     console[method] = function () {
-      const args = [...arguments]
+      const args = [...arguments].map(arg => inspect(arg, true))
       appendLog([method, args])
     }
   })
@@ -34,10 +33,7 @@ export function fetchLogs() {
 
 export function flushLogs() {
   logs.forEach(([method, args]) => {
-    builtin[method].apply(
-      console,
-      args.map(arg => inspect(arg, true)),
-    )
+    builtin[method].apply(console, args)
   })
   logs.splice(0, logs.length)
   methods.forEach(method => {
