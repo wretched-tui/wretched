@@ -582,8 +582,8 @@ export const colors: {
   match(text: `#${string}`): number
   match(r: number, g: number, b: number): number
   match(rgb: [r: number, g: number, b: number]): number
-  RGBToHex(r: number, g: number, b: number): `#${string}`
-  RGBToHex(rgb: [r: number, g: number, b: number]): `#${string}`
+  RGBtoHex(r: number, g: number, b: number): `#${string}`
+  RGBtoHex(rgb: [r: number, g: number, b: number]): `#${string}`
   hexToRGB(text: string): [number, number, number]
   nameToIndex(name: string): number
   indexToRGB(index: number): [number, number, number]

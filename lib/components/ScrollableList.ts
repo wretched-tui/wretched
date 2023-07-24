@@ -246,15 +246,17 @@ export class ScrollableList extends Container {
         )
         const inRange = ~~h >= heights[0] && ~~h <= heights[1]
         viewport.write(
-          inRange ? '█' : '▒',
+          inRange ? '█' : ' ',
           new Point(cellWidth, y),
           new Style(
             inRange
               ? {
-                  foreground: this.theme.plain.highlight,
+                  foreground: this.theme.highlight,
+                  background: this.theme.highlight,
                 }
               : {
-                  foreground: this.theme.plain.background,
+                  foreground: this.theme.darken,
+                  background: this.theme.darken,
                 },
           ),
         )

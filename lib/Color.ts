@@ -39,13 +39,13 @@ export type Color =
 
 export function colorToHex(color: Color): `#${string}` {
   if (Array.isArray(color)) {
-    return colors.RGBToHex(color)
+    return colors.RGBtoHex(color)
   } else if (typeof color === 'string' && color.startsWith('#')) {
     return color as `#${string}`
   } else if (typeof color === 'object' && 'sgr' in color) {
     return colors.indexToHex(+color.sgr)
   } else if (typeof color === 'object' && 'grayscale' in color) {
-    return colors.RGBToHex(color.grayscale, color.grayscale, color.grayscale)
+    return colors.RGBtoHex(color.grayscale, color.grayscale, color.grayscale)
   } else {
     const index = colors.nameToIndex(color)
     return index === -1 ? '#ffffff' : colors.indexToHex(index)

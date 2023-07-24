@@ -1,7 +1,6 @@
 import type {Viewport} from '../Viewport'
 import type {MouseEvent} from '../events'
 import type {Props as ViewProps} from '../View'
-import type {ThemeType} from '../Theme'
 
 import {View} from '../View'
 import {Container} from '../Container'
@@ -16,7 +15,8 @@ import {
   isMouseClicked,
 } from '../events'
 
-type Border = 'default' | 'none'
+type Border = 'default' | 'arrows' | 'none'
+type BorderChars = [string, string]
 
 interface TextProps {
   text: string
@@ -30,7 +30,6 @@ interface LinesProps {
 
 interface StyleProps {
   border?: Border
-  type?: ThemeType
   style?: Partial<Style>
   hover?: Partial<Style>
   pressed?: Partial<Style>
@@ -46,11 +45,7 @@ export class Button extends Container {
   onHover: StyleProps['onHover']
   onPress: StyleProps['onPress']
 
-  #type: ThemeType
   #border: Border
-  #style: Partial<Style> | undefined
-  #hoverStyle: Partial<Style> | undefined
-  #pressedStyle: Partial<Style> | undefined
   #textView?: Text
 
   #isPressed = false
@@ -60,7 +55,6 @@ export class Button extends Container {
 
   constructor({
     text,
-    type,
     border,
     content,
     onClick,
@@ -84,11 +78,7 @@ export class Button extends Container {
       this.add(content)
     }
 
-    this.#type = type ?? 'plain'
     this.#border = border ?? 'default'
-    this.#style = style
-    this.#hoverStyle = hover
-    this.#pressedStyle = pressed
 
     this.onClick = onClick
     this.onHover = onHover
@@ -152,49 +142,16 @@ export class Button extends Container {
     }
   }
 
-  #currentStyle() {
-    const text = this.theme[this.#type].text,
-      bg = this.theme[this.#type].background,
-      highlightBg = this.theme[this.#type].highlight
-
-    let borderStyle: Style,
-      style = new Style({
-        foreground: text,
-        background: bg,
-      }).merge(this.#style)
-
-    const hoverStyle = style
-      .merge({background: highlightBg})
-      .merge(this.#hoverStyle)
-
-    if (this.isPressed) {
-      style = style.merge({background: bg}).merge(this.#pressedStyle)
-      borderStyle = style.merge({
-        foreground: bg,
-        background: bg,
-      })
-    } else if (this.isHover) {
-      style = hoverStyle
-      borderStyle = style.merge({
-        foreground: hoverStyle.background,
-        background: hoverStyle.background,
-      })
-    } else {
-      borderStyle = style.merge({
-        foreground: hoverStyle.background,
-      })
-    }
-
-    return [style, borderStyle]
-  }
-
   render(viewport: Viewport) {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
-    const [style, borderStyle] = this.#currentStyle()
-    const [left, right] = this.#border === 'default' ? ['▌', '▐'] : [' ', ' ']
+    const textStyle = this.theme.default({
+      isPressed: this.isPressed,
+      isHover: this.isHover,
+    })
+    const [left, right] = BORDERS[this.#border]
 
-    viewport.usingPen(style, () => {
+    viewport.usingPen(textStyle, () => {
       const startX = Math.max(1, viewport.visibleRect.minX()),
         endX = Math.min(
           viewport.contentSize.width - 1,
@@ -203,7 +160,7 @@ export class Button extends Container {
         minY = viewport.visibleRect.minY(),
         maxY = viewport.visibleRect.maxY()
       for (let y = minY; y < maxY; ++y) {
-        viewport.usingPen(borderStyle, () => {
+        viewport.usingPen(textStyle, () => {
           viewport.write(left, new Point(0, y))
           viewport.write(right, new Point(viewport.contentSize.width - 1, y))
         })
@@ -217,10 +174,16 @@ export class Button extends Container {
     const offset = ~~((viewport.contentSize.height - intrinsicSize.height) / 2)
     viewport.clipped(
       new Rect(new Point(1, offset), viewport.contentSize.shrink(1, offset)),
-      style,
+      textStyle,
       inside => {
         super.render(inside)
       },
     )
   }
+}
+
+const BORDERS: Record<Border, BorderChars> = {
+  default: ['▌', '▐'],
+  arrows: ['⟨', '⟩'],
+  none: [' ', ' '],
 }

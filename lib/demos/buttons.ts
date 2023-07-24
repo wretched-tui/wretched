@@ -50,33 +50,34 @@ async function run() {
             ['flex1', new Space()],
             new Button({
               height: 3,
-              type: 'primary',
+              theme: 'primary',
               text: 'Launch',
             }),
 
             ['flex1', new Space()],
             new Button({
               height: 3,
-              type: 'confirm',
+              theme: 'proceed',
+              text: 'Proceed',
+            }),
+
+            ['flex1', new Space()],
+            new Button({
+              height: 3,
+              theme: 'cancel',
               text: 'Cancel',
             }),
 
             ['flex1', new Space()],
             new Button({
               height: 3,
-              type: 'destroy',
-              text: 'The Usual',
-            }),
-
-            ['flex1', new Space()],
-            new Button({
-              height: 3,
-              type: 'secondary',
+              theme: 'secondary',
               text: 'Do it!',
             }),
 
             ['flex1', new Space()],
-            new Button({height: 3, type: 'plain', text: 'Do it!'}),
+            new Button({height: 3, theme: 'plain', text: 'Do it!'}),
+            new Button({height: 3, theme: 'selected', text: 'Do it!'}),
             ['flex1', new Space()],
             new Separator({
               direction: 'horizontal',

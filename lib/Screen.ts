@@ -1,9 +1,11 @@
 import type {BlessedProgram} from './sys'
 import {program as blessedProgram} from './sys'
-import {SGRTerminal} from './terminal'
-import {Viewport} from './Viewport'
+
+import type {SGRTerminal} from './terminal'
+import type {Rect, Point} from './geometry'
+import {Size} from './geometry'
 import {View} from './View'
-import {Rect, Point, Size} from './geometry'
+import {Viewport} from './Viewport'
 import {flushLogs} from './log'
 import {Buffer} from './Buffer'
 import type {

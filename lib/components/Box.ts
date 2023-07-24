@@ -34,20 +34,20 @@ interface ContentProps {
 }
 interface StyleProps extends ViewProps {
   border?: Border | BorderChars
-  highlight?: Style
+  highlight?: boolean
 }
 type Props = StyleProps & (ChildrenProps | ContentProps)
 
 export class Box extends Container {
   #borderChars: BorderChars
   #borderSizes: BorderSizes
-  #highlight?: Style
-  #hover = false
+  #highlight: boolean
+  #isHover = false
 
   constructor({content, children, border, highlight, ...viewProps}: Props) {
     super(viewProps)
 
-    this.#highlight = highlight
+    this.#highlight = highlight ?? false
     if (children) {
       this.addAll(children)
     } else if (content) {
@@ -86,24 +86,22 @@ export class Box extends Container {
 
   receiveMouse(event: MouseEvent) {
     if (isMouseEnter(event)) {
-      this.#hover = true
+      this.#isHover = true
     } else if (isMouseExit(event)) {
-      this.#hover = false
+      this.#isHover = false
     }
   }
 
   render(viewport: Viewport) {
+    if (this.#highlight) {
+      viewport.registerMouse('mouse.move')
+    }
+
     const [top, left, tl, tr, bl, br, bottom, right] = this.#borderChars
 
     const maxX = viewport.contentSize.width - this.#borderSizes.right
     const maxY = viewport.contentSize.height - this.#borderSizes.bottom
-    let borderStyle = new Style({foreground: 'white', background: 'default'})
-    if (this.#highlight) {
-      borderStyle = this.#hover
-        ? this.#highlight.merge(borderStyle)
-        : borderStyle
-      viewport.registerMouse('mouse.move')
-    }
+    let borderStyle = this.theme.default({isHover: this.#isHover})
 
     const innerStyle = new Style({background: borderStyle.background})
     for (let y = this.#borderSizes.top; y < maxY; ++y) {
@@ -142,13 +140,6 @@ export class Box extends Container {
       }
     })
   }
-}
-
-const BORDERS: Record<Border, BorderChars> = {
-  single: ['─', '│', '┌', '┐', '└', '┘'],
-  bold: ['━', '┃', '┏', '┓', '┗', '┛'],
-  double: ['═', '║', '╔', '╗', '╚', '╝'],
-  round: ['─', '│', '╭', '╮', '╰', '╯'],
 }
 
 function calculateBorder(
@@ -192,4 +183,11 @@ function borderSize(str: string) {
     return {width: 0, height: 0}
   }
   return unicode.stringSize(str)
+}
+
+const BORDERS: Record<Border, BorderChars> = {
+  single: ['─', '│', '┌', '┐', '└', '┘'],
+  bold: ['━', '┃', '┏', '┓', '┗', '┛'],
+  double: ['═', '║', '╔', '╗', '╚', '╝'],
+  round: ['─', '│', '╭', '╮', '╰', '╯'],
 }

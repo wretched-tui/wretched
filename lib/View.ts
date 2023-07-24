@@ -1,12 +1,13 @@
 import type {Mutable} from './geometry'
 import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
+import type {Purpose} from './Theme'
 import {Theme} from './Theme'
 import type {KeyEvent, MouseEvent} from './events'
 import {Point, Size, Rect} from './geometry'
 
 export interface Props {
-  theme?: Theme
+  theme?: Theme | Purpose
   x?: number
   y?: number
   //
@@ -58,7 +59,7 @@ export abstract class View {
     maxHeight,
     padding,
   }: Props = {}) {
-    this.#theme = theme
+    this.#theme = typeof theme === 'string' ? Theme[theme] : theme
     this.#x = x
     this.#y = y
     this.#width = width
@@ -89,7 +90,7 @@ export abstract class View {
   }
 
   get theme(): Theme {
-    return this.#theme ?? this.parent?.theme ?? Theme.default
+    return this.#theme ?? this.parent?.theme ?? Theme.plain
   }
 
   get screen(): Screen | null {
@@ -173,12 +174,6 @@ export abstract class View {
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
-      if (!this.#prevSize) {
-        throw new Error(
-          'It is guaranteed that intrinsicSize is called before render(), even if the result is ignored',
-        )
-      }
-
       let origin: Point
       let contentSize: Size = viewport.contentSize
       if (this.#x || this.#y) {
