@@ -30,7 +30,7 @@
     "terminal"
   ],
   "engines": {
-    "node": ">= 20.0.0"
+    "node": ">= 18.12.0"
   },
   "devDependencies": {
     "@types/node": "^20.3.2",
