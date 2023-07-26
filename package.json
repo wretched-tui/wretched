@@ -8,7 +8,7 @@
   "preferGlobal": false,
   "repository": "git://github.com/colinta/wretched.git",
   "homepage": "https://github.com/colinta/wretched",
-  "types": "index.d.ts",
+  "types": "dist/index.d.ts",
   "bugs": {
     "url": "http://github.com/colinta/wretched/issues"
   },
