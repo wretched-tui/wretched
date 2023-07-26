@@ -8,35 +8,52 @@ import {styled} from '../ansi'
 import {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
 
-import {Flow} from './Flow'
+import {Container} from '../Container'
 import {Text} from './Text'
+import {ScrollableList} from './ScrollableList'
 
-export class ConsoleLog extends Flow {
+export class ConsoleLog extends Container {
+  #logs: [Method, any[]][] = []
+  #scrollableList = new ScrollableList({
+    scrollHeight:10,
+    cellAtIndex: index => {
+      if (index < 0) {
+        index = this.#logs.length + (index % this.#logs.length)
+      }
+      if (index >= this.#logs.length) {
+        return
+      }
+      return new LogLine(this.#logs[index][0], this.#logs[index][1])
+    },
+    cellCount: () => this.#logs.length,
+    keepAtBottom: true
+  })
   constructor(viewProps: ViewProps = {}) {
-    super({direction: 'topToBottom', children: [], ...viewProps})
+    super(viewProps)
+
+    this.add(this.#scrollableList)
+  }
+
+  setLogs(logs: [Method, any[]][]) {
+    this.#logs = logs
+    this.#scrollableList.invalidateAllRows()
   }
 
   appendLog(method: Method, args: any[]) {
     if (method === 'dir') {
     } else if (method === 'table') {
     } else {
-      if (this.children.length < 1000) {
-        this.add(new LogLine(method, args))
-      } else if (this.children.length === 1000) {
-        this.add(new LogLine(method, ['UH OH']), 0)
-      }
+      this.#logs.push([method, args])
     }
   }
 
   clear() {
-    for (const child of [...this.children]) {
-      this.remove(child)
-    }
+    this.#logs = []
+
   }
 
   render(viewport: Viewport) {
-    fetchLogs().forEach(([method, args]) => this.appendLog(method, args))
-    viewport.registerMouse('mouse.wheel')
+    // fetchLogs().forEach(([method, args]) => this.appendLog(method, args))
     super.render(viewport)
   }
 }
@@ -45,12 +62,13 @@ class LogLine extends Text {
   constructor(method: Method, args: any[]) {
     const header =
       styled(centerPad(method.toUpperCase(), 7), 'black fg;white bg') + ' '
-    const lines = args.flatMap(arg => {
-      return `${arg}`.split('\n').map((line, index) => {
-        if (index === 0) {
+    const spaces = ' '.repeat(unicode.lineWidth(header))
+    const lines = args.flatMap((arg, index) => {
+      return `${arg}`.split('\n').map((line, lineIndex) => {
+        if (index === 0 && lineIndex === 0) {
           return header + line
         } else {
-          return ' '.repeat(unicode.lineWidth(header)) + line
+          return spaces + line
         }
       })
     })
