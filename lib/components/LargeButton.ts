@@ -30,26 +30,36 @@ export class LargeButton extends Button {
       isPressed: this.isPressed,
       isHover: this.isHover,
     })
-    const [left, right] = BORDERS[this.#border]
-
-    viewport.usingPen(textStyle, () => {
-      const startX = Math.max(1, viewport.visibleRect.minX()),
-        endX = Math.min(
-          viewport.contentSize.width - 1,
-          viewport.visibleRect.maxX(),
-        ),
-        minY = viewport.visibleRect.minY(),
-        maxY = viewport.visibleRect.maxY()
-      for (let y = minY; y < maxY; ++y) {
-        viewport.usingPen(textStyle, () => {
-          viewport.write(left, new Point(0, y))
-          viewport.write(right, new Point(viewport.contentSize.width - 1, y))
-        })
-        if (endX - startX > 2) {
-          viewport.write(' '.repeat(endX - startX), new Point(startX, y))
-        }
-      }
+    const borderStyle = this.theme.ui({
+      isPressed: this.isPressed,
+      isHover: this.isHover,
+      isOrnament: true,
     })
+
+    const [left, right] = BORDERS[this.#border]
+    const startX = Math.max(1, viewport.visibleRect.minX()),
+      endX = Math.min(
+        viewport.contentSize.width - 1,
+        viewport.visibleRect.maxX(),
+      ),
+      minY = viewport.visibleRect.minY(),
+      maxY = viewport.visibleRect.maxY()
+    for (let y = minY; y < maxY; ++y) {
+      viewport.write(left, new Point(0, y), borderStyle)
+      viewport.write(
+        right,
+        new Point(viewport.contentSize.width - 1, y),
+        borderStyle,
+      )
+
+      if (endX - startX > 2) {
+        viewport.write(
+          ' '.repeat(endX - startX),
+          new Point(startX, y),
+          textStyle,
+        )
+      }
+    }
 
     const naturalSize = super.naturalSize(viewport.contentSize)
     const offset = ~~((viewport.contentSize.height - naturalSize.height) / 2)

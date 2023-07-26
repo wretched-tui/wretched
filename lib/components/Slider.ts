@@ -130,7 +130,8 @@ export class Slider extends View {
 
   renderLine(viewport: Viewport) {
     const pt = Point.zero.mutableCopy()
-    const style = this.theme.ui({isHover: this.#isHover})
+    const textStyle = this.theme.ui({isHover: this.#isHover})
+    const controlStyle = this.theme.ui({isHover: this.#isHover})
     if (this.#direction === 'horizontal') {
       const position = Math.round(
         interpolate(this.#position, this.#range, [
@@ -139,7 +140,8 @@ export class Slider extends View {
         ]),
       )
       viewport.visibleRect.forEachPoint(pt => {
-        let char: string
+        let char: string,
+          style = textStyle
         if (pt.x === position) {
           if (pt.y === 0 && viewport.contentSize.height > 1) {
             char = '▄'
@@ -151,6 +153,7 @@ export class Slider extends View {
           } else {
             char = '█'
           }
+          style = controlStyle
         } else if (viewport.contentSize.height === 1) {
           if (pt.x === 0) {
             char = '╶'
@@ -191,7 +194,8 @@ export class Slider extends View {
         ]),
       )
       viewport.visibleRect.forEachPoint(pt => {
-        let char: string
+        let char: string,
+          style = textStyle
         if (pt.y === position) {
           if (pt.x === 0 && viewport.contentSize.width > 1) {
             char = '▐'
@@ -203,6 +207,7 @@ export class Slider extends View {
           } else {
             char = '█'
           }
+          style = controlStyle
         } else if (viewport.contentSize.width === 1) {
           if (pt.y === 0) {
             char = '╷'

@@ -153,8 +153,6 @@ export class Button extends Container {
   render(viewport: Viewport) {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
-    const [left, right] = BORDERS[this.#border]
-
     const textStyle = this.theme.ui({
       isPressed: this.isPressed,
       isHover: this.isHover,
@@ -178,6 +176,8 @@ export class Button extends Container {
       offsetLeft,
       Math.round((viewport.contentSize.height - naturalSize.height) / 2),
     )
+
+    const [left, right] = BORDERS[this.#border]
     for (let y = 0; y < naturalSize.height; y++) {
       viewport.write(
         left,

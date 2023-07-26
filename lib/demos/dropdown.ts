@@ -83,7 +83,6 @@ async function run() {
             new Dropdown({
               theme: 'secondary',
               padding: {left: 2, right: 2},
-              height: 1,
               choices,
               selected: 1,
             }),
@@ -113,6 +112,13 @@ async function run() {
               theme: 'proceed',
               padding: {left: 2, right: 2},
               height: 1,
+              choices,
+              selected: 1,
+            }),
+            new Space({height: 1}),
+            new Dropdown({
+              theme: 'plain',
+              padding: {left: 2, right: 2},
               choices,
               selected: 1,
             }),

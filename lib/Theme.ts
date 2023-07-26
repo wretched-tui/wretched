@@ -81,12 +81,18 @@ export class Theme {
   ui({
     isPressed,
     isHover,
+    isOrnament,
   }: {
     isPressed?: boolean
     isHover?: boolean
+    isOrnament?: boolean
   } = {}): Style {
     return new Style({
-      foreground: this.textColor,
+      foreground: isOrnament
+        ? isPressed
+          ? this.darken
+          : this.highlight
+        : this.textColor,
       background: isPressed
         ? this.darken
         : isHover
