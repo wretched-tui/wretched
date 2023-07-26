@@ -9,15 +9,16 @@ type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 interface Props extends ViewProps {
   children: View[]
   direction: Direction
+  spaceBetween?: number
 }
 
 export class Flow extends Container {
   direction: Direction
-
-  constructor({children, direction, ...viewProps}: Props) {
+  #spaceBetween: number
+  constructor({children, direction, spaceBetween, ...viewProps}: Props) {
     super(viewProps)
     this.direction = direction
-
+    this.#spaceBetween = spaceBetween ?? 0
     for (const child of children) {
       this.add(child)
     }
@@ -71,6 +72,7 @@ export class Flow extends Container {
         childSize.height = viewport.contentSize.height
       }
 
+
       if (this.direction === 'rightToLeft') {
         origin.x -= childSize.width
       } else if (this.direction === 'bottomToTop') {
@@ -84,11 +86,18 @@ export class Flow extends Container {
         })
       }
 
-      if (this.direction === 'leftToRight') {
-        origin.x += childSize.width
-      } else if (this.direction === 'topToBottom') {
-        origin.y += childSize.height
+      if (this.direction === 'rightToLeft') {
+        origin.x -= this.#spaceBetween
+      } else if (this.direction === 'bottomToTop') {
+        origin.y -= this.#spaceBetween
       }
+
+      if (this.direction === 'leftToRight') {
+        origin.x += childSize.width + this.#spaceBetween
+      } else if (this.direction === 'topToBottom') {
+        origin.y += childSize.height + this.#spaceBetween
+      }
+
 
       if (isVertical(this.direction)) {
         remainingSize.height = Math.max(

@@ -34,6 +34,7 @@ export abstract class View {
   #screen: Screen | null = null
   #theme: Theme | undefined
   #prevSizeCache: Map<string, Size> = new Map()
+  #contentSize: Size = Size.zero
 
   #x: Props['x']
   #y: Props['y']
@@ -210,10 +211,15 @@ export abstract class View {
     }
   }
 
+  get contentSize(): Size {
+    return this.#contentSize
+  }
+
   #renderWrap(
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
+      this.#contentSize = viewport.contentSize
       let origin: Point
       let contentSize: Size = viewport.contentSize
       if (this.#x || this.#y) {
