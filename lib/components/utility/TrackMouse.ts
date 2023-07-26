@@ -20,8 +20,8 @@ export class TrackMouse extends Container {
     this.add(content)
   }
 
-  intrinsicSize(availableSize: Size) {
-    return super.intrinsicSize(availableSize.shrink(1, 1)).grow(1, 1)
+  naturalSize(availableSize: Size) {
+    return super.naturalSize(availableSize.shrink(1, 1)).grow(1, 1)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -38,7 +38,7 @@ export class TrackMouse extends Container {
     viewport.clipped(
       new Rect(new Point(1, 1), viewport.contentSize.shrink(1, 1)),
       inside => {
-        super.render(inside)
+        this.renderChildren(inside)
       },
     )
 

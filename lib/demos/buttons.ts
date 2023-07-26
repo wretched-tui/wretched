@@ -16,6 +16,7 @@ import {TrackMouse} from '../components/utility'
 import {
   Box,
   Button,
+  LargeButton,
   ConsoleLog,
   Drawer,
   Dropdown,
@@ -35,7 +36,7 @@ async function run() {
   })
   const [screen, program] = await Screen.start(
     async (program: BlessedProgram) => {
-      await iTerm2.setBackground(program, [57, 57, 57])
+      await iTerm2.setBackground(program, [23, 23, 23])
 
       return new TrackMouse({
         content: new Flex({
@@ -48,36 +49,36 @@ async function run() {
             }),
 
             ['flex1', new Space()],
-            new Button({
+            new LargeButton({
               height: 3,
               theme: 'primary',
               text: 'Launch',
             }),
 
             ['flex1', new Space()],
-            new Button({
+            new LargeButton({
               height: 3,
               theme: 'proceed',
               text: 'Proceed',
             }),
 
             ['flex1', new Space()],
-            new Button({
+            new LargeButton({
               height: 3,
               theme: 'cancel',
               text: 'Cancel',
             }),
 
             ['flex1', new Space()],
-            new Button({
+            new LargeButton({
               height: 3,
               theme: 'secondary',
               text: 'Do it!',
             }),
 
             ['flex1', new Space()],
-            new Button({height: 3, theme: 'plain', text: 'Do it!'}),
-            new Button({height: 3, theme: 'selected', text: 'Do it!'}),
+            new Button({theme: 'plain', height: 3, text: 'Do it!'}),
+            new Button({theme: 'selected', height: 3, text: 'Do it!'}),
             ['flex1', new Space()],
             new Separator({
               direction: 'horizontal',

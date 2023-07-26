@@ -38,7 +38,7 @@ export class ModalManager {
 
       lastView = view
       this.#modalView.updateView(view, onClose)
-      this.#modalView.intrinsicSize(viewport.contentSize)
+      this.#modalView.naturalSize(viewport.contentSize)
 
       screen.preRender()
       viewport.parentRect = rect
@@ -79,6 +79,6 @@ class Modal extends Container {
 
   render(viewport: Viewport) {
     viewport.registerMouse('mouse.button.left')
-    super.render(viewport)
+    this.renderChildren(viewport)
   }
 }

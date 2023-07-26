@@ -11,8 +11,8 @@ export interface Props {
   x?: number
   y?: number
   //
-  width?: number
-  height?: number
+  width?: number | 'fill' | 'natural'
+  height?: number | 'fill' | 'natural'
   minWidth?: number
   minHeight?: number
   maxWidth?: number
@@ -33,9 +33,7 @@ export abstract class View {
 
   #screen: Screen | null = null
   #theme: Theme | undefined
-  #invalidateSize = true
-  #prevAvailableSize?: Size
-  #prevSize?: Size
+  #prevSizeCache: Map<string, Size> = new Map()
 
   #x: Props['x']
   #y: Props['y']
@@ -73,14 +71,14 @@ export abstract class View {
 
     const render = this.render.bind(this)
     this.render = this.#renderWrap(render).bind(this)
-    const intrinsicSize = this.intrinsicSize.bind(this)
-    this.intrinsicSize = this.#intrinsicSizeWrap(intrinsicSize).bind(this)
+    const naturalSize = this.naturalSize.bind(this)
+    this.naturalSize = this.#naturalSizeWrap(naturalSize).bind(this)
 
     Object.defineProperties(this, {
       render: {
         enumerable: false,
       },
-      intrinsicSize: {
+      naturalSize: {
         enumerable: false,
       },
       parent: {
@@ -97,15 +95,54 @@ export abstract class View {
     return this.#screen
   }
 
-  #restrictSize(availableSize: () => Size): Mutable<Size> {
-    if (this.#width !== undefined && this.#height !== undefined) {
-      return new Size(this.#width, this.#height).mutableCopy()
+  #toDimension(
+    dim: number | 'fill' | 'natural',
+    available: number,
+    natural: () => number,
+  ): number {
+    if (dim === 'fill') {
+      return available
+    } else if (dim === 'natural') {
+      return natural()
+    }
+    return dim
+  }
+
+  #restrictSize(
+    _calcSize: () => Size,
+    availableSize: Size,
+    prefer: 'grow' | 'shrink',
+  ): Mutable<Size> {
+    let memo: Size | undefined
+    const calcSize = () => {
+      return (memo ??= _calcSize())
     }
 
-    const size = availableSize().mutableCopy()
+    if (this.#width !== undefined && this.#height !== undefined) {
+      // shortcut for explicit or 'fill' on both width & height, skip all the rest
+      const width = this.#toDimension(
+          this.#width,
+          availableSize.width,
+          () => calcSize().width,
+        ),
+        height = this.#toDimension(
+          this.#height,
+          availableSize.height,
+          () => calcSize().height,
+        )
+      return new Size(width, height).mutableCopy()
+    }
+
+    const size = (
+      prefer === 'shrink' ? calcSize() : availableSize
+    ).mutableCopy()
 
     if (this.#width !== undefined) {
-      size.width = this.#width
+      size.width = this.#toDimension(
+        this.#width,
+        availableSize.width,
+        () => calcSize().width,
+      )
     } else {
       if (this.#minWidth !== undefined) {
         size.width = Math.max(this.#minWidth, size.width)
@@ -116,7 +153,11 @@ export abstract class View {
     }
 
     if (this.#height !== undefined) {
-      size.height = this.#height
+      size.height = this.#toDimension(
+        this.#height,
+        availableSize.height,
+        () => calcSize().height,
+      )
     } else {
       if (this.#minHeight !== undefined) {
         size.height = Math.max(this.#minHeight, size.height)
@@ -129,32 +170,33 @@ export abstract class View {
     return size
   }
 
-  #intrinsicSizeWrap(
-    intrinsicSize: (availableSize: Size) => Size,
+  #naturalSizeWrap(
+    naturalSize: (availableSize: Size) => Size,
   ): (availableSize: Size) => Size {
     return availableSize => {
-      if (
-        this.#prevSize &&
-        this.#prevAvailableSize === availableSize &&
-        !this.#invalidateSize
-      ) {
-        return this.#prevSize
+      const cached = this.#prevSizeCache.get(cacheKey(availableSize))
+      if (cached) {
+        return cached
       }
 
       if (this.#x || this.#y) {
         availableSize = availableSize.shrink(this.#x ?? 0, this.#y ?? 0)
       }
 
-      const size = this.#restrictSize(() => {
-        let contentSize = intrinsicSize(availableSize)
-        if (this.#padding) {
-          contentSize = contentSize.grow(
-            this.#padding.left + this.#padding.right,
-            this.#padding.top + this.#padding.bottom,
-          )
-        }
-        return contentSize
-      })
+      const size = this.#restrictSize(
+        () => {
+          let contentSize = naturalSize(availableSize)
+          if (this.#padding) {
+            contentSize = contentSize.grow(
+              this.#padding.left + this.#padding.right,
+              this.#padding.top + this.#padding.bottom,
+            )
+          }
+          return contentSize
+        },
+        availableSize,
+        'shrink',
+      )
 
       if (this.#x) {
         size.width += this.#x
@@ -163,9 +205,7 @@ export abstract class View {
         size.height += this.#y
       }
 
-      this.#prevSize = size
-      this.#prevAvailableSize = availableSize
-      this.#invalidateSize = false
+      this.#prevSizeCache.set(cacheKey(availableSize), size)
       return size
     }
   }
@@ -183,7 +223,11 @@ export abstract class View {
         origin = Point.zero
       }
 
-      contentSize = this.#restrictSize(() => contentSize)
+      contentSize = this.#restrictSize(
+        () => this.naturalSize(contentSize),
+        contentSize,
+        'grow',
+      )
 
       if (this.#padding) {
         origin = origin.offset(this.#padding.left, this.#padding.top)
@@ -198,15 +242,14 @@ export abstract class View {
     }
   }
 
-  abstract intrinsicSize(availableSize: Size): Size
+  abstract naturalSize(availableSize: Size): Size
   abstract render(viewport: Viewport): void
   /**
-   * Called from a view when a property change could affect intrinsicSize
+   * Called from a view when a property change could affect naturalSize
    */
   invalidateSize() {
-    this.#invalidateSize = true
-    this.#prevSize = undefined
-    this.#prevAvailableSize = undefined
+    this.#prevSizeCache = new Map()
+    this.parent?.invalidateSize()
   }
 
   receiveKey(event: KeyEvent) {}
@@ -259,4 +302,8 @@ function toEdges(
     bottom: edges.bottom ?? 0,
     left: edges.left ?? 0,
   }
+}
+
+function cacheKey(size: Size) {
+  return `${size.width}x${size.height}`
 }

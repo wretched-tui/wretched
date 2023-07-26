@@ -127,6 +127,7 @@ export class Buffer implements Terminal {
     if (prevStyle !== Style.NONE) {
       terminal.write('\x1b[0m')
     }
+    terminal.flush()
 
     this.#canvas = new Map()
   }

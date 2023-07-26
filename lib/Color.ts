@@ -55,11 +55,11 @@ export function colorToHex(color: Color): `#${string}` {
 export function colorToSGR(color: Color, fgbg: 'fg' | 'bg'): string {
   if (typeof color === 'object' && 'sgr' in color) {
     return `${color.sgr} ${fgbg}`
-  } else if (
-    Array.isArray(color) ||
-    (typeof color === 'object' && 'grayscale' in color)
-  ) {
+  } else if (Array.isArray(color)) {
     return `${colorToHex(color)} ${fgbg}`
+  } else if (typeof color === 'object' && 'grayscale' in color) {
+    const gray = 232 + Math.round((color.grayscale / 255) * 23)
+    return `${colorToHex(color)}(${gray}) ${fgbg}`
   } else {
     return `${color} ${fgbg}`
   }

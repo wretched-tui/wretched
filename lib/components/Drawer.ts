@@ -5,7 +5,13 @@ import {View} from '../View'
 import {Container} from '../Container'
 import {Style} from '../Style'
 import {Rect, Point, Size} from '../geometry'
-import {isMouseClicked, isMouseEnter, isMouseExit} from '../events'
+import {
+  isMouseClicked,
+  isMousePressed,
+  isMouseReleased,
+  isMouseEnter,
+  isMouseExit,
+} from '../events'
 
 interface Props extends ViewProps {
   drawer: View
@@ -20,7 +26,8 @@ export class Drawer extends Container {
   readonly drawer: View
   readonly content: View
 
-  #hover = false
+  #isHover = false
+  #isPressed = false
   #drawerWidth = 0
   #isOpen = false
   #targetDx = 0
@@ -50,8 +57,8 @@ export class Drawer extends Container {
     this.#targetDx = value ? this.#drawerWidth : 0
   }
 
-  intrinsicSize(size: Size): Size {
-    const drawerSize = this.drawer.intrinsicSize(
+  naturalSize(size: Size): Size {
+    const drawerSize = this.drawer.naturalSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
     this.#drawerWidth = drawerSize.width
@@ -59,7 +66,7 @@ export class Drawer extends Container {
       this.#targetDx = this.#drawerWidth
     }
 
-    const contentSize = this.content.intrinsicSize(
+    const contentSize = this.content.naturalSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
 
@@ -84,10 +91,16 @@ export class Drawer extends Container {
   }
 
   receiveMouse(event: MouseEvent) {
+    if (isMousePressed(event)) {
+      this.#isPressed = true
+    } else if (isMouseReleased(event)) {
+      this.#isPressed = false
+    }
+
     if (isMouseEnter(event)) {
-      this.#hover = true
+      this.#isHover = true
     } else if (isMouseExit(event)) {
-      this.#hover = false
+      this.#isHover = false
     }
 
     if (isMouseClicked(event)) {
@@ -128,11 +141,10 @@ export class Drawer extends Container {
       })
     }
 
-    const style = new Style(
-      this.#hover
-        ? {foreground: {grayscale: GRAY_HOVER}}
-        : {foreground: {grayscale: GRAY_TEXT}},
-    )
+    const style = this.theme.text({
+      isHover: this.#isHover,
+      isPressed: this.#isPressed,
+    })
     this.#drawDrawer(viewport, style, drawerButtonRect)
   }
 
@@ -166,11 +178,11 @@ export class Drawer extends Container {
         if (point.y === y0) {
           drawer = '╮'
         } else if (point.y === button0) {
-          drawer = '╰' + (this.#hover ? '─' : '') + '╮'
+          drawer = '╰' + (this.#isHover ? '─' : '') + '╮'
         } else if (point.y === button1 - 1) {
-          drawer = '╭' + (this.#hover ? '─' : '') + '╯'
+          drawer = '╭' + (this.#isHover ? '─' : '') + '╯'
         } else if (drawButton) {
-          drawer = this.#hover ? ' ' : ''
+          drawer = this.#isHover ? ' ' : ''
           drawer += this.#isOpen ? '‹' : '›'
           drawer += '│'
         } else if (point.y === maxY - 1) {

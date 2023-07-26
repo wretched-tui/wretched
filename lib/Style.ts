@@ -14,6 +14,7 @@ export class Style {
 
   static NONE = new Style()
   static underlined = new Style({underline: true})
+  static bold = new Style({bold: true})
 
   static fromSGR(ansi: string): Style {
     let match = ansi.match(/^\x1b\[([\d;]*)m$/)
@@ -221,13 +222,9 @@ export class Style {
       blink: style.blink ?? this.blink,
       invisible: style.invisible ?? this.invisible,
       foreground:
-        style.foreground === undefined || style.foreground === 'default'
-          ? this.foreground
-          : style.foreground,
+        style.foreground === undefined ? this.foreground : style.foreground,
       background:
-        style.background === undefined || style.background === 'default'
-          ? this.background
-          : style.background,
+        style.background === undefined ? this.background : style.background,
     })
   }
 

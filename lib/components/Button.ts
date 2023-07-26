@@ -1,3 +1,5 @@
+import {unicode} from '../sys'
+
 import type {Viewport} from '../Viewport'
 import type {MouseEvent} from '../events'
 import type {Props as ViewProps} from '../View'
@@ -38,15 +40,15 @@ interface StyleProps {
   onPress?: (value: boolean) => void
 }
 
-type Props = StyleProps & (TextProps | LinesProps) & ViewProps
+export type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Button extends Container {
   onClick: StyleProps['onClick']
   onHover: StyleProps['onHover']
   onPress: StyleProps['onPress']
 
-  #border: Border
   #textView?: Text
+  #border: Border
 
   #isPressed = false
   #isPressedOverride = false
@@ -79,7 +81,6 @@ export class Button extends Container {
     }
 
     this.#border = border ?? 'default'
-
     this.onClick = onClick
     this.onHover = onHover
     this.onPress = onPress
@@ -105,11 +106,18 @@ export class Button extends Container {
   set text(value: string | undefined) {
     if (this.#textView) {
       this.#textView.text = `< ${value} >` ?? ''
+      this.invalidateSize()
     }
   }
 
-  intrinsicSize(availableSize: Size): Size {
-    return super.intrinsicSize(availableSize).grow(2, 0)
+  #borderSize(): [number, number] {
+    const [left, right] = BORDERS[this.#border]
+    return [unicode.lineWidth(left), unicode.lineWidth(right)]
+  }
+
+  naturalSize(availableSize: Size): Size {
+    const [left, right] = this.#borderSize()
+    return super.naturalSize(availableSize).grow(left + right, 0)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -145,45 +153,51 @@ export class Button extends Container {
   render(viewport: Viewport) {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
-    const textStyle = this.theme.default({
+    const [left, right] = BORDERS[this.#border]
+
+    const textStyle = this.theme.ui({
       isPressed: this.isPressed,
       isHover: this.isHover,
     })
-    const [left, right] = BORDERS[this.#border]
 
-    viewport.usingPen(textStyle, () => {
-      const startX = Math.max(1, viewport.visibleRect.minX()),
-        endX = Math.min(
-          viewport.contentSize.width - 1,
-          viewport.visibleRect.maxX(),
-        ),
-        minY = viewport.visibleRect.minY(),
-        maxY = viewport.visibleRect.maxY()
-      for (let y = minY; y < maxY; ++y) {
-        viewport.usingPen(textStyle, () => {
-          viewport.write(left, new Point(0, y))
-          viewport.write(right, new Point(viewport.contentSize.width - 1, y))
-        })
-        if (endX - startX > 2) {
-          viewport.write(' '.repeat(endX - startX), new Point(startX, y))
-        }
-      }
+    viewport.visibleRect.forEachPoint(pt => {
+      viewport.write(' ', pt, textStyle)
     })
 
-    const intrinsicSize = super.intrinsicSize(viewport.contentSize)
-    const offset = ~~((viewport.contentSize.height - intrinsicSize.height) / 2)
-    viewport.clipped(
-      new Rect(new Point(1, offset), viewport.contentSize.shrink(1, offset)),
-      textStyle,
-      inside => {
-        super.render(inside)
-      },
+    const [leftWidth, rightWidth] = this.#borderSize()
+    const naturalSize = super.naturalSize(
+      viewport.contentSize.shrink(leftWidth + rightWidth, 0),
     )
+    const offsetLeft = Math.round(
+        (viewport.contentSize.width - naturalSize.width) / 2,
+      ),
+      offsetRight = Math.floor(
+        (viewport.contentSize.width - naturalSize.width) / 2,
+      )
+    const offset = new Point(
+      offsetLeft,
+      Math.round((viewport.contentSize.height - naturalSize.height) / 2),
+    )
+    for (let y = 0; y < naturalSize.height; y++) {
+      viewport.write(
+        left,
+        new Point(offset.x - leftWidth, offset.y + y),
+        textStyle,
+      )
+      viewport.write(
+        right,
+        new Point(offset.x + naturalSize.width, offset.y + y),
+        textStyle,
+      )
+    }
+    viewport.clipped(new Rect(offset, naturalSize), textStyle, inside => {
+      this.renderChildren(inside)
+    })
   }
 }
 
 const BORDERS: Record<Border, BorderChars> = {
-  default: ['▌', '▐'],
-  arrows: ['⟨', '⟩'],
+  default: ['[ ', ' ]'],
+  arrows: ['⟨ ', ' ⟩'],
   none: [' ', ' '],
 }

@@ -582,9 +582,19 @@ export const colors: {
   match(text: `#${string}`): number
   match(r: number, g: number, b: number): number
   match(rgb: [r: number, g: number, b: number]): number
+  hexToRGB(text: string): [number, number, number]
   RGBtoHex(r: number, g: number, b: number): `#${string}`
   RGBtoHex(rgb: [r: number, g: number, b: number]): `#${string}`
-  hexToRGB(text: string): [number, number, number]
+  /**
+   * RGB is in range 0..255, HSB is in range 0..1
+   */
+  RGBtoHSB(r: number, g: number, b: number): [number, number, number]
+  RGBtoHSB(rgb: [r: number, g: number, b: number]): [number, number, number]
+  /**
+   * HSB is in range 0..1, RGB is in range 0..255
+   */
+  HSBtoRGB(h: number, s: number, v: number): [number, number, number]
+  HSBtoRGB(hsv: [h: number, s: number, v: number]): [number, number, number]
   nameToIndex(name: string): number
   indexToRGB(index: number): [number, number, number]
   indexToHex(index: number): `#{string}`

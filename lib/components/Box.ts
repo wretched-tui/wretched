@@ -71,14 +71,14 @@ export class Box extends Container {
 
   declare border: Border | BorderChars
 
-  intrinsicSize(size: Size): Size {
-    const intrinsicSize = super.intrinsicSize(
+  naturalSize(size: Size): Size {
+    const naturalSize = super.naturalSize(
       size.shrink(
         this.#borderSizes.left + this.#borderSizes.right,
         this.#borderSizes.top + this.#borderSizes.bottom,
       ),
     )
-    return intrinsicSize.grow(
+    return naturalSize.grow(
       this.#borderSizes.left + this.#borderSizes.right,
       this.#borderSizes.top + this.#borderSizes.bottom,
     )
@@ -101,7 +101,7 @@ export class Box extends Container {
 
     const maxX = viewport.contentSize.width - this.#borderSizes.right
     const maxY = viewport.contentSize.height - this.#borderSizes.bottom
-    let borderStyle = this.theme.default({isHover: this.#isHover})
+    let borderStyle = this.theme.text({isHover: this.#isHover})
 
     const innerStyle = new Style({background: borderStyle.background})
     for (let y = this.#borderSizes.top; y < maxY; ++y) {
@@ -121,7 +121,7 @@ export class Box extends Container {
         ),
       ),
       inside => {
-        super.render(inside)
+        this.renderChildren(inside)
       },
     )
 

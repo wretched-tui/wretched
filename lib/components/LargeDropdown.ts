@@ -3,7 +3,6 @@ import type {Props as ViewProps} from '../View'
 import type {MouseEvent} from '../events'
 import {unicode} from '../sys'
 import {View} from '../View'
-import {Style} from '../Style'
 import {Container} from '../Container'
 import {Point, Size, Rect} from '../geometry'
 import {isMouseEnter, isMouseExit, isMouseClicked} from '../events'
@@ -24,7 +23,7 @@ interface Props<T> extends ViewProps {
   selected: number
 }
 
-export class Dropdown<T> extends View {
+export class LargeDropdown<T> extends View {
   #dropdown: DropdownSelector<T>
   #isHover = false
   #showModal = false
@@ -48,7 +47,12 @@ export class Dropdown<T> extends View {
     this.#selectedSize = new Size(
       unicode.stringSize(this.#dropdown.selectedText),
     )
-    return this.#selectedSize.grow(5, 0)
+    //12      345 width += 5
+    //╭─......┬─╮1
+    //│ .text.│ │
+    //...txt2....
+    //╰─......┴─╯2 height += 1
+    return this.#selectedSize.grow(5, 2)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -73,12 +77,15 @@ export class Dropdown<T> extends View {
     viewport.registerMouse(['mouse.move', 'mouse.button.left'])
     const lines = this.#dropdown.selectedText
     const textStyle = this.theme.ui({
-      isHover: this.#isHover && !this.#showModal,
+      isPressed: this.#showModal,
+      isHover: this.#isHover,
     })
 
     if (viewport.contentSize.height === 1) {
+      const [top, side, tl, tr, bl, br] = BORDERS.hover
+
       viewport.write(
-        ' '.repeat(viewport.contentSize.width - 3) + `▏  `,
+        side + ' '.repeat(viewport.contentSize.width - 1),
         Point.zero,
         textStyle,
       )
@@ -90,41 +97,45 @@ export class Dropdown<T> extends View {
         },
       )
       viewport.write(
+        `${side} ${side}`,
+        new Point(viewport.contentSize.width - 3, 0),
+        textStyle,
+      )
+      viewport.write(
         this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',
         new Point(viewport.contentSize.width - 2, 0),
         textStyle,
       )
     } else {
-      // const [top, side, tl, tr, bl, br] =
-      //   this.#isHover || this.#showModal ? BORDERS.hover : BORDERS.control
-      const [top, side, br] = [' ', ' ', '▏  ']
+      const [top, side, tl, tr, bl, br] =
+        this.#isHover || this.#showModal ? BORDERS.hover : BORDERS.control
 
-      // viewport.write(
-      //   top.repeat(viewport.contentSize.width - 3) + tr,
-      //   new Point(0, 0),
-      //   textStyle,
-      // )
-      const pt = new Point(0, 0).mutableCopy()
-      for (; pt.y < viewport.contentSize.height; pt.y++) {
+      viewport.write(
+        tl + top.repeat(viewport.contentSize.width - 4) + `${tr}`,
+        new Point(0, 0),
+        textStyle,
+      )
+      const pt = new Point(0, 1).mutableCopy()
+      for (; pt.y < viewport.contentSize.height - 1; pt.y++) {
         viewport.write(
-          ' '.repeat(viewport.contentSize.width - 3),
+          side + ' '.repeat(viewport.contentSize.width - 4),
           pt,
           textStyle,
         )
-        if (pt.y < lines.length) {
-          viewport.write(lines[pt.y], pt.offset(1, 0), textStyle)
+        if (pt.y - 1 < lines.length) {
+          viewport.write(lines[pt.y - 1], pt.offset(1, 0), textStyle)
         }
         viewport.write(
-          `▏ ${side}`,
+          `${side} ${side}`,
           pt.offset(viewport.contentSize.width - 3, 0),
           textStyle,
         )
       }
-      // viewport.write(
-      //   top.repeat(viewport.contentSize.width - 3) + br,
-      //   new Point(0, viewport.contentSize.height - 1),
-      //   textStyle,
-      // )
+      viewport.write(
+        bl + top.repeat(viewport.contentSize.width - 4) + `${br}`,
+        new Point(0, viewport.contentSize.height - 1),
+        textStyle,
+      )
 
       viewport.write(
         this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',
@@ -202,7 +213,7 @@ class DropdownSelector<T> extends Container {
       direction: 'leftToRight',
       children: [
         ['flex1', button],
-        new Separator({direction: 'vertical', border: 'single'}),
+        new Separator({direction: 'vertical', border: 'bold'}),
       ],
     })
   }
@@ -247,22 +258,36 @@ class DropdownSelector<T> extends Container {
 
     let y: number
     if (placement === 'below') {
-      y = viewport.parentRect.maxY()
+      y = viewport.parentRect.maxY() - 1
     } else {
-      y = viewport.parentRect.minY() - height
+      y = viewport.parentRect.minY() - height + 1
     }
 
     const border: BoxBorderChars = [...BORDERS[placement]]
+    if (viewport.parentRect.size.height === 1) {
+      if (placement === 'below') {
+        y += 1
+        height -= 1
+        border[0] = '' // top
+        border[2] = '' // top left
+        border[3] = '' // top right
+      } else {
+        height -= 1
+        border[4] = '' // bottom left
+        border[5] = '' // bottom right
+        border[6] = '' // bottom
+      }
+    }
     this.#box.border = border
 
     const rect = new Rect(new Point(x, y), new Size(width, height))
-    viewport.clipped(rect, inside => this.renderChildren(inside))
+    viewport.clipped(rect, inside => super.render(inside))
   }
 }
 
 const BORDERS: BorderChars = {
   control: ['─', '│', '╭', '┬─╮', '╰', '┴─╯'],
   hover: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
-  below: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
-  above: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
+  below: ['─', '│', '├', '┼─┤', '╰', '┴─╯', '─', '│'],
+  above: ['─', '│', '╭', '┬─╮', '├', '┼─┤', '─', '│'],
 }

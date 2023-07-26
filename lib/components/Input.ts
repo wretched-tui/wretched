@@ -9,7 +9,9 @@ import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 
 interface Props extends ViewProps {
-  text: string
+  text?: string
+  onChange?: (text: string) => void
+  onSubmit?: (text: string) => void
 }
 
 interface Cursor {
@@ -44,13 +46,33 @@ export class Input extends View {
       : Math.max(this.#cursor.start, this.#cursor.end)
   }
 
-  constructor({text, ...viewProps}: Props) {
+  constructor({text, onChange, onSubmit, ...viewProps}: Props) {
     super(viewProps)
-    text = unicode.removeAnsi(text)
+
+    this.onChange = onChange
+    this.onSubmit = onSubmit
+    text = unicode.removeAnsi(text ?? '')
+
     this.#chars = unicode.printableChars(text)
     this.#width = unicode.lineWidth(text)
     this.#offset = 0
     this.#cursor = {start: this.#chars.length, end: this.#chars.length}
+  }
+
+  get text() {
+    return this.#chars.join('')
+  }
+  set text(text: string) {
+    text = unicode.removeAnsi(text)
+    this.#chars = unicode.printableChars(text)
+    this.#width = unicode.lineWidth(text)
+    if (this.#cursor.start > this.#chars.length) {
+      this.#cursor.start = this.#chars.length
+    }
+    if (this.#cursor.end > this.#chars.length) {
+      this.#cursor.end = this.#chars.length
+    }
+    this.invalidateSize()
   }
 
   #showCursor = true
@@ -101,8 +123,27 @@ export class Input extends View {
     }
   }
 
-  intrinsicSize(): Size {
+  naturalSize(): Size {
     return new Size(this.#width + 1, 1)
+  }
+
+  toPosition(offset: number) {
+    let p = 0
+    for (let index = 0; index < offset; index++) {
+      p += unicode.charWidth(this.#chars[index])
+    }
+    return p
+  }
+
+  toOffset(position: number) {
+    let p = 0
+    for (let index = 0; index < this.#chars.length; index++) {
+      if (p >= position) {
+        return index
+      }
+      p += unicode.charWidth(this.#chars[index])
+    }
+    return this.#chars.length - 1
   }
 
   render(viewport: Viewport) {
@@ -112,15 +153,25 @@ export class Input extends View {
     }
 
     const visibleWidth = viewport.contentSize.width
-    const quarter = ~~(visibleWidth / 4 + 0.5)
+    const quarterWidth = Math.round(visibleWidth / 4)
     if (visibleWidth > this.#width) {
       this.#offset = 0
-    } else if (this.#cursor.end - quarter <= this.#offset) {
-      this.#offset = Math.max(0, this.#cursor.end - quarter)
-    } else if (this.#cursor.end + quarter >= this.#offset + visibleWidth) {
-      this.#offset = Math.min(
-        this.#chars.length - visibleWidth + 1,
-        this.#cursor.end - visibleWidth + quarter + 1,
+    } else if (
+      this.toPosition(this.#cursor.end) - quarterWidth <=
+      this.toPosition(this.#offset)
+    ) {
+      this.#offset = this.toOffset(
+        Math.max(0, this.toPosition(this.#cursor.end) - quarterWidth),
+      )
+    } else if (
+      this.toPosition(this.#cursor.end) + quarterWidth >=
+      this.toPosition(this.#offset) + visibleWidth
+    ) {
+      this.#offset = this.toOffset(
+        Math.min(
+          this.toPosition(this.#chars.length) - visibleWidth + 1,
+          this.toPosition(this.#cursor.end) - visibleWidth + quarterWidth + 1,
+        ),
       )
     }
 

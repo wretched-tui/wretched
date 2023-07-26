@@ -5,7 +5,7 @@ import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
-type FlexSize = 'intrinsic' | {flex: number} | `flex${number}` // {flex: number} shorthand
+type FlexSize = 'natural' | {flex: number} | `flex${number}` // {flex: number} shorthand
 
 interface Props extends ViewProps {
   children: ([FlexSize, View] | View)[]
@@ -23,7 +23,7 @@ export class Flex extends Container {
     for (const info of children) {
       let flexSize: FlexSize, child: View
       if (info instanceof View) {
-        flexSize = 'intrinsic'
+        flexSize = 'natural'
         child = info
       } else {
         ;[flexSize, child] = info
@@ -33,15 +33,15 @@ export class Flex extends Container {
     }
   }
 
-  intrinsicSize(availableSize: Size): Size {
+  naturalSize(availableSize: Size): Size {
     const size = Size.zero.mutableCopy()
     let remainingSize =
       availableSize[isVertical(this.direction) ? 'height' : 'width']
     let hasFlex = false
     for (const child of this.children) {
-      const flexSize = this.sizes.get(child) ?? 'intrinsic'
-      const childSize = child.intrinsicSize(availableSize)
-      if (flexSize === 'intrinsic') {
+      const flexSize = this.sizes.get(child) ?? 'natural'
+      const childSize = child.naturalSize(availableSize)
+      if (flexSize === 'natural') {
         if (isVertical(this.direction)) {
           remainingSize = Math.max(0, remainingSize - childSize.height)
           size.width = Math.max(size.width, childSize.width)
@@ -80,14 +80,14 @@ export class Flex extends Container {
 
     let flexTotal = 0
     let flexCount = 0
-    // first pass, calculate all the intrinsicSizes and subtract them from the
-    // contentSize - leftovers are divided to the flex views. intrinsicSizes might
+    // first pass, calculate all the naturalSizes and subtract them from the
+    // contentSize - leftovers are divided to the flex views. naturalSizes might
     // as well be memoized along with the flex amounts
     const flexViews: [FlexSize, number, View][] = []
     for (const child of this.children) {
-      const flexSize = this.sizes.get(child) ?? 'intrinsic'
-      if (flexSize === 'intrinsic') {
-        const childSize = child.intrinsicSize(viewport.contentSize)
+      const flexSize = this.sizes.get(child) ?? 'natural'
+      if (flexSize === 'natural') {
+        const childSize = child.naturalSize(viewport.contentSize)
         if (isVertical(this.direction)) {
           flexViews.push([flexSize, childSize.height, child])
           remainingSize = Math.max(0, remainingSize - childSize.height)
@@ -131,7 +131,7 @@ export class Flex extends Container {
     for (const [flexSize, amount, child] of flexViews) {
       const childSize = viewport.contentSize.mutableCopy()
 
-      if (flexSize === 'intrinsic') {
+      if (flexSize === 'natural') {
         if (isVertical(this.direction)) {
           childSize.height = amount
         } else {

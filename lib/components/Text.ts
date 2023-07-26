@@ -37,6 +37,7 @@ export class Text extends View {
     }
     this.#text = value
     this.#lines = value.split('\n').map(line => [line, unicode.lineWidth(line)])
+    this.invalidateSize()
   }
 
   #lines: [string, number][]
@@ -58,7 +59,7 @@ export class Text extends View {
     ])
   }
 
-  intrinsicSize(availableSize: Size): Size {
+  naturalSize(availableSize: Size): Size {
     const [width, height] = this.#lines.reduce(
       ([maxWidth, height], [, width]) => {
         let lineHeight: number = 1

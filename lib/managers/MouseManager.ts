@@ -225,10 +225,14 @@ export class MouseManager {
     eventName: MouseEventName,
     target: MouseEventTarget,
   ) {
+    const position = new Point(
+      systemEvent.x - target.offset.x,
+      systemEvent.y - target.offset.y,
+    )
     const event = {
       ...systemEvent,
       name: eventName,
-      position: target.offset.offset(systemEvent.x, systemEvent.y),
+      position,
     }
     target.view.receiveMouse(event)
   }

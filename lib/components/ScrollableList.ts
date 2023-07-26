@@ -5,6 +5,7 @@ import {Container} from '../Container'
 import {Style} from '../Style'
 import {Rect, Point, Size, interpolate} from '../geometry'
 import type {MouseEvent} from '../events'
+import {isMouseDragging} from '../events'
 
 interface Props extends ViewProps {
   cellAtIndex: (row: number) => View | undefined
@@ -16,6 +17,8 @@ interface ContentOffset {
   offset: number
 }
 
+const MAX_ROW = 100000
+
 export class ScrollableList extends Container {
   /**
    * Your function here need not return "stable" views; the views returned by this
@@ -25,12 +28,12 @@ export class ScrollableList extends Container {
   cellAtIndex: (row: number) => View | undefined
 
   #showScrollbars: boolean
-  #heights: [number, number, number] = [0, 0, 0]
   #contentOffset: ContentOffset
   #contentSize: Size
   #maxWidth: number = 0
   #viewCache: Map<number, View> = new Map()
   #sizeCache: Map<number, Size> = new Map()
+  #totalHeight?: number
 
   constructor({cellAtIndex, showScrollbars, ...viewProps}: Props) {
     super(viewProps)
@@ -61,6 +64,33 @@ export class ScrollableList extends Container {
       this.scrollBy(-1)
     } else if (event.name === 'mouse.wheel.down') {
       this.scrollBy(1)
+    } else if (isMouseDragging(event) && this.#totalHeight) {
+      if (this.#totalHeight <= this.#contentSize.height) {
+        this.#contentOffset = {row: 0, offset: 0}
+        return
+      }
+
+      const heightY = Math.round(
+        interpolate(
+          Math.max(0, Math.min(this.#contentSize.height - 1, event.position.y)),
+          [0, this.#contentSize.height - 1],
+          [0, this.#totalHeight - this.#contentSize.height],
+        ),
+      )
+      const cellWidth = this.#contentSize.width
+      for (let row = 0, y = 0; row < MAX_ROW; row++) {
+        const rowHeight = this.sizeForRow(row, cellWidth)?.height
+        if (rowHeight === undefined) {
+          break
+        }
+
+        if (y + rowHeight >= heightY) {
+          this.#contentOffset = {row, offset: y - heightY}
+          return
+        }
+
+        y += rowHeight
+      }
     }
   }
 
@@ -139,14 +169,14 @@ export class ScrollableList extends Container {
       return undefined
     }
 
-    const size = view.intrinsicSize(new Size(contentWidth, 0))
+    const size = view.naturalSize(new Size(contentWidth, 0))
     if (contentWidth === this.#contentSize.width) {
       this.#sizeCache.set(row, size)
     }
     return size
   }
 
-  intrinsicSize(size: Size): Size {
+  naturalSize(size: Size): Size {
     let row = Math.max(0, this.#contentOffset.row)
     let y = this.#contentOffset.offset
 
@@ -229,14 +259,23 @@ export class ScrollableList extends Container {
     }
 
     if (this.#showScrollbars) {
+      viewport.registerMouse(
+        'mouse.button.left',
+        new Rect(
+          new Point(cellWidth, 0),
+          new Size(1, viewport.contentSize.height),
+        ),
+      )
+
       heights[2] = heights[1]
-      for (let i = row; i < 100000; i++) {
+      for (let i = row; i < MAX_ROW; i++) {
         const rowHeight = this.sizeForRow(i, cellWidth)?.height
         if (rowHeight === undefined) {
           break
         }
         heights[2] += rowHeight
       }
+      this.#totalHeight = heights[2]
 
       for (let y = 0; y < viewport.contentSize.height; y++) {
         const h = interpolate(

@@ -25,9 +25,10 @@ async function run() {
   const consoleLog = new ConsoleLog()
   const [screen, program] = await Screen.start(
     async (program: BlessedProgram) => {
-      await iTerm2.setBackground(program, [57, 57, 57])
+      await iTerm2.setBackground(program, [23, 23, 23])
 
       return new Drawer({
+        // theme: 'primary',
         drawer: new Text({
           maxWidth: 40,
           wrap: true,
@@ -41,7 +42,7 @@ async function run() {
           direction: 'topToBottom',
           children: [
             [
-              'intrinsic',
+              'natural',
               new Flex({
                 direction: 'leftToRight',
                 children: [
@@ -60,7 +61,7 @@ async function run() {
               }),
             ],
             [
-              'intrinsic',
+              'natural',
               new Flex({
                 direction: 'leftToRight',
                 children: [
@@ -93,6 +94,7 @@ async function run() {
                         children: [
                           new Button({
                             text: 'Click me!🙂',
+                            width: 'natural',
                             style: {bold: true, foreground: 'red'},
                             onClick() {
                               console.log('You did!')

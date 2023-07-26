@@ -23,11 +23,11 @@ export class Flow extends Container {
     }
   }
 
-  intrinsicSize(availableSize: Size): Size {
+  naturalSize(availableSize: Size): Size {
     const size = Size.zero.mutableCopy()
     const remainingSize = availableSize.mutableCopy()
     for (const child of this.children) {
-      const childSize = child.intrinsicSize(availableSize)
+      const childSize = child.naturalSize(availableSize)
       if (isVertical(this.direction)) {
         remainingSize.height = Math.max(
           0,
@@ -64,7 +64,7 @@ export class Flow extends Container {
     const minVisibleX = viewport.visibleRect.minX(),
       maxVisibleX = viewport.visibleRect.maxX()
     for (const child of this.children) {
-      const childSize = child.intrinsicSize(viewport.contentSize).mutableCopy()
+      const childSize = child.naturalSize(viewport.contentSize).mutableCopy()
       if (isVertical(this.direction)) {
         childSize.width = viewport.contentSize.width
       } else {

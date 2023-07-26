@@ -8,5 +8,5 @@ export interface Terminal {
 
 export type SGRTerminal = Pick<
   BlessedProgram,
-  'cols' | 'rows' | 'move' | 'write' | 'on' | 'once'
+  'cols' | 'rows' | 'move' | 'write' | 'on' | 'once' | 'flush'
 >

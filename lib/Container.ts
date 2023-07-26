@@ -6,18 +6,22 @@ import {Screen} from './Screen'
 export abstract class Container extends View {
   children: View[] = []
 
-  intrinsicSize(size: Size): Size {
+  naturalSize(size: Size): Size {
     let width = 0
     let height = 0
     for (const child of this.children) {
-      const intrinsicSize = child.intrinsicSize(size)
-      width = Math.max(width, intrinsicSize.width)
-      height = Math.max(height, intrinsicSize.height)
+      const naturalSize = child.naturalSize(size)
+      width = Math.max(width, naturalSize.width)
+      height = Math.max(height, naturalSize.height)
     }
     return new Size(width, height)
   }
 
   render(viewport: Viewport) {
+    this.renderChildren(viewport)
+  }
+
+  renderChildren(viewport: Viewport) {
     for (const child of this.children) {
       child.render(viewport)
     }

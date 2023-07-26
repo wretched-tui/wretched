@@ -20,24 +20,21 @@ interface Props extends ViewProps {
   direction: Direction
   padding?: number
   border?: Border
-  style?: Style
 }
 
 export class Separator extends View {
   #direction: Direction
   #padding: number
   #border: Border
-  #style: Style | undefined
 
-  constructor({direction, padding, border, style, ...viewProps}: Props) {
+  constructor({direction, padding, border, ...viewProps}: Props) {
     super(viewProps)
     this.#direction = direction
     this.#padding = padding ?? 0
     this.#border = border ?? 'single'
-    this.#style = style
   }
 
-  intrinsicSize(size: Size): Size {
+  naturalSize(size: Size): Size {
     if (this.#direction === 'vertical') {
       return new Size(1 + 2 * this.#padding, size.height)
     } else {
@@ -46,21 +43,19 @@ export class Separator extends View {
   }
 
   render(viewport: Viewport) {
+    const style = this.theme.text()
+
     if (this.#direction === 'vertical') {
       const [char] = BORDERS[this.#border],
         minY = viewport.visibleRect.minY(),
         maxY = viewport.visibleRect.maxY()
       for (let y = minY; y < maxY; ++y) {
-        viewport.write(char, new Point(this.#padding, y), this.#style)
+        viewport.write(char, new Point(this.#padding, y), style)
       }
     } else {
       const [, char] = BORDERS[this.#border]
       const pt = viewport.visibleRect.origin.offset(0, this.#padding)
-      viewport.write(
-        char.repeat(viewport.visibleRect.size.width),
-        pt,
-        this.#style,
-      )
+      viewport.write(char.repeat(viewport.visibleRect.size.width), pt, style)
     }
   }
 }

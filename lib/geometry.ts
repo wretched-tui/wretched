@@ -4,7 +4,8 @@ export class Point {
 
   static zero = new Point(0, 0)
 
-  constructor(x: number, y: number) {
+  constructor(...args: PointArgs) {
+    const [x, y] = toXY(args)
     this.x = x
     this.y = y
   }
@@ -17,9 +18,7 @@ export class Point {
     return this.copy() as MutablePoint
   }
 
-  offset(dp: Point): Point
-  offset(dx: number, dy: number): Point
-  offset(...args: [number, number] | [pt: Point]) {
+  offset(...args: PointArgs) {
     if (args.length === 2) {
       return new Point(this.x + args[0], this.y + args[1])
     } else {
@@ -33,16 +32,12 @@ export interface MutablePoint extends Point {
   y: number
 }
 
-type SizeArgs = [number, number] | [Pick<Size, 'width' | 'height'>]
-
 export class Size {
   readonly width: number
   readonly height: number
 
   static zero = new Size(0, 0)
 
-  constructor(size: Pick<Size, 'width' | 'height'>)
-  constructor(width: number, height: number)
   constructor(...args: SizeArgs) {
     const [width, height] = toWH(args)
     this.width = Math.max(0, width)
@@ -118,9 +113,9 @@ export class Rect {
 
   static zero = new Rect(Point.zero, Size.zero)
 
-  constructor(origin: Point, size: Size) {
-    let {x, y} = origin
-    let {width, height} = size
+  constructor(origin: PointArg, size: SizeArg) {
+    let [x, y] = toXY(origin)
+    let [width, height] = toWH(size)
     if (width < 0) {
       x = x + width
       width = -width
@@ -209,6 +204,10 @@ export function interpolate(
   [x0, x1]: [number, number],
   [y0, y1]: [number, number],
 ): number {
+  if (x0 === x1) {
+    return y0
+  }
+
   return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0)
 }
 
@@ -220,8 +219,25 @@ export type Mutable<T extends Point | Size | Rect> = T extends Point
   ? MutableRect
   : never
 
-function toWH(args: SizeArgs): [number, number] {
-  if (args.length === 2) {
+type PointArg = [number, number] | Pick<Point, 'x' | 'y'>
+type PointArgs = [number, number] | [Pick<Point, 'x' | 'y'>]
+type SizeArg = [number, number] | Pick<Size, 'width' | 'height'>
+type SizeArgs = [number, number] | [Pick<Size, 'width' | 'height'>]
+
+function toXY(args: PointArgs | PointArg): [number, number] {
+  if ('x' in args && 'y' in args) {
+    return [args.x, args.y]
+  } else if (args.length === 2) {
+    return args
+  } else {
+    return [args[0].x, args[0].y]
+  }
+}
+
+function toWH(args: SizeArgs | SizeArg): [number, number] {
+  if ('width' in args && 'height' in args) {
+    return [args.width, args.height]
+  } else if (args.length === 2) {
     return args
   } else {
     return [args[0].width, args[0].height]

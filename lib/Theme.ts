@@ -9,18 +9,23 @@ export type Purpose =
   | 'selected'
   | 'plain'
 
-const defaultText = '#E2E2E2'
+const defaultText = '#E2E2E2(253)'
+const defaultBrightText = '#FFF(16)'
 
 interface Props {
   text?: Color
+  brightText?: Color
   background: Color
+  textBackground?: Color
   highlight: Color
   darken: Color
 }
 
 export class Theme {
-  text: Color
+  textColor: Color
+  brightText: Color
   background: Color
+  textBackground: Color
   highlight: Color
   darken: Color
 
@@ -32,38 +37,48 @@ export class Theme {
   static secondary = new Theme({
     background: '#D0851C',
     highlight: '#F39614',
-    darken: '#F39614',
+    darken: '#A66A16',
   })
   static proceed = new Theme({
     background: '#108040',
     highlight: '#1EB317',
-    darken: '#1EB317',
+    darken: '#0C6030',
   })
   static cancel = new Theme({
     background: '#981618',
     highlight: '#C51B1E',
-    darken: '#C51B1E',
+    darken: '#821113',
   })
   static selected = new Theme({
-    text: '#383838',
-    background: '#BDBDBD',
-    highlight: '#E6E6E6',
-    darken: '#E6E6E6',
+    text: '#383838(236)',
+    background: '#BDBDBD(250)',
+    highlight: '#E6E6E6(254)',
+    darken: '#7F7F7F(243)',
   })
   static plain = new Theme({
-    background: '#4F4F4F',
-    highlight: '#616161',
-    darken: '#616161',
+    background: '#4F4F4F(239)',
+    textBackground: 'default',
+    highlight: '#616161(241)',
+    darken: '#3F3F3F(237)',
   })
 
-  constructor({text, background, highlight, darken}: Props) {
-    this.text = text ?? defaultText
+  constructor({
+    text,
+    brightText,
+    background,
+    textBackground,
+    highlight,
+    darken,
+  }: Props) {
+    this.textColor = text ?? defaultText
+    this.brightText = brightText ?? defaultBrightText
     this.background = background
+    this.textBackground = textBackground ?? background
     this.highlight = highlight
     this.darken = darken
   }
 
-  default({
+  ui({
     isPressed,
     isHover,
   }: {
@@ -71,7 +86,7 @@ export class Theme {
     isHover?: boolean
   } = {}): Style {
     return new Style({
-      foreground: this.text,
+      foreground: this.textColor,
       background: isPressed
         ? this.darken
         : isHover
@@ -80,7 +95,7 @@ export class Theme {
     })
   }
 
-  border({
+  text({
     isPressed,
     isHover,
   }: {
@@ -89,19 +104,19 @@ export class Theme {
   } = {}): Style {
     if (isPressed) {
       return new Style({
-        foreground: this.darken,
-        background: this.darken,
+        foreground: this.highlight,
+        background: this.textBackground,
       })
     }
     if (isHover) {
       return new Style({
-        foreground: this.highlight,
-        background: this.highlight,
+        foreground: this.brightText,
+        background: this.textBackground,
       })
     }
     return new Style({
-      foreground: this.highlight,
-      background: this.background,
+      foreground: this.textColor,
+      background: this.textBackground,
     })
   }
 }
