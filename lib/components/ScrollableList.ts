@@ -8,7 +8,7 @@ import type {MouseEvent} from '../events'
 import {isMouseDragging} from '../events'
 
 interface StyleProps extends ViewProps {
-  cellAtIndex: (row: number) => View | undefined,
+  cellAtIndex: (row: number) => View | undefined
   showScrollbars?: boolean
   scrollHeight?: number
 }
@@ -51,7 +51,14 @@ export class ScrollableList extends Container {
   #totalHeight?: number
   #scrollHeight: number
 
-  constructor({cellAtIndex, cellCount, keepAtBottom, scrollHeight, showScrollbars, ...viewProps}: Props) {
+  constructor({
+    cellAtIndex,
+    cellCount,
+    keepAtBottom,
+    scrollHeight,
+    showScrollbars,
+    ...viewProps
+  }: Props) {
     super(viewProps)
     this.#showScrollbars = showScrollbars ?? true
     this.#contentOffset = {row: 0, offset: 0}
@@ -251,7 +258,6 @@ export class ScrollableList extends Container {
       row -= 1
     }
     return {row: row, offset: this.contentSize.height - y}
-
   }
 
   render(viewport: Viewport) {
@@ -338,20 +344,20 @@ export class ScrollableList extends Container {
           [0, viewport.contentSize.height - 1],
           [0, heights[2]],
         )
-        const inRange = ~~h >= heights[0] && (~~h) <= heights[1]+1
+        const inRange = ~~h >= heights[0] && ~~h <= heights[1] + 1
         viewport.write(
           inRange ? '█' : ' ',
           new Point(cellWidth, y),
           new Style(
             inRange
               ? {
-                foreground: this.theme.highlight,
-                background: this.theme.highlight,
-              }
+                  foreground: this.theme.highlight,
+                  background: this.theme.highlight,
+                }
               : {
-                foreground: this.theme.darken,
-                background: this.theme.darken,
-              },
+                  foreground: this.theme.darken,
+                  background: this.theme.darken,
+                },
           ),
         )
       }

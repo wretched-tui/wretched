@@ -45,7 +45,9 @@ export class Text extends View {
   #alignment: StyleProps['alignment']
   #wrap: StyleProps['wrap']
 
-  constructor({text, lines, style, alignment, wrap, ...viewProps}: Props = {text: ''}) {
+  constructor(
+    {text, lines, style, alignment, wrap, ...viewProps}: Props = {text: ''},
+  ) {
     super(viewProps)
 
     this.#style = style

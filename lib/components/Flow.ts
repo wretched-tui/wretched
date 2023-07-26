@@ -72,7 +72,6 @@ export class Flow extends Container {
         childSize.height = viewport.contentSize.height
       }
 
-
       if (this.direction === 'rightToLeft') {
         origin.x -= childSize.width
       } else if (this.direction === 'bottomToTop') {
@@ -97,7 +96,6 @@ export class Flow extends Container {
       } else if (this.direction === 'topToBottom') {
         origin.y += childSize.height + this.#spaceBetween
       }
-
 
       if (isVertical(this.direction)) {
         remainingSize.height = Math.max(

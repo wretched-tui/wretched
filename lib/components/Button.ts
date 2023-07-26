@@ -8,7 +8,6 @@ import {View} from '../View'
 import {Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
-import {Style} from '../Style'
 import {
   isMousePressed,
   isMouseReleased,
@@ -32,9 +31,6 @@ interface LinesProps {
 
 interface StyleProps {
   border?: Border
-  style?: Partial<Style>
-  hover?: Partial<Style>
-  pressed?: Partial<Style>
   onClick?: () => void
   onHover?: (value: boolean) => void
   onPress?: (value: boolean) => void
@@ -62,9 +58,6 @@ export class Button extends Container {
     onClick,
     onHover,
     onPress,
-    style,
-    hover,
-    pressed,
     ...viewProps
   }: Props) {
     super(viewProps)
@@ -77,6 +70,9 @@ export class Button extends Container {
         })),
       )
     } else {
+      if (content instanceof Text) {
+        this.#textView = content
+      }
       this.add(content)
     }
 
@@ -105,7 +101,7 @@ export class Button extends Container {
   }
   set text(value: string | undefined) {
     if (this.#textView) {
-      this.#textView.text = `< ${value} >` ?? ''
+      this.#textView.text = value ?? ''
       this.invalidateSize()
     }
   }
@@ -169,9 +165,7 @@ export class Button extends Container {
     const offsetLeft = Math.round(
         (viewport.contentSize.width - naturalSize.width) / 2,
       ),
-      offsetRight = Math.floor(
-        (viewport.contentSize.width - naturalSize.width) / 2,
-      )
+      offsetRight = viewport.contentSize.width - naturalSize.width - offsetLeft
     const offset = new Point(
       offsetLeft,
       Math.round((viewport.contentSize.height - naturalSize.height) / 2),

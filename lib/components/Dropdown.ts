@@ -3,14 +3,11 @@ import type {Props as ViewProps} from '../View'
 import type {MouseEvent} from '../events'
 import {unicode} from '../sys'
 import {View} from '../View'
-import {Style} from '../Style'
 import {Container} from '../Container'
 import {Point, Size, Rect} from '../geometry'
 import {isMouseEnter, isMouseExit, isMouseClicked} from '../events'
 import {Box, Button, Flex, ScrollableList, Separator, Text} from '../components'
 import type {BorderChars as BoxBorderChars} from '../components/Box'
-
-type Placement = 'above' | 'below'
 
 interface BorderChars {
   control: BoxBorderChars

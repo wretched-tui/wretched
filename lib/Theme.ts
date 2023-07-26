@@ -125,4 +125,25 @@ export class Theme {
       background: this.textBackground,
     })
   }
+
+  merge(
+    overrides: Partial<
+      Pick<
+        Theme,
+        | 'textColor'
+        | 'brightText'
+        | 'background'
+        | 'textBackground'
+        | 'highlight'
+        | 'darken'
+      >
+    >,
+  ): Theme {
+    const {textColor: text} = this
+    return new Theme({
+      ...this,
+      text,
+      ...overrides,
+    })
+  }
 }

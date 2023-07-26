@@ -8,7 +8,6 @@ import {View} from '../View'
 import {Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
-import {Style} from '../Style'
 import {
   isMousePressed,
   isMouseReleased,
@@ -38,17 +37,11 @@ export class Checkbox extends Container {
   onCheck: StyleProps['onCheck']
 
   #textView?: Text
-  #checked:boolean
+  #checked: boolean
   #isPressed = false
   #isHover = false
 
-  constructor({
-    text,
-    checked,
-    content,
-    onCheck,
-    ...viewProps
-  }: Props) {
+  constructor({text, checked, content, onCheck, ...viewProps}: Props) {
     super(viewProps)
 
     if (text !== undefined) {
@@ -59,6 +52,9 @@ export class Checkbox extends Container {
         })),
       )
     } else {
+      if (content instanceof Text) {
+        this.#textView = content
+      }
       this.add(content)
     }
 
@@ -66,12 +62,16 @@ export class Checkbox extends Container {
     this.onCheck = onCheck
   }
 
+  get isChecked() {
+    return this.#checked
+  }
+
   get text() {
     return this.#textView?.text
   }
   set text(value: string | undefined) {
     if (this.#textView) {
-      this.#textView.text = `< ${value} >` ?? ''
+      this.#textView.text = value ?? ''
       this.invalidateSize()
     }
   }
@@ -126,18 +126,14 @@ export class Checkbox extends Container {
     )
 
     const box = BOX[this.#checked ? 'checked' : 'unchecked']
-    viewport.write(
-      box,
-      Point.zero,
-      uiStyle,
-    )
-  viewport.clipped(new Rect(offset, naturalSize), uiStyle, inside => {
+    viewport.write(box, Point.zero, uiStyle)
+    viewport.clipped(new Rect(offset, naturalSize), uiStyle, inside => {
       this.renderChildren(inside)
     })
   }
 }
 
-const BOX: Record<'unchecked' |'checked', string> = {
+const BOX: Record<'unchecked' | 'checked', string> = {
   unchecked: '☐ ',
-  checked: '☑ '
+  checked: '☑ ',
 }

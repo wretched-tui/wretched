@@ -95,7 +95,6 @@ async function run() {
                           new Button({
                             text: 'Click me!🙂',
                             width: 'natural',
-                            style: {bold: true, foreground: 'red'},
                             onClick() {
                               console.log('You did!')
                             },
@@ -103,7 +102,6 @@ async function run() {
                           new Space({height: 1}),
                           new Button({
                             text: 'Not me!',
-                            style: {foreground: 'green'},
                             onClick() {
                               console.log("You DIDN'T")
                             },

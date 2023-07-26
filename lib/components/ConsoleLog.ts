@@ -15,7 +15,7 @@ import {ScrollableList} from './ScrollableList'
 export class ConsoleLog extends Container {
   #logs: [Method, any[]][] = []
   #scrollableList = new ScrollableList({
-    scrollHeight:10,
+    scrollHeight: 10,
     cellAtIndex: index => {
       if (index < 0) {
         index = this.#logs.length + (index % this.#logs.length)
@@ -26,7 +26,7 @@ export class ConsoleLog extends Container {
       return new LogLine(this.#logs[index][0], this.#logs[index][1])
     },
     cellCount: () => this.#logs.length,
-    keepAtBottom: true
+    keepAtBottom: true,
   })
   constructor(viewProps: ViewProps = {}) {
     super(viewProps)
@@ -49,7 +49,6 @@ export class ConsoleLog extends Container {
 
   clear() {
     this.#logs = []
-
   }
 
   render(viewport: Viewport) {
