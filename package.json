@@ -15,7 +15,8 @@
   "scripts": {
     "clean": "rm -f dist/**/*.js",
     "cp-usr": "mkdir -p dist/sys/ && cp -r lib/sys/usr dist/sys/",
-    "demo": "yarn clean && yarn cp-usr && tsc && cd dist/demos/ && node --enable-source-maps --"
+    "build": "yarn clean && yarn cp-usr && yarn tsc",
+    "demo": "yarn build && cd dist/demos/ && node --enable-source-maps --"
   },
   "keywords": [
     "curses",
