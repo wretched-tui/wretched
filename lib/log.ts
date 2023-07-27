@@ -1,28 +1,30 @@
 import {inspect} from './inspect'
 
-const inspect_methods = ['debug', 'error', 'info', 'log', 'warn'] as const
-const methods = [...inspect_methods, 'dir', 'table'] as const
-export type Method = (typeof methods)[number]
-export type Listener = (method: Method, args: any[]) => void
-
-let logs: [Method, any[]][] = []
+const levels = ['debug', 'error', 'info', 'log', 'warn'] as const
+export type Level = (typeof levels)[number]
+export type Listener = (level: Level, args: any[]) => void
+export interface LogLine {
+  level: Level
+  args: any[]
+}
+let logs: LogLine[] = []
 
 const builtin: any = {}
-methods.forEach(method => {
-  builtin[method] = console[method]
+levels.forEach(level => {
+  builtin[level] = console[level]
 })
 
 export function interceptConsoleLog() {
-  methods.forEach(method => {
-    console[method] = function () {
+  levels.forEach(level => {
+    console[level] = function () {
       const args = [...arguments].map(arg => inspect(arg, true))
-      appendLog([method, args])
+      appendLog({level, args})
     }
   })
 }
 
-function appendLog([method, args]: [Method, any[]]) {
-  logs.push([method, args])
+function appendLog(log: LogLine) {
+  logs.push(log)
 }
 
 export function fetchLogs() {
@@ -32,11 +34,11 @@ export function fetchLogs() {
 }
 
 export function flushLogs() {
-  logs.forEach(([method, args]) => {
-    builtin[method].apply(console, args)
+  logs.forEach(({level, args}) => {
+    builtin[level].apply(console, args)
   })
   logs.splice(0, logs.length)
-  methods.forEach(method => {
-    console[method] = builtin[method]
+  levels.forEach(level => {
+    console[level] = builtin[level]
   })
 }

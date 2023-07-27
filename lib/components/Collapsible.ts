@@ -18,6 +18,7 @@ interface StyleProps {
   isCollapsed?: boolean
   collapsedView: View
   expandedView: View
+  onClick?: () => void
 }
 
 type Props = StyleProps & ViewProps
@@ -28,13 +29,14 @@ export class Collapsible extends Container {
   #isCollapsed = true
   #isPressed = false
   #isHover = false
-
-  constructor({isCollapsed, collapsedView, expandedView, ...viewProps}: Props) {
+  #onClick?: () => void
+  constructor({isCollapsed, collapsedView, expandedView, onClick, ...viewProps}: Props) {
     super(viewProps)
 
     this.#isCollapsed = isCollapsed ?? false
     this.#collapsedView = collapsedView
     this.#expandedView = expandedView
+    this.#onClick = onClick
 
     this.add(collapsedView)
     this.add(expandedView)
@@ -57,6 +59,7 @@ export class Collapsible extends Container {
       if (isMouseClicked(event)) {
         this.#isCollapsed = !this.#isCollapsed
         this.invalidateSize()
+        if (this.#onClick) this.#onClick()
       }
     }
 
@@ -86,7 +89,7 @@ export class Collapsible extends Container {
     const offset = new Point(2, 0)
 
     viewport.write(
-      this.#isCollapsed ? '▼' : '►',
+      this.#isCollapsed ? '►' : '▼',
       new Point(0, offset.y),
       textStyle,
     )
