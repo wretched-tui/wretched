@@ -1,6 +1,7 @@
 export * from './Box'
 export {Button} from './Button'
 export {LargeButton} from './LargeButton'
+export * from './Collapsible'
 export * from './Checkbox'
 export * from './ConsoleLog'
 export * from './Drawer'

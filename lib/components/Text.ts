@@ -62,17 +62,18 @@ export class Text extends View {
   }
 
   naturalSize(availableSize: Size): Size {
-    const [width, height] = this.#lines.reduce(
-      ([maxWidth, height], [, width]) => {
-        let lineHeight: number = 1
-        if (this.#wrap) {
-          lineHeight += ~~(width / availableSize.width)
-        }
-        return [Math.max(maxWidth, width), height + lineHeight]
-      },
-      [0, 0] as [number, number],
-    )
-    return new Size(Math.min(availableSize.width, width), height)
+    return this.#lines.reduce((size, [, width]) => {
+      if (this.#wrap) {
+        const lineHeight = 1 + ~~(width / availableSize.width)
+        size.width = availableSize.width
+        size.height += 1 + lineHeight
+        return size
+      }
+
+      size.width = Math.max(size.width, width + 1)
+      size.height += 1
+      return size
+    }, Size.zero.mutableCopy())
   }
 
   render(viewport: Viewport) {
@@ -121,9 +122,8 @@ export class Text extends View {
           }
 
           point.x += width
-          if (!this.#wrap && point.x >= viewport.visibleRect.maxX()) {
-            break
-          }
+          // do not early exit when point.x >= maxX. 'line' may contain ANSI codes that
+          // need to be picked up by replacePen.
         }
 
         point.y += 1
