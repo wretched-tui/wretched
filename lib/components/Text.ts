@@ -66,11 +66,11 @@ export class Text extends View {
       if (this.#wrap) {
         const lineHeight = 1 + ~~(width / availableSize.width)
         size.width = availableSize.width
-        size.height += 1 + lineHeight
+        size.height += lineHeight
         return size
       }
 
-      size.width = Math.max(size.width, width + 1)
+      size.width = Math.max(size.width, width)
       size.height += 1
       return size
     }, Size.zero.mutableCopy())
@@ -92,8 +92,8 @@ export class Text extends View {
           this.#alignment === 'left'
             ? 0
             : this.#alignment === 'center'
-            ? ~~((viewport.contentSize.width - width) / 2)
-            : viewport.contentSize.width - width
+              ? ~~((viewport.contentSize.width - width) / 2)
+              : viewport.contentSize.width - width
         point.x = offsetX
         for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)
