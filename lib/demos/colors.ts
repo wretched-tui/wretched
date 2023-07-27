@@ -1,35 +1,12 @@
 import {colors} from '../sys'
 import type {BlessedProgram} from '../sys'
-import type {MouseEvent} from '../events'
-import type {Props as ViewProps} from '../View'
-
-import {isMouseDragging, isMouseEnter, isMouseExit} from '../events'
 
 import {iTerm2} from '../iTerm2'
 import {interceptConsoleLog} from '../log'
 
 import {Screen} from '../Screen'
-import {Style} from '../Style'
-import {Container} from '../Container'
-import {Viewport} from '../Viewport'
-import {View} from '../View'
-import {Point, Size, Rect, interpolate} from '../geometry'
 
-import {TrackMouse} from '../components/utility'
-import {
-  Box,
-  Button,
-  ConsoleLog,
-  Drawer,
-  Dropdown,
-  Flex,
-  Flow,
-  Input,
-  Separator,
-  Slider,
-  Space,
-  Text,
-} from '../components'
+import {ConsoleLog, Flex, Input, Slider, Space} from '../components'
 
 async function run() {
   process.title = 'Wretched'

@@ -32,7 +32,6 @@ interface LinesProps {
 interface StyleProps {
   border?: Border
   onClick?: () => void
-  onHover?: (value: boolean) => void
   onPress?: (value: boolean) => void
 }
 
@@ -40,26 +39,15 @@ export type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Button extends Container {
   onClick: StyleProps['onClick']
-  onHover: StyleProps['onHover']
   onPress: StyleProps['onPress']
 
   #textView?: Text
   #border: Border
 
   #isPressed = false
-  #isPressedOverride = false
   #isHover = false
-  #isHoverOverride = false
 
-  constructor({
-    text,
-    border,
-    content,
-    onClick,
-    onHover,
-    onPress,
-    ...viewProps
-  }: Props) {
+  constructor({text, border, content, onClick, onPress, ...viewProps}: Props) {
     super(viewProps)
 
     if (text !== undefined) {
@@ -78,22 +66,15 @@ export class Button extends Container {
 
     this.#border = border ?? 'default'
     this.onClick = onClick
-    this.onHover = onHover
     this.onPress = onPress
   }
 
-  get isPressed() {
-    return this.#isPressedOverride || this.#isPressed
-  }
-  set isPressed(value: boolean) {
-    this.#isPressedOverride = value
+  get isHover() {
+    return this.#isHover
   }
 
-  get isHover() {
-    return this.#isHoverOverride || this.#isHover
-  }
-  set isHover(value: boolean) {
-    this.#isHoverOverride = value
+  get isPressed() {
+    return this.#isPressed
   }
 
   get text() {
@@ -118,14 +99,8 @@ export class Button extends Container {
 
   receiveMouse(event: MouseEvent) {
     if (isMousePressed(event)) {
-      if (!this.isPressed) {
-        this.onPress?.(true)
-      }
       this.#isPressed = true
     } else if (isMouseReleased(event)) {
-      if (this.isPressed) {
-        this.onPress?.(false)
-      }
       this.#isPressed = false
 
       if (isMouseClicked(event)) {
@@ -134,14 +109,8 @@ export class Button extends Container {
     }
 
     if (isMouseEnter(event)) {
-      if (!this.isHover) {
-        this.onHover?.(true)
-      }
       this.#isHover = true
     } else if (isMouseExit(event)) {
-      if (this.isHover) {
-        this.onHover?.(false)
-      }
       this.#isHover = false
     }
   }
@@ -150,8 +119,8 @@ export class Button extends Container {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     const textStyle = this.theme.ui({
-      isPressed: this.isPressed,
-      isHover: this.isHover,
+      isPressed: this.#isPressed,
+      isHover: this.#isHover,
     })
 
     viewport.visibleRect.forEachPoint(pt => {
@@ -192,6 +161,9 @@ export class Button extends Container {
 
 const BORDERS: Record<Border, BorderChars> = {
   default: ['[ ', ' ]'],
-  arrows: ['⟨ ', ' ⟩'],
+  arrows: [' ', ' '],
   none: [' ', ' '],
 }
+
+// E0A0 
+// E0B0 

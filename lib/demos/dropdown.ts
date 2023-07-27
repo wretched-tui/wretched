@@ -6,18 +6,13 @@ import {interceptConsoleLog} from '../log'
 import {Screen} from '../Screen'
 import {TrackMouse} from '../components/utility'
 import {
-  Box,
   Button,
   ConsoleLog,
-  Drawer,
   Dropdown,
   LargeDropdown,
   Flex,
-  Flow,
-  Input,
   Separator,
   Space,
-  Text,
 } from '../components'
 
 async function run() {

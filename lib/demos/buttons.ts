@@ -1,31 +1,18 @@
 import type {BlessedProgram} from '../sys'
-import type {MouseEvent} from '../events'
-import type {Props as ViewProps} from '../View'
 
 import {iTerm2} from '../iTerm2'
 import {interceptConsoleLog} from '../log'
 
 import {Screen} from '../Screen'
-import {Style} from '../Style'
-import {Container} from '../Container'
-import {Viewport} from '../Viewport'
-import {View} from '../View'
-import {Point, Size, Rect} from '../geometry'
 
 import {TrackMouse} from '../components/utility'
 import {
-  Box,
   Button,
   LargeButton,
   ConsoleLog,
-  Drawer,
-  Dropdown,
   Flex,
-  Flow,
-  Input,
   Separator,
   Space,
-  Text,
 } from '../components'
 
 async function run() {

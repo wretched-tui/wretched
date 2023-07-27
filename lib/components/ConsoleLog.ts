@@ -1,9 +1,7 @@
 import {unicode} from '../sys'
 
 import type {Method} from '../log'
-import {fetchLogs} from '../log'
 import {centerPad} from '../util'
-import {inspect} from '../inspect'
 import {styled} from '../ansi'
 import {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
