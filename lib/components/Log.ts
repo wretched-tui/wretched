@@ -11,26 +11,25 @@ import {Text} from './Text'
 import {ScrollableList} from './ScrollableList'
 import {Collapsible} from './Collapsible'
 import {Flow} from './Flow'
+import {CollapsibleText} from './CollapsibleText'
 
 export class Log extends Container {
   #logs: LogLine[] = []
+  #viewMemo: WeakMap<LogLine, LogLineView> = new WeakMap()
   #scrollableList = new ScrollableList({
     scrollHeight: 10,
     cellAtIndex: (index) => {
-      if (index < 0) {
-        index = this.#logs.length + (index % this.#logs.length)
-      }
       if (index >= this.#logs.length) {
         return
       }
-      const {level, args} = this.#logs[index]
-      return new LogLineView({
-        level,
-        args,
-        onLogClick: () => {
-          this.#scrollableList.invalidateRow(index, 'size')
-        }
-      })
+
+      const log = this.#logs[index]
+      let memo = this.#viewMemo.get(log)
+      if (!memo) {
+        memo = new LogLineView(log)
+        this.#viewMemo.set(log, memo)
+      }
+      return memo
     },
     cellCount: () => this.#logs.length,
     keepAtBottom: true,
@@ -59,11 +58,10 @@ export class Log extends Container {
 interface LogLineViewProps {
   level: Level
   args: any[]
-  onLogClick?: () => void
 }
 
 class LogLineView extends Container {
-  constructor({level, args, onLogClick}: LogLineViewProps) {
+  constructor({level, args}: LogLineViewProps) {
     super({})
     const header =
       styled(centerPad(level.toUpperCase(), 7), 'black fg;white bg')
@@ -74,11 +72,10 @@ class LogLineView extends Container {
     })
 
     let logView: View
+    const [firstLine, ..._] = lines
     if (lines.length > 1) {
-      const [firstLine, ..._] = lines
       logView = new Collapsible({
         isCollapsed: true,
-        onClick: onLogClick,
         collapsedView: new Text({
           text: firstLine,
           wrap: false,
@@ -89,9 +86,8 @@ class LogLineView extends Container {
         }),
       })
     } else {
-      logView = new Text({
-        lines: lines,
-        wrap: true,
+      logView = new CollapsibleText({
+        text: firstLine,
       })
     }
 

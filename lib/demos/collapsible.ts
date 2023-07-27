@@ -47,4 +47,3 @@ const OBJ = {
   },
 }
 
-// console.log(inspect(OBJ))

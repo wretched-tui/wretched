@@ -40,7 +40,10 @@ export class Flex extends Container {
     let hasFlex = false
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'natural'
-      const childSize = child.naturalSize(availableSize)
+      const availableChildSize = isVertical(this.direction)
+        ? new Size(availableSize.width, remainingSize)
+        : new Size(remainingSize, availableSize.height)
+      const childSize = child.naturalSize(availableChildSize)
       if (flexSize === 'natural') {
         if (isVertical(this.direction)) {
           remainingSize = Math.max(0, remainingSize - childSize.height)
@@ -55,9 +58,7 @@ export class Flex extends Container {
         hasFlex = true
         if (isVertical(this.direction)) {
           size.width = Math.max(size.width, childSize.width)
-          size.height = availableSize.height
         } else {
-          size.width = availableSize.width
           size.height = Math.max(size.height, childSize.height)
         }
       }
@@ -65,9 +66,9 @@ export class Flex extends Container {
 
     if (hasFlex) {
       if (isVertical(this.direction)) {
-        return new Size(size.width, availableSize.height)
+        return new Size(size.width, Math.max(size.height, availableSize.height))
       } else {
-        return new Size(availableSize.width, size.height)
+        return new Size(Math.max(size.width, availableSize.width), size.height)
       }
     }
 
@@ -87,7 +88,10 @@ export class Flex extends Container {
     for (const child of this.children) {
       const flexSize = this.sizes.get(child) ?? 'natural'
       if (flexSize === 'natural') {
-        const childSize = child.naturalSize(viewport.contentSize)
+        const availableChildSize = isVertical(this.direction)
+          ? new Size(viewport.contentSize.width, remainingSize)
+          : new Size(remainingSize, viewport.contentSize.height)
+        const childSize = child.naturalSize(availableChildSize)
         if (isVertical(this.direction)) {
           flexViews.push([flexSize, childSize.height, child])
           remainingSize = Math.max(0, remainingSize - childSize.height)

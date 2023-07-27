@@ -6,11 +6,11 @@ import {Screen} from './Screen'
 export abstract class Container extends View {
   children: View[] = []
 
-  naturalSize(size: Size): Size {
+  naturalSize(availableSize: Size): Size {
     let width = 0
     let height = 0
     for (const child of this.children) {
-      const naturalSize = child.naturalSize(size)
+      const naturalSize = child.naturalSize(availableSize)
       width = Math.max(width, naturalSize.width)
       height = Math.max(height, naturalSize.height)
     }

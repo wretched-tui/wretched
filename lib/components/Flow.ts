@@ -25,21 +25,24 @@ export class Flow extends Container {
   }
 
   naturalSize(availableSize: Size): Size {
-    const size = Size.zero.mutableCopy()
     const remainingSize = availableSize.mutableCopy()
+    const size = Size.zero.mutableCopy()
     for (const child of this.children) {
-      const childSize = child.naturalSize(availableSize)
+      const childSize = child.naturalSize(remainingSize)
       if (isVertical(this.direction)) {
-        remainingSize.height = Math.max(
-          0,
-          remainingSize.height - childSize.height,
-        )
+        if (size.height > 0) {
+          size.height += this.#spaceBetween
+        }
         size.width = Math.max(size.width, childSize.width)
         size.height += childSize.height
+        remainingSize.height -= childSize.height
       } else {
-        remainingSize.width = Math.max(0, remainingSize.width - childSize.width)
+        if (size.width > 0) {
+          size.width += this.#spaceBetween
+        }
         size.width += childSize.width
         size.height = Math.max(size.height, childSize.height)
+        remainingSize.width -= childSize.width
       }
     }
 
@@ -65,11 +68,13 @@ export class Flow extends Container {
     const minVisibleX = viewport.visibleRect.minX(),
       maxVisibleX = viewport.visibleRect.maxX()
     for (const child of this.children) {
-      const childSize = child.naturalSize(viewport.contentSize).mutableCopy()
+      const childSize = child.naturalSize(remainingSize).mutableCopy()
       if (isVertical(this.direction)) {
         childSize.width = viewport.contentSize.width
+        remainingSize.height -= childSize.height + this.#spaceBetween
       } else {
         childSize.height = viewport.contentSize.height
+        remainingSize.width -= childSize.width + this.#spaceBetween
       }
 
       if (this.direction === 'rightToLeft') {
@@ -85,6 +90,10 @@ export class Flow extends Container {
         })
       }
 
+      if (remainingSize.width <= 0 || remainingSize.height <= 0) {
+        break
+      }
+
       if (this.direction === 'rightToLeft') {
         origin.x -= this.#spaceBetween
       } else if (this.direction === 'bottomToTop') {
@@ -95,19 +104,6 @@ export class Flow extends Container {
         origin.x += childSize.width + this.#spaceBetween
       } else if (this.direction === 'topToBottom') {
         origin.y += childSize.height + this.#spaceBetween
-      }
-
-      if (isVertical(this.direction)) {
-        remainingSize.height = Math.max(
-          0,
-          remainingSize.height - childSize.height,
-        )
-      } else {
-        remainingSize.width = Math.max(0, remainingSize.width - childSize.width)
-      }
-
-      if (remainingSize.width <= 0 || remainingSize.height <= 0) {
-        break
       }
     }
   }

@@ -91,6 +91,10 @@ export class ScrollableList extends Container {
     this.#sizeCache.delete(row)
   }
 
+  invalidateSize(): void {
+    this.invalidateAllRows('size')
+    super.invalidateSize()
+  }
 
   receiveMouse(event: MouseEvent) {
     if (event.name === 'mouse.wheel.up') {
@@ -217,17 +221,17 @@ export class ScrollableList extends Container {
     return size
   }
 
-  naturalSize(size: Size): Size {
+  naturalSize(availableSize: Size): Size {
     let row = Math.max(0, this.#contentOffset.row)
     let y = this.#contentOffset.offset
 
-    while (y < size.height) {
+    while (y < availableSize.height) {
       const view = this.viewForRow(row)
       if (!view) {
         break
       }
 
-      const rowSize = this.sizeForRow(row, size.width, view)
+      const rowSize = this.sizeForRow(row, availableSize.width, view)
       this.#maxWidth = Math.max(this.#maxWidth, rowSize.width)
       y += rowSize.height
       row += 1
@@ -235,7 +239,7 @@ export class ScrollableList extends Container {
 
     return new Size(
       this.#maxWidth + (this.#showScrollbars ? 1 : 0),
-      size.height,
+      availableSize.height,
     )
   }
 

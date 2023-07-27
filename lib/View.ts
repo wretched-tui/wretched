@@ -57,6 +57,7 @@ export abstract class View {
     maxWidth,
     maxHeight,
     padding,
+    debug,
   }: Props = {}) {
     this.#theme = typeof theme === 'string' ? Theme[theme] : theme
     this.#x = x
@@ -69,6 +70,7 @@ export abstract class View {
     this.#maxHeight = maxHeight
 
     this.#padding = toEdges(padding)
+    this.#debug = debug ?? false
 
     const render = this.render.bind(this)
     this.render = this.#renderWrap(render).bind(this)
@@ -94,6 +96,10 @@ export abstract class View {
 
   get screen(): Screen | null {
     return this.#screen
+  }
+
+  get debug() {
+    return this.#debug
   }
 
   #toDimension(
@@ -122,10 +128,10 @@ export abstract class View {
     if (this.#width !== undefined && this.#height !== undefined) {
       // shortcut for explicit or 'fill' on both width & height, skip all the rest
       const width = this.#toDimension(
-          this.#width,
-          availableSize.width,
-          () => calcSize().width,
-        ),
+        this.#width,
+        availableSize.width,
+        () => calcSize().width,
+      ),
         height = this.#toDimension(
           this.#height,
           availableSize.height,
@@ -219,6 +225,12 @@ export abstract class View {
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
+      if (this.#contentSize.width !== viewport.contentSize.width || this.#contentSize.height !== viewport.contentSize.height) {
+        this.#invalidateParent = false
+        this.invalidateSize()
+        this.#invalidateParent = true
+      }
+
       this.#contentSize = viewport.contentSize
       let origin: Point
       let contentSize: Size = viewport.contentSize
@@ -255,7 +267,9 @@ export abstract class View {
    */
   invalidateSize() {
     this.#prevSizeCache = new Map()
-    this.parent?.invalidateSize()
+    if (this.#invalidateParent) {
+      this.parent?.invalidateSize()
+    }
   }
 
   receiveKey(event: KeyEvent) {}
