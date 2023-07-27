@@ -19,6 +19,7 @@ export interface Props {
   maxHeight?: number
   //
   padding?: number | Partial<Edges>
+  debug?: boolean
 }
 
 interface Edges {
@@ -35,6 +36,7 @@ export abstract class View {
   #theme: Theme | undefined
   #prevSizeCache: Map<string, Size> = new Map()
   #contentSize: Size = Size.zero
+  #invalidateParent = true
 
   #x: Props['x']
   #y: Props['y']
@@ -45,6 +47,7 @@ export abstract class View {
   #maxWidth: Props['maxWidth']
   #maxHeight: Props['maxHeight']
   #padding: Edges | undefined
+  #debug: boolean
 
   constructor({
     theme,

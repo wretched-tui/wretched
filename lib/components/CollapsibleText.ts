@@ -48,13 +48,14 @@ export class CollapsibleText extends View {
     if (this.#isCollapsed) {
       size.width = lineWidth
       size.height = 1
-      return size.grow(lineWidth > availableSize.width ? 2 : 0, 0)
+      return size
     }
 
     if (lineWidth > availableSize.width) {
       lineWidth += 2
     }
     const lineHeight = Math.ceil(lineWidth / availableSize.width)
+    console.log({lineWidth, lineHeight, availableSize})
     size.width = availableSize.width
     size.height += lineHeight
     return size
@@ -72,8 +73,9 @@ export class CollapsibleText extends View {
       }
     }
   }
+
   render(viewport: Viewport) {
-    const line = this.#text + `–content: ${viewport.contentSize.width}`
+    const line = this.#text
     if (!line.length) {
       return
     }
@@ -83,7 +85,7 @@ export class CollapsibleText extends View {
       const point = new Point(0, 0).mutableCopy()
       let didWrap = false
       let offsetX = 0
-      if (viewport.contentSize.width < width) {
+      if (viewport.visibleRect.size.width < width) {
         viewport.registerMouse('mouse.button.left')
         viewport.write(this.#isCollapsed ? '► ' : '▼ ', Point.zero, this.theme.text({isPressed: this.#isPressed}))
         offsetX = 2

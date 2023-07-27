@@ -35,14 +35,14 @@ export class Flow extends Container {
         }
         size.width = Math.max(size.width, childSize.width)
         size.height += childSize.height
-        remainingSize.height -= childSize.height
+        remainingSize.height -= childSize.height + this.#spaceBetween
       } else {
         if (size.width > 0) {
           size.width += this.#spaceBetween
         }
         size.width += childSize.width
         size.height = Math.max(size.height, childSize.height)
-        remainingSize.width -= childSize.width
+        remainingSize.width -= childSize.width + this.#spaceBetween
       }
     }
 
