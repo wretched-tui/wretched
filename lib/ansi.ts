@@ -19,35 +19,35 @@ export function ansi(code: number, input: string) {
 }
 
 export function bold(input: string) {
-  return program.global?.text(input, 'bold') ?? ansi(1, input)
+  return ansi(1, input)
 }
 
 export function underline(input: string) {
-  return program.global?.text(input, 'underline') ?? ansi(4, input)
+  return ansi(4, input)
 }
 
 export function red(input: string) {
-  return program.global?.text(input, 'red fg') ?? ansi(31, input)
+  return ansi(31, input)
 }
 
 export function green(input: string) {
-  return program.global?.text(input, 'green fg') ?? ansi(32, input)
+  return ansi(32, input)
 }
 
 export function yellow(input: string) {
-  return program.global?.text(input, 'yellow fg') ?? ansi(33, input)
+  return ansi(33, input)
 }
 
 export function blue(input: string) {
-  return program.global?.text(input, 'blue fg') ?? ansi(34, input)
+  return ansi(34, input)
 }
 
 export function cyan(input: string) {
-  return program.global?.text(input, 'cyan fg') ?? ansi(36, input)
+  return ansi(36, input)
 }
 
 export function gray(input: string) {
-  return program.global?.text(input, 'gray fg') ?? ansi(90, input)
+  return ansi(90, input)
 }
 
 export const colorize = {
