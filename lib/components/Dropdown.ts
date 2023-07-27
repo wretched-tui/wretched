@@ -188,8 +188,8 @@ class DropdownSelector<T> extends Container {
         }),
       }),
       onClick: () => {
-        this.#scrollView.invalidateRow(this.#selected)
-        this.#scrollView.invalidateRow(row)
+        this.#scrollView.invalidateRow(this.#selected, 'view')
+        this.#scrollView.invalidateRow(row, 'view')
         this.#selected = row
         this.#onSelect()
       },

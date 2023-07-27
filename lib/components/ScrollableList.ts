@@ -70,19 +70,27 @@ export class ScrollableList extends Container {
 
   /**
    * Tells ScrollableList to re-fetch the visible rows.
+   * @param forCache: 'size' | 'view'   representing which cache to invalidate
    */
-  invalidateAllRows() {
-    this.#viewCache = new Map()
+  invalidateAllRows(forCache: 'size' | 'view') {
+    if (forCache === 'view') {
+      this.#viewCache = new Map()
+    }
     this.#sizeCache = new Map()
   }
 
   /**
-   * Tells ScrollableList to refetch a specific row.
+   * Tells ScrollableList to refetch a specific row
+   * @param row: the row to invalidate
+   * @param forCache: 'size' | 'view'   representing which cache to invalidate
    */
-  invalidateRow(row: number) {
-    this.#viewCache.delete(row)
+  invalidateRow(row: number, forCache: 'size' | 'view') {
+    if (forCache === 'view') {
+      this.#viewCache.delete(row)
+    }
     this.#sizeCache.delete(row)
   }
+
 
   receiveMouse(event: MouseEvent) {
     if (event.name === 'mouse.wheel.up') {
@@ -288,6 +296,12 @@ export class ScrollableList extends Container {
       }
 
       const height = this.sizeForRow(row, cellWidth, view)?.height
+
+      if (y === this.#contentOffset.offset && y + height <= 0) {
+        y = 0
+        this.#contentOffset.offset = 0
+      }
+
       row += 1
       heights[1] += height
 
@@ -351,13 +365,13 @@ export class ScrollableList extends Container {
           new Style(
             inRange
               ? {
-                  foreground: this.theme.highlight,
-                  background: this.theme.highlight,
-                }
+                foreground: this.theme.highlight,
+                background: this.theme.highlight,
+              }
               : {
-                  foreground: this.theme.darken,
-                  background: this.theme.darken,
-                },
+                foreground: this.theme.darken,
+                background: this.theme.darken,
+              },
           ),
         )
       }
