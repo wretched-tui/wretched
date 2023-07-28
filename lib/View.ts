@@ -132,10 +132,10 @@ export abstract class View {
     if (this.#width !== undefined && this.#height !== undefined) {
       // shortcut for explicit or 'fill' on both width & height, skip all the rest
       const width = this.#toDimension(
-          this.#width,
-          availableSize.width,
-          () => calcSize().width,
-        ),
+        this.#width,
+        availableSize.width,
+        () => calcSize().width,
+      ),
         height = this.#toDimension(
           this.#height,
           availableSize.height,
@@ -279,16 +279,16 @@ export abstract class View {
     }
   }
 
-  receiveKey(event: KeyEvent) {}
-  receiveMouse(event: MouseEvent) {}
+  receiveKey(event: KeyEvent) { }
+  receiveMouse(event: MouseEvent) { }
   receiveTick(dt: number): boolean | undefined {
     return
   }
 
-  willMoveTo(parent: View) {}
-  didMoveFrom(parent: View) {}
-  didMount(screen: Screen) {}
-  didUnmount(screen: Screen) {}
+  willMoveTo(parent: View) { }
+  didMoveFrom(parent: View) { }
+  didMount(screen: Screen) { }
+  didUnmount(screen: Screen) { }
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {

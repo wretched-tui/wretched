@@ -7,7 +7,7 @@ import {Rect, Point, Size} from '../geometry'
 import {Style} from '../Style'
 import {type MouseEvent, isMouseEnter, isMouseExit} from '../events'
 
-export type Border = 'single' | 'bold' | 'double' | 'round'
+export type Border = 'single' | 'bold' | 'double' | 'round' | 'popout'
 
 export type BorderChars =
   | [string, string, string, string, string, string]
@@ -15,11 +15,17 @@ export type BorderChars =
   | [string, string, string, string, string, string, string, string]
 
 export interface BorderSizes {
+  maxTop: number,
+  maxRight: number,
+  maxBottom: number,
+  maxLeft: number,
   top: number
+  topLeft: number
   topRight: number
   left: number
   right: number
   bottom: number
+  bottomLeft: number
   bottomRight: number
 }
 
@@ -73,13 +79,13 @@ export class Box extends Container {
   naturalSize(size: Size): Size {
     const naturalSize = super.naturalSize(
       size.shrink(
-        this.#borderSizes.left + this.#borderSizes.right,
-        this.#borderSizes.top + this.#borderSizes.bottom,
+        this.#borderSizes.maxLeft + this.#borderSizes.maxRight,
+        this.#borderSizes.maxTop + this.#borderSizes.maxBottom,
       ),
     )
     return naturalSize.grow(
-      this.#borderSizes.left + this.#borderSizes.right,
-      this.#borderSizes.top + this.#borderSizes.bottom,
+      this.#borderSizes.maxLeft + this.#borderSizes.maxRight,
+      this.#borderSizes.maxTop + this.#borderSizes.maxBottom,
     )
   }
 
@@ -98,14 +104,14 @@ export class Box extends Container {
 
     const [top, left, tl, tr, bl, br, bottom, right] = this.#borderChars
 
-    const maxX = viewport.contentSize.width - this.#borderSizes.right
+    const maxX = viewport.contentSize.width
     const maxY = viewport.contentSize.height - this.#borderSizes.bottom
     let borderStyle = this.theme.text({isHover: this.#isHover})
 
     const innerStyle = new Style({background: borderStyle.background})
     for (let y = this.#borderSizes.top; y < maxY; ++y) {
       viewport.write(
-        ' '.repeat(maxX - 1),
+        ' '.repeat(Math.max(0, maxX - this.#borderSizes.left - this.#borderSizes.right)),
         new Point(this.#borderSizes.left, y),
         innerStyle,
       )
@@ -125,17 +131,23 @@ export class Box extends Container {
     )
 
     viewport.usingPen(borderStyle, () => {
+      const [tlLines, topLines, trLines] = [tl.split('\n'), top.split('\n'), tr.split('\n')]
+      for (let line = 0; line < this.#borderSizes.maxTop; ++line) {
+        const [lineTL, lineTop, lineTR] = [tlLines[line] ?? '', topLines[line] ?? '', trLines[line] ?? '']
+        viewport.write(
+          lineTL + lineTop.repeat(
+            Math.max(0, viewport.contentSize.width - this.#borderSizes.topRight - this.#borderSizes.topLeft)) + lineTR,
+          new Point(0, line),
+        )
+      }
       viewport.write(
-        tl + top.repeat(maxX - this.#borderSizes.topRight) + tr,
-        new Point(0, 0),
-      )
-      viewport.write(
-        bl + (bottom ?? top).repeat(maxX - this.#borderSizes.bottomRight) + br,
+        bl + (bottom ?? top).repeat(
+          Math.max(0, viewport.contentSize.width - this.#borderSizes.bottomLeft - this.#borderSizes.bottomRight)) + br,
         new Point(0, maxY),
       )
       for (let y = this.#borderSizes.top; y < maxY; ++y) {
         viewport.write(left, new Point(0, y))
-        viewport.write(right ?? left, new Point(maxX, y))
+        viewport.write(right ?? left, new Point(maxX - this.#borderSizes.right, y))
       }
     })
   }
@@ -147,33 +159,33 @@ function calculateBorder(
   let chars: BorderChars, sizes: BorderSizes
   if (typeof border === 'string') {
     chars = BORDERS[border]
-    sizes = {
-      top: 1,
-      topRight: 1,
-      left: 1,
-      right: 1,
-      bottom: 1,
-      bottomRight: 1,
-    }
   } else {
     chars = border
-    const top = borderSize(chars[0])
-    const left = borderSize(chars[1])
-    // topLeft: 2
-    const topRight = borderSize(chars[3])
-    // bottomLeft: 4
-    const bottomRight = borderSize(chars[5])
-    const bottom = chars[6] !== undefined ? borderSize(chars[6]) : top
-    const right = chars[7] !== undefined ? borderSize(chars[7]) : left
-    sizes = {
-      left: left.width,
-      right: right.width,
-      top: top.height,
-      topRight: topRight.width,
-      bottom: bottom.height,
-      bottomRight: bottomRight.width,
-    }
   }
+
+  const top = borderSize(chars[0])
+  const left = borderSize(chars[1])
+  const topLeft = borderSize(chars[2])
+  const topRight = borderSize(chars[3])
+  const bottomLeft = borderSize(chars[4])
+  const bottomRight = borderSize(chars[5])
+  const bottom = chars[6] !== undefined ? borderSize(chars[6]) : top
+  const right = chars[7] !== undefined ? borderSize(chars[7]) : left
+  sizes = {
+    maxLeft: Math.max(topLeft.width, left.width, bottomLeft.width),
+    maxRight: Math.max(topRight.width, right.width, bottomRight.width),
+    maxTop: Math.max(top.height, topLeft.height, topRight.height),
+    maxBottom: Math.max(bottom.height, bottomLeft.height, bottomRight.height),
+    top: top.height,
+    bottom: bottom.height,
+    left: left.width,
+    right: right.width,
+    topLeft: topLeft.width,
+    topRight: topRight.width,
+    bottomLeft: bottomLeft.width,
+    bottomRight: bottomRight.width,
+  }
+
   return [chars, sizes]
 }
 
@@ -189,4 +201,5 @@ const BORDERS: Record<Border, BorderChars> = {
   bold: ['━', '┃', '┏', '┓', '┗', '┛'],
   double: ['═', '║', '╔', '╗', '╚', '╝'],
   round: ['─', '│', '╭', '╮', '╰', '╯'],
+  popout: [' \n─', '│', ' \n┌', ' /\\   \n/  \\─┐', '└', '┘', '─', '│'],
 }

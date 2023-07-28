@@ -6,7 +6,7 @@ import {Style} from './Style'
 import {Rect, Point, Size} from './geometry'
 import {Screen} from './Screen'
 import {View} from './View'
-import type {MouseEventListenerName} from './events'
+import type {HotKey, MouseEventListenerName} from './events'
 
 /**
  * Defines a region (size) in which to draw, and a subset (visibleRect) that is
@@ -57,7 +57,7 @@ export class Viewport {
 
   requestModal(modal: View, onClose: () => void) {
     if (!this.#currentRender) {
-      return null
+      return false
     }
 
     return this.#screen.requestModal(
@@ -68,8 +68,16 @@ export class Viewport {
     )
   }
 
-  registerShortcut() {
-    // registers keyboard shortcut
+  dismissModal(view: View) {
+    this.#screen.dismissModal(view)
+  }
+
+  registerHotKey(key: HotKey) {
+    if (!this.#currentRender) {
+      return
+    }
+
+    this.#screen.registerHotKey(this.#currentRender, key)
   }
 
   registerFocus() {
@@ -182,9 +190,9 @@ export class Viewport {
   usingPen(draw: (pen: Pen) => void): void
   usingPen(
     ...args: [Style | undefined, (pen: Pen) => void] | [(pen: Pen) => void]
-  ): void {
+  ) {
     const prevStyle = this.#style
-    const pen = new Pen((style?: Style) => {
+    const pen = new Pen(prevStyle, (style?: Style) => {
       this.#style = style ?? prevStyle
     })
 
@@ -237,8 +245,8 @@ export class Viewport {
     const visibleMaxY = Math.min(
       clip.size.height,
       this.#visibleRect.origin.y +
-        this.#visibleRect.size.height -
-        clip.origin.y,
+      this.#visibleRect.size.height -
+      clip.origin.y,
     )
 
     const contentSize = new Size(contentWidth, contentHeight)
@@ -271,9 +279,15 @@ class Pen {
   #setter: (style?: Style) => void
   #stack: Style[]
 
-  constructor(setter: (style?: Style) => void) {
+  constructor(initialStyle: Style, setter: (style?: Style) => void) {
     this.#setter = setter
-    this.#stack = []
+    this.#stack = [initialStyle]
+  }
+
+  mergePen(style: Style) {
+    const current = this.#stack[0] ?? Style.NONE
+    style = current.merge(style)
+    this.replacePen(style)
   }
 
   replacePen(style: Style) {

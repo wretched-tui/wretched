@@ -38,7 +38,7 @@ export class Log extends Container {
 
   setLogs(logs: LogLine[]) {
     this.#logs = logs
-    this.#scrollableList.invalidateAllRows('view')
+    this.#scrollableList.updateItems(logs)
   }
 
   appendLog(log: LogLine) {
@@ -58,13 +58,44 @@ interface LogLineViewProps {
 class LogLineView extends Container {
   constructor({level, args}: LogLineViewProps) {
     super({})
+
+    let headerStyle: string
+    switch (level) {
+      case 'error':
+        headerStyle = 'red bg'
+        break
+      case 'warn':
+        headerStyle = 'yellow bg'
+        break
+      case 'info':
+        headerStyle = 'white bg'
+        break
+      case 'debug':
+        headerStyle = 'green bg'
+        break
+      default:
+        headerStyle = 'white bg'
+        break
+    }
+
     const header = styled(
       centerPad(level.toUpperCase(), 7),
-      'black fg;white bg',
+      `black fg;${headerStyle}`,
     )
     const lines = args.flatMap(arg => {
       return `${arg}`.split('\n').map(line => {
-        return line
+        switch (level) {
+          case 'error':
+            return styled(line, 'red fg')
+          case 'warn':
+            return styled(line, 'yellow fg')
+          case 'info':
+            return styled(line, 'white fg')
+          case 'debug':
+            return styled(line, 'green fg')
+          default:
+            return line
+        }
       })
     })
 

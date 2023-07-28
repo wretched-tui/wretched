@@ -1,6 +1,8 @@
+import {underline} from '../ansi';
 import type {KeyEvent as WretchedKeyEvent} from '../sys'
 
 export type KeyEvent = WretchedKeyEvent & {type: 'key'}
+export type HotKey = {char: string; ctrl?: boolean; meta?: boolean; shift?: boolean}
 
 export function isKeyPrintable(event: KeyEvent) {
   switch (event.name) {
@@ -47,4 +49,37 @@ export function isKeyPrintable(event: KeyEvent) {
     return false
   }
   return true
+}
+
+export const match = (key: HotKey, event: KeyEvent) => {
+  if ((key.ctrl ?? false) !== event.ctrl) {
+    return false
+  }
+  if ((key.meta ?? false) !== event.meta) {
+    return false
+  }
+  if ((key.shift ?? false) !== event.shift) {
+    return false
+  }
+
+  return key.char === event.name
+}
+
+export const styleTextForHotKey = (text: string, key: HotKey,) => {
+  const alt = '⌥'
+  const shift = '⇧'
+  const ctrl = '⌃'
+  let mod = ''
+
+  if (key.ctrl) {
+    mod += ctrl
+  }
+  if (key.meta) {
+    mod += alt
+  }
+  if (key.shift) {
+    mod += shift
+  }
+
+  return `${text} ${underline(mod + key.char)}`
 }

@@ -79,7 +79,7 @@ export class Text extends View {
   render(viewport: Viewport) {
     const lines: [string, number][] = this.#lines
 
-    viewport.usingPen(this.#style, pen => {
+    viewport.usingPen(pen => {
       const point = new Point(0, 0).mutableCopy()
       for (const [line, width] of lines) {
         if (!line.length) {
@@ -92,14 +92,14 @@ export class Text extends View {
           this.#alignment === 'left'
             ? 0
             : this.#alignment === 'center'
-            ? ~~((viewport.contentSize.width - width) / 2)
-            : viewport.contentSize.width - width
+              ? ~~((viewport.contentSize.width - width) / 2)
+              : viewport.contentSize.width - width
         point.x = offsetX
         for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            pen.replacePen(Style.fromSGR(char))
+            pen.mergePen(Style.fromSGR(char))
             continue
           }
 

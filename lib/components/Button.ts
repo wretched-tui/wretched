@@ -12,6 +12,9 @@ import {
   isMouseEnter,
   isMouseExit,
   isMouseClicked,
+  HotKey,
+  KeyEvent,
+  styleTextForHotKey,
 } from '../events'
 
 type Border = 'default' | 'arrows' | 'none'
@@ -31,6 +34,7 @@ interface StyleProps {
   border?: Border
   onClick?: () => void
   onPress?: (value: boolean) => void
+  hotKey?: HotKey,
 }
 
 export type Props = StyleProps & (TextProps | LinesProps) & ViewProps
@@ -38,6 +42,7 @@ export type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 export class Button extends Container {
   onClick: StyleProps['onClick']
   onPress: StyleProps['onPress']
+  #hotKey?: HotKey
 
   #textView?: Text
   #border: Border
@@ -45,13 +50,13 @@ export class Button extends Container {
   #isPressed = false
   #isHover = false
 
-  constructor({text, border, content, onClick, onPress, ...viewProps}: Props) {
+  constructor({text, border, content, hotKey, onClick, onPress, ...viewProps}: Props) {
     super(viewProps)
 
     if (text !== undefined) {
       this.add(
         (this.#textView = new Text({
-          text,
+          text: hotKey ? styleTextForHotKey(text, hotKey) : text,
           alignment: 'center',
         })),
       )
@@ -65,6 +70,7 @@ export class Button extends Container {
     this.#border = border ?? 'default'
     this.onClick = onClick
     this.onPress = onPress
+    this.#hotKey = hotKey
   }
 
   get isHover() {
@@ -113,9 +119,16 @@ export class Button extends Container {
     }
   }
 
+  receiveKey(_: KeyEvent) {
+    this.onClick?.()
+  }
+
   render(viewport: Viewport) {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
+    if (this.#hotKey) {
+      viewport.registerHotKey(this.#hotKey)
+    }
     const textStyle = this.theme.ui({
       isPressed: this.#isPressed,
       isHover: this.#isHover,
@@ -130,8 +143,8 @@ export class Button extends Container {
       viewport.contentSize.shrink(leftWidth + rightWidth, 0),
     )
     const offsetLeft = Math.round(
-        (viewport.contentSize.width - naturalSize.width) / 2,
-      ),
+      (viewport.contentSize.width - naturalSize.width) / 2,
+    ),
       offsetRight = viewport.contentSize.width - naturalSize.width - offsetLeft
     const offset = new Point(
       offsetLeft,

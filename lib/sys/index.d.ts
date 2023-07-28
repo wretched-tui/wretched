@@ -42,11 +42,21 @@ export interface MouseEvent {
 }
 
 export interface KeyEvent {
+  /**
+   * "Probably" the letter (a-z, etc) that was pressed. Blank (or nonsensical) for meta characters (escape, arrow keys, etc)
+   * Also blank when ctrl/meta/shift are pressed
+   */
   char: string
+  /**
+   * Named key, like "enter", "a", "escape", etc, or the printable character
+   */
   name: string
   ctrl: boolean
   meta: boolean
   shift: boolean
+  /**
+   * The letter that was pressed, *plus* the modifiers (C-M-S- for control- meta- shift, always in that order)
+   */
   full: string
 }
 

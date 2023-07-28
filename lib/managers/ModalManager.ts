@@ -28,6 +28,14 @@ export class ModalManager {
     return true
   }
 
+  dismissModal(view: View) {
+    if (!this.#modal || view !== this.#modal[0]) {
+      return
+    }
+
+    this.#modal[1]()
+  }
+
   renderModals(screen: Screen, viewport: Viewport) {
     this.#modalView.moveToScreen(screen)
 

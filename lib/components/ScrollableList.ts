@@ -29,8 +29,6 @@ interface ContentOffset {
   offset: number
 }
 
-const MAX_ROW = 100000
-
 export class ScrollableList<T> extends Container {
   /**
    * Your function here need not return "stable" views; the views returned by this
@@ -182,6 +180,11 @@ export class ScrollableList<T> extends Container {
     }
   }
 
+  updateItems(items: T[]) {
+    this.#items = items
+    this.invalidateAllRows('view')
+  }
+
   viewForRow(row: number): View | undefined {
     if (row < 0 || row >= this.#items.length) {
       return
@@ -256,7 +259,7 @@ export class ScrollableList<T> extends Container {
     while (y < this.contentSize.height) {
       const height = this.sizeForRow(row, cellWidth)?.height
       if (height === undefined) {
-        return this.#contentOffset
+        return {row: 0, offset: 0}
       }
 
       y += height
@@ -266,15 +269,21 @@ export class ScrollableList<T> extends Container {
 
       row -= 1
     }
-    return {row: row, offset: this.contentSize.height - y}
+
+    return {row, offset: this.contentSize.height - y}
   }
 
   render(viewport: Viewport) {
     viewport.registerMouse('mouse.wheel')
 
-    if (this.#keepAtBottom && this.#isAtBottom) {
-      this.#contentOffset = this.lastOffset()
+    if (
+      this.#contentOffset.row >= this.#items.length
+      || (this.#keepAtBottom && this.#isAtBottom)
+    ) {
+      const offset = this.lastOffset()
+      this.#contentOffset = offset
     }
+
     const prevRows = new Set(this.children)
     const visibleRows = new Set<View>()
     let row = Math.max(0, this.#contentOffset.row)
@@ -366,13 +375,13 @@ export class ScrollableList<T> extends Container {
           new Style(
             inRange
               ? {
-                  foreground: this.theme.highlight,
-                  background: this.theme.highlight,
-                }
+                foreground: this.theme.highlight,
+                background: this.theme.highlight,
+              }
               : {
-                  foreground: this.theme.darken,
-                  background: this.theme.darken,
-                },
+                foreground: this.theme.darken,
+                background: this.theme.darken,
+              },
           ),
         )
       }

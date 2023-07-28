@@ -9,6 +9,7 @@ import {Viewport} from './Viewport'
 import {flushLogs} from './log'
 import {Buffer} from './Buffer'
 import type {
+  HotKey,
   KeyEvent,
   MouseEventListenerName,
   SystemEvent,
@@ -43,7 +44,7 @@ export class Screen {
     program.clear()
     program.setMouse({sendFocus: true}, true)
 
-    const fn = function () {}
+    const fn = function () { }
     program.on('keypress', fn)
 
     const rootView =
@@ -142,8 +143,16 @@ export class Screen {
     return this.#modalManager.requestModal(parent, modal, onClose, rect)
   }
 
+  dismissModal(view: View) {
+    return this.#modalManager.dismissModal(view)
+  }
+
   registerFocus(view: View) {
     return this.#focusManager.registerFocus(view)
+  }
+
+  registerHotKey(view: View, key: HotKey) {
+    return this.#focusManager.registerHotKey(view, key)
   }
 
   triggerKeyboard(event: KeyEvent) {
@@ -179,7 +188,7 @@ export class Screen {
     this.#tickManager.registerTick(view)
   }
 
-  triggerTick(dt: number) {}
+  triggerTick(dt: number) { }
 
   preRender() {
     this.#modalManager.reset()
