@@ -35,7 +35,8 @@ export abstract class View {
   #screen: Screen | null = null
   #theme: Theme | undefined
   #prevSizeCache: Map<string, Size> = new Map()
-  #contentSize: Size = Size.zero
+  #viewportContentSize: Size = Size.zero
+  #renderedContentSize: Size = Size.zero
   #invalidateParent = true
 
   #x: Props['x']
@@ -131,10 +132,10 @@ export abstract class View {
     if (this.#width !== undefined && this.#height !== undefined) {
       // shortcut for explicit or 'fill' on both width & height, skip all the rest
       const width = this.#toDimension(
-        this.#width,
-        availableSize.width,
-        () => calcSize().width,
-      ),
+          this.#width,
+          availableSize.width,
+          () => calcSize().width,
+        ),
         height = this.#toDimension(
           this.#height,
           availableSize.height,
@@ -195,14 +196,14 @@ export abstract class View {
 
       const size = this.#restrictSize(
         () => {
-          let contentSize = naturalSize(availableSize)
+          let size = naturalSize(availableSize)
           if (this.#padding) {
-            contentSize = contentSize.grow(
+            size = size.grow(
               this.#padding.left + this.#padding.right,
               this.#padding.top + this.#padding.bottom,
             )
           }
-          return contentSize
+          return size
         },
         availableSize,
         'shrink',
@@ -221,44 +222,47 @@ export abstract class View {
   }
 
   get contentSize(): Size {
-    return this.#contentSize
+    return this.#renderedContentSize
   }
 
   #renderWrap(
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
-      if (this.#contentSize.width !== viewport.contentSize.width || this.#contentSize.height !== viewport.contentSize.height) {
+      if (
+        this.#viewportContentSize.width !== viewport.contentSize.width ||
+        this.#viewportContentSize.height !== viewport.contentSize.height
+      ) {
         this.#invalidateParent = false
         this.invalidateSize()
         this.#invalidateParent = true
       }
 
-      this.#contentSize = viewport.contentSize
+      this.#viewportContentSize = viewport.contentSize
+
       let origin: Point
-      let contentSize: Size = viewport.contentSize
+      const contentSize = viewport.contentSize.mutableCopy()
       if (this.#x || this.#y) {
         origin = new Point(this.#x ?? 0, this.#y ?? 0)
-        contentSize = contentSize.shrink(origin.x, origin.y)
+        contentSize.width -= origin.x
+        contentSize.height -= origin.y
       } else {
         origin = Point.zero
       }
 
-      contentSize = this.#restrictSize(
+      if (this.#padding) {
+        origin = origin.offset(this.#padding.left, this.#padding.top)
+        contentSize.width -= this.#padding.left + this.#padding.right
+        contentSize.height -= this.#padding.top + this.#padding.bottom
+      }
+
+      this.#renderedContentSize = this.#restrictSize(
         () => this.naturalSize(contentSize),
         contentSize,
         'grow',
       )
 
-      if (this.#padding) {
-        origin = origin.offset(this.#padding.left, this.#padding.top)
-        contentSize = contentSize.shrink(
-          this.#padding.left + this.#padding.right,
-          this.#padding.top + this.#padding.bottom,
-        )
-      }
-
-      const rect = new Rect(origin, contentSize)
+      const rect = new Rect(origin, this.#renderedContentSize)
       viewport._render(this, rect, render)
     }
   }
