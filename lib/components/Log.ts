@@ -18,12 +18,8 @@ export class Log extends Container {
   #viewMemo: WeakMap<LogLine, LogLineView> = new WeakMap()
   #scrollableList = new ScrollableList({
     scrollHeight: 10,
-    cellAtIndex: (index) => {
-      if (index >= this.#logs.length) {
-        return
-      }
-
-      const log = this.#logs[index]
+    items: this.#logs,
+    cellForItem: log => {
       let memo = this.#viewMemo.get(log)
       if (!memo) {
         memo = new LogLineView(log)
@@ -31,7 +27,6 @@ export class Log extends Container {
       }
       return memo
     },
-    cellCount: () => this.#logs.length,
     keepAtBottom: true,
   })
 

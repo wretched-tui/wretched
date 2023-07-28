@@ -5,27 +5,24 @@ import {Style} from '../Style'
 import {Rect, Point, Size, interpolate} from '../geometry'
 import {type MouseEvent, isMouseDragging} from '../events'
 
-interface StyleProps extends ViewProps {
-  cellAtIndex: (row: number) => View | undefined
+interface Props<T> extends ViewProps {
+  items: T[]
+  cellForItem: (item: T, row: number) => View
+  /**
+   * Show/hide the scrollbars
+   * @default true
+   */
   showScrollbars?: boolean
   /**
    * How many rows to scroll by when using the mouse wheel.
    * @default 1
    */
   scrollHeight?: number
+  /**
+   * Useful for log views
+   */
+  keepAtBottom?: boolean
 }
-
-interface KeepAtBottom {
-  cellCount: () => number
-  keepAtBottom?: true
-}
-
-interface CannotKeepAtBottom {
-  cellCount?: undefined
-  keepAtBottom?: undefined
-}
-
-type Props = StyleProps & (KeepAtBottom | CannotKeepAtBottom)
 
 interface ContentOffset {
   row: number
@@ -34,39 +31,39 @@ interface ContentOffset {
 
 const MAX_ROW = 100000
 
-export class ScrollableList extends Container {
+export class ScrollableList<T> extends Container {
   /**
    * Your function here need not return "stable" views; the views returned by this
    * function will be cached until you call `scrollableList.invalidateCache()` or
    * `scrollableList.invalidateRow(row)`.
    */
-  cellAtIndex: (row: number) => View | undefined
-  cellCount?: () => number
-
+  #items: T[]
+  #cellForItem: Props<T>['cellForItem']
   #keepAtBottom: boolean
   #isAtBottom = true
   #showScrollbars: boolean
-  #contentOffset: ContentOffset
-  #maxWidth: number = 0
-  #viewCache: Map<number, View> = new Map()
-  #sizeCache: Map<number, Size> = new Map()
-  #totalHeight?: number
   #scrollHeight: number
 
+  #contentOffset: ContentOffset
+  #maxWidth: number = 0
+  #viewCache: Map<T, View> = new Map()
+  #sizeCache: Map<T, Size> = new Map()
+  #totalHeight?: number
+
   constructor({
-    cellAtIndex,
-    cellCount,
+    cellForItem,
+    items,
     keepAtBottom,
     scrollHeight,
     showScrollbars,
     ...viewProps
-  }: Props) {
+  }: Props<T>) {
     super(viewProps)
     this.#showScrollbars = showScrollbars ?? true
     this.#contentOffset = {row: 0, offset: 0}
-    this.cellAtIndex = cellAtIndex
+    this.#cellForItem = cellForItem
     this.#scrollHeight = scrollHeight ?? 1
-    this.cellCount = cellCount
+    this.#items = items
     this.#keepAtBottom = keepAtBottom ?? false
   }
 
@@ -86,11 +83,11 @@ export class ScrollableList extends Container {
    * @param row: the row to invalidate
    * @param forCache: 'size' | 'view'   representing which cache to invalidate
    */
-  invalidateRow(row: number, forCache: 'size' | 'view') {
+  invalidateItem(item: T, forCache: 'size' | 'view') {
     if (forCache === 'view') {
-      this.#viewCache.delete(row)
+      this.#viewCache.delete(item)
     }
-    this.#sizeCache.delete(row)
+    this.#sizeCache.delete(item)
   }
 
   invalidateSize(): void {
@@ -119,7 +116,7 @@ export class ScrollableList extends Container {
       )
       this.#isAtBottom = heightY === maxY
       const cellWidth = this.contentSize.width
-      for (let row = 0, y = 0; row < MAX_ROW; row++) {
+      for (let row = 0, y = 0; row < this.#items.length; row++) {
         const rowHeight = this.sizeForRow(row, cellWidth)?.height
         if (rowHeight === undefined) {
           break
@@ -186,15 +183,16 @@ export class ScrollableList extends Container {
   }
 
   viewForRow(row: number): View | undefined {
-    if (row < 0) {
+    if (row < 0 || row >= this.#items.length) {
       return
     }
 
-    let view = this.#viewCache.get(row)
+    const item = this.#items[row]
+    let view = this.#viewCache.get(item)
     if (!view) {
-      view = this.cellAtIndex(row)
+      view = this.#cellForItem(item, row)
       if (view) {
-        this.#viewCache.set(row, view)
+        this.#viewCache.set(item, view)
       }
     }
 
@@ -204,8 +202,9 @@ export class ScrollableList extends Container {
   sizeForRow(row: number, contentWidth: number, view: View): Size
   sizeForRow(row: number, contentWidth: number): Size | undefined
   sizeForRow(row: number, contentWidth: number, view?: View): Size | undefined {
-    if (contentWidth === this.contentSize.width) {
-      const size = this.#sizeCache.get(row)
+    const item = this.#items[row]
+    if (contentWidth === this.contentSize.width && item) {
+      const size = this.#sizeCache.get(item)
       if (size !== undefined) {
         return size
       }
@@ -217,8 +216,8 @@ export class ScrollableList extends Container {
     }
 
     const size = view.naturalSize(new Size(contentWidth, 0))
-    if (contentWidth === this.contentSize.width) {
-      this.#sizeCache.set(row, size)
+    if (contentWidth === this.contentSize.width && item) {
+      this.#sizeCache.set(item, size)
     }
     return size
   }
@@ -250,11 +249,7 @@ export class ScrollableList extends Container {
   }
 
   lastOffset() {
-    if (!this.cellCount) {
-      return this.#contentOffset
-    }
-
-    const cellCount = this.cellCount()
+    const cellCount = this.#items.length
     const cellWidth = this.contentSize.width
     let row = cellCount - 1
     let y = 0
@@ -349,7 +344,7 @@ export class ScrollableList extends Container {
       )
 
       heights[2] = heights[1]
-      for (let i = row; i < MAX_ROW; i++) {
+      for (let i = row; i < this.#items.length; i++) {
         const rowHeight = this.sizeForRow(i, cellWidth)?.height
         if (rowHeight === undefined) {
           break
@@ -371,13 +366,13 @@ export class ScrollableList extends Container {
           new Style(
             inRange
               ? {
-                foreground: this.theme.highlight,
-                background: this.theme.highlight,
-              }
+                  foreground: this.theme.highlight,
+                  background: this.theme.highlight,
+                }
               : {
-                foreground: this.theme.darken,
-                background: this.theme.darken,
-              },
+                  foreground: this.theme.darken,
+                  background: this.theme.darken,
+                },
           ),
         )
       }

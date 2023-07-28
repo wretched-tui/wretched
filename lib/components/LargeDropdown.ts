@@ -169,9 +169,7 @@ class DropdownSelector<T> extends Container {
   #choices: [string[], T][]
   #selected: number
   #onSelect: () => void
-  #scrollView = new ScrollableList({
-    cellAtIndex: row => this.cellAtIndex(row),
-  })
+  #scrollView: ScrollableList<T>
   #box = new Box({maxHeight: 24, border: BORDERS.below})
 
   constructor({choices, selected, onSelect, ...viewProps}: SelectorProps<T>) {
@@ -183,6 +181,11 @@ class DropdownSelector<T> extends Container {
     ])
     this.#selected = selected
     this.#onSelect = onSelect
+
+    this.#scrollView = new ScrollableList({
+      items: this.#choices.map(([, choice]) => choice),
+      cellForItem: (choice, row) => this.cellForItem(choice, row),
+    })
     this.#box.add(this.#scrollView)
     this.add(this.#box)
   }
@@ -195,15 +198,12 @@ class DropdownSelector<T> extends Container {
     return this.#choices[this.#selected][1]
   }
 
-  cellAtIndex(row: number) {
-    if (row >= this.#choices.length) {
-      return undefined
-    }
-
+  cellForItem(choice: T, row: number) {
     const lines: string[] = this.#choices[row][0]
-    const selected = this.#selected === row
+    const selected = this.#choices[this.#selected][1]
+    const isSelected = this.#selected === row
     const button = new Button({
-      theme: selected ? 'selected' : undefined,
+      theme: isSelected ? 'selected' : undefined,
       border: 'none',
       content: new Text({
         width: 'fill',
@@ -214,8 +214,8 @@ class DropdownSelector<T> extends Container {
         }),
       }),
       onClick: () => {
-        this.#scrollView.invalidateRow(this.#selected, 'view')
-        this.#scrollView.invalidateRow(row, 'view')
+        this.#scrollView.invalidateItem(selected, 'view')
+        this.#scrollView.invalidateItem(choice, 'view')
         this.#selected = row
         this.#onSelect()
       },
