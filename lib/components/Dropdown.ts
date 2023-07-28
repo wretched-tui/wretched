@@ -253,7 +253,7 @@ class DropdownSelector<T> extends Container {
         } else {
           this.#selected = new Set()
         }
-        this.#scrollView.invalidateSize()
+        this.#scrollView.invalidateAllRows('view')
       },
     })
     this.#scrollView = new ScrollableList({
