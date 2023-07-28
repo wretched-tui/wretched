@@ -32,10 +32,10 @@ interface StyleProps {
 type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Checkbox extends Container {
-  onCheck: StyleProps['onCheck']
+  isChecked: boolean
 
+  #onCheck: StyleProps['onCheck']
   #textView?: Text
-  #isChecked: boolean
   #isPressed = false
   #isHover = false
 
@@ -56,12 +56,8 @@ export class Checkbox extends Container {
       this.add(content)
     }
 
-    this.#isChecked = isChecked
-    this.onCheck = onCheck
-  }
-
-  get isChecked() {
-    return this.#isChecked
+    this.isChecked = isChecked
+    this.#onCheck = onCheck
   }
 
   get text() {
@@ -90,8 +86,8 @@ export class Checkbox extends Container {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {
-        this.#isChecked = !this.#isChecked
-        this.onCheck?.(this.#isChecked)
+        this.isChecked = !this.isChecked
+        this.#onCheck?.(this.isChecked)
       }
     }
 
@@ -123,7 +119,7 @@ export class Checkbox extends Container {
       Math.round((viewport.contentSize.height - naturalSize.height) / 2),
     )
 
-    const box = BOX[this.#isChecked ? 'checked' : 'unchecked']
+    const box = BOX[this.isChecked ? 'checked' : 'unchecked']
     viewport.write(box, Point.zero, uiStyle)
     viewport.clipped(new Rect(offset, naturalSize), uiStyle, inside => {
       this.renderChildren(inside)

@@ -33,24 +33,20 @@ interface LinesProps {
 interface StyleProps {
   border?: Border
   onClick?: () => void
-  onPress?: (value: boolean) => void
-  hotKey?: HotKey,
+  hotKey?: HotKey
 }
 
 export type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Button extends Container {
-  onClick: StyleProps['onClick']
-  onPress: StyleProps['onPress']
   #hotKey?: HotKey
-
+  #onClick: StyleProps['onClick']
   #textView?: Text
   #border: Border
-
   #isPressed = false
   #isHover = false
 
-  constructor({text, border, content, hotKey, onClick, onPress, ...viewProps}: Props) {
+  constructor({text, border, content, hotKey, onClick, ...viewProps}: Props) {
     super(viewProps)
 
     if (text !== undefined) {
@@ -68,9 +64,8 @@ export class Button extends Container {
     }
 
     this.#border = border ?? 'default'
-    this.onClick = onClick
-    this.onPress = onPress
     this.#hotKey = hotKey
+    this.#onClick = onClick
   }
 
   get isHover() {
@@ -108,7 +103,7 @@ export class Button extends Container {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {
-        this.onClick?.()
+        this.#onClick?.()
       }
     }
 
@@ -144,8 +139,7 @@ export class Button extends Container {
     )
     const offsetLeft = Math.round(
       (viewport.contentSize.width - naturalSize.width) / 2,
-    ),
-      offsetRight = viewport.contentSize.width - naturalSize.width - offsetLeft
+    )
     const offset = new Point(
       offsetLeft,
       Math.round((viewport.contentSize.height - naturalSize.height) / 2),
