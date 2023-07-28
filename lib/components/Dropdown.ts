@@ -12,6 +12,8 @@ import {
   ScrollableList,
   Separator,
   Text,
+  Checkbox,
+  Space,
 } from '../components'
 import {
   type MouseEvent,
@@ -27,35 +29,98 @@ interface BorderChars {
   below: BoxBorderChars
 }
 
-interface Props<T> extends ViewProps {
+interface SharedProps<T> extends ViewProps {
   choices: [string, T][]
-  selected: number
 }
+
+interface StyleProps {
+  title?: string
+}
+
+type SelectMultipleFn<T> = (value: T[]) => void
+type SelectOneFn<T> = (value: T) => void
+
+interface SelectMultiple<T> {
+  multiple: true
+  selected: number[]
+  onSelect: SelectMultipleFn<T>
+}
+
+interface SelectOne<T> {
+  multiple?: false
+  selected?: number
+  onSelect: SelectOneFn<T>
+}
+
+type Props<T> = SharedProps<T> & StyleProps & (SelectMultiple<T> | SelectOne<T>)
 
 export class Dropdown<T> extends View {
   #dropdown: DropdownSelector<T>
+  #title?: string[]
   #isHover = false
   #showModal = false
   #selectedSize = Size.zero
 
-  constructor({choices, selected, ...viewProps}: Props<T>) {
+  constructor({
+    title,
+    choices,
+    selected,
+    multiple,
+    onSelect,
+    ...viewProps
+  }: Props<T>) {
     super(viewProps)
 
+    let selectedRows: number[]
+    if (multiple) {
+      selectedRows = selected as number[]
+    } else if (selected !== undefined) {
+      selectedRows = [selected as number]
+    } else {
+      selectedRows = []
+    }
+
+    this.#title = title ? title.split('\n') : undefined
     this.#dropdown = new DropdownSelector({
       theme: this.theme,
+      multiple: multiple ?? false,
       choices,
-      selected,
+      selected: selectedRows,
       onSelect: () => {
-        this.#showModal = false
+        if (multiple) {
+          ;(onSelect as SelectMultipleFn<T>)(this.#dropdown.selectedValues)
+        } else {
+          this.#showModal = false
+          const value = this.#dropdown.selectedValue
+          if (value !== undefined) {
+            ;(onSelect as SelectOneFn<T>)(value)
+          }
+        }
         this.invalidateSize()
       },
     })
   }
 
+  get choices() {
+    return this.#dropdown.choices
+  }
+  set choices(choices: SharedProps<T>['choices']) {
+    this.#dropdown.choices = choices
+  }
+
+  #titleLines() {
+    if (
+      this.#title !== undefined &&
+      this.#dropdown.selectedValues.length === 0
+    ) {
+      return this.#title
+    }
+
+    return this.#dropdown.selectedText ?? ['<select>']
+  }
+
   naturalSize(size: Size): Size {
-    this.#selectedSize = new Size(
-      unicode.stringSize(this.#dropdown.selectedText),
-    )
+    this.#selectedSize = new Size(unicode.stringSize(this.#titleLines()))
     return this.#selectedSize.grow(5, 0)
   }
 
@@ -79,7 +144,7 @@ export class Dropdown<T> extends View {
     }
 
     viewport.registerMouse(['mouse.move', 'mouse.button.left'])
-    const lines = this.#dropdown.selectedText
+    const lines = this.#titleLines()
     const textStyle = this.theme.ui({
       isHover: this.#isHover && !this.#showModal,
     })
@@ -132,64 +197,115 @@ export class Dropdown<T> extends View {
   }
 }
 
-interface SelectorProps<T> extends Props<T> {
+interface SelectorProps<T> extends SharedProps<T> {
   onSelect(): void
+  selected: number[]
+  multiple: boolean
 }
 
 class DropdownSelector<T> extends Container {
   #choices: [string[], T][]
-  #selected: number
+  #selected: Set<number>
+  #multiple: boolean
   #onSelect: () => void
   #scrollView: ScrollableList<T>
   #box = new Box({maxHeight: 24, border: BORDERS.below})
+  #checkbox: Checkbox
 
-  constructor({choices, selected, onSelect, ...viewProps}: SelectorProps<T>) {
+  get choices() {
+    return this.#choices.map(([lines, choice]) => [lines.join('\n'), choice])
+  }
+
+  set choices(choices: SharedProps<T>['choices']) {
+    const selected = [...this.#selected].map(index => this.#choices[index][1])
+    this.#choices = choices.map(([text, choice]) => [text.split('\n'), choice])
+    this.#selected = new Set(
+      selected.flatMap(item => {
+        const index = choices.findIndex(([_, choice]) => choice === item)
+        if (index === -1) {
+          return []
+        }
+        return [index]
+      }),
+    )
+    this.#scrollView.updateItems(choices.map(([, choice]) => choice))
+  }
+
+  constructor({
+    choices,
+    selected,
+    multiple,
+    onSelect,
+    ...viewProps
+  }: SelectorProps<T>) {
     super({...viewProps})
 
-    this.#choices = choices.map(([text, value], row) => [
-      text.split('\n'),
-      value,
-    ])
-    this.#selected = selected
+    this.#choices = choices.map(([text, value]) => [text.split('\n'), value])
+    this.#selected = new Set(selected)
+    this.#multiple = multiple
     this.#onSelect = onSelect
+    this.#checkbox = new Checkbox({
+      text: 'Select all',
+      isChecked: false,
+      onCheck: value => {
+        if (value) {
+          this.#selected = new Set(Array(this.#choices.length).keys())
+        } else {
+          this.#selected = new Set()
+        }
+        this.#scrollView.invalidateSize()
+      },
+    })
     this.#scrollView = new ScrollableList({
       items: this.#choices.map(([, choice]) => choice),
       cellForItem: (choice, row) => this.cellForItem(choice, row),
     })
-    this.#box.add(this.#scrollView)
+    const content = new Flex({direction: 'topToBottom', children: []})
+
+    if (multiple) {
+      content.add(this.#checkbox)
+    }
+    content.addFlex('flex1', this.#scrollView)
+    this.#box.add(content)
     this.add(this.#box)
+
+    this.#checkbox.isChecked = this.#isAllSelected()
+  }
+
+  #isAllSelected() {
+    return this.#selected.size === this.#choices.length
   }
 
   get selectedText() {
-    return this.#choices[this.#selected][0]
+    if (this.#selected.size === 0) {
+      return undefined
+    }
+    if (this.#selected.size > 1) {
+      // return [`${this.#selected.size} items selected`]
+      return [
+        [...this.#selected]
+          .map(index => this.#choices[index][0].join(' '))
+          .join(', '),
+      ]
+    }
+    const [row] = [...this.#selected]
+    return this.#choices[row][0]
   }
 
   get selectedValue() {
-    return this.#choices[this.#selected][1]
+    if (this.#selected.size === 0) {
+      return undefined
+    }
+    const [row] = [...this.#selected]
+    return this.#choices[row][1]
+  }
+
+  get selectedValues() {
+    return [...this.#selected].map(index => this.#choices[index][1])
   }
 
   cellForItem(choice: T, row: number) {
-    const lines: string[] = this.#choices[row][0]
-    const selected = this.#choices[this.#selected][1]
-    const isSelected = this.#selected === row
-    const button = new Button({
-      theme: isSelected ? 'selected' : undefined,
-      border: 'none',
-      content: new Text({
-        width: 'fill',
-        lines: lines.map((line, index) => {
-          const prefix =
-            index === 0 ? (this.#selected === row ? '⦿ ' : '◯ ') : '  '
-          return prefix + line
-        }),
-      }),
-      onClick: () => {
-        this.#scrollView.invalidateItem(selected, 'view')
-        this.#scrollView.invalidateItem(choice, 'view')
-        this.#selected = row
-        this.#onSelect()
-      },
-    })
+    const button = this.#cellButton(choice, row)
 
     return new Flex({
       direction: 'leftToRight',
@@ -197,6 +313,45 @@ class DropdownSelector<T> extends Container {
         ['flex1', button],
         new Separator({direction: 'vertical', border: 'single'}),
       ],
+    })
+  }
+
+  #cellButton(choice: T, row: number) {
+    const lines: string[] = this.#choices[row][0]
+    const isSelected = [...this.#selected].some(index => index === row)
+
+    return new Button({
+      theme: isSelected ? 'selected' : undefined,
+      border: 'none',
+      content: new Text({
+        width: 'fill',
+        lines: lines.map((line, index) => {
+          const prefix = index === 0 ? (isSelected ? '⦿ ' : '◯ ') : '  '
+          return prefix + line
+        }),
+      }),
+      onClick: () => {
+        this.#selected.forEach(selected => {
+          const item = this.#choices[selected][1]
+          this.#scrollView.invalidateItem(item, 'view')
+        })
+
+        this.#scrollView.invalidateItem(choice, 'view')
+
+        if (this.#multiple) {
+          if (this.#selected.has(row)) {
+            this.#selected.delete(row)
+          } else {
+            this.#selected.add(row)
+          }
+        } else {
+          this.#selected = new Set([row])
+        }
+
+        this.#checkbox.isChecked = this.#isAllSelected()
+
+        this.#onSelect()
+      },
     })
   }
 

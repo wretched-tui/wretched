@@ -33,6 +33,11 @@ export class Flex extends Container {
     }
   }
 
+  addFlex(flexSize: FlexSize, child: View) {
+    this.add(child)
+    this.sizes.set(child, flexSize)
+  }
+
   naturalSize(availableSize: Size): Size {
     const size = Size.zero.mutableCopy()
     let remainingSize =
