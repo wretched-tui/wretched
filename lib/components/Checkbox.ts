@@ -25,7 +25,7 @@ interface LinesProps {
 }
 
 interface StyleProps {
-  isChecked: boolean
+  isChecked: boolean,
   onCheck?: (checked: boolean) => void
 }
 
@@ -71,7 +71,7 @@ export class Checkbox extends Container {
   }
 
   #boxWidth(): number {
-    const box = BOX.checked
+    const box = BOX.checkbox.unchecked
     return unicode.lineWidth(box)
   }
 
@@ -119,7 +119,7 @@ export class Checkbox extends Container {
       Math.round((viewport.contentSize.height - naturalSize.height) / 2),
     )
 
-    const box = BOX[this.isChecked ? 'checked' : 'unchecked']
+    const box = BOX[this instanceof Radio ? 'radio' : 'checkbox'][this.isChecked ? 'checked' : 'unchecked']
     viewport.write(box, Point.zero, uiStyle)
     viewport.clipped(new Rect(offset, naturalSize), uiStyle, inside => {
       this.renderChildren(inside)
@@ -127,7 +127,15 @@ export class Checkbox extends Container {
   }
 }
 
-const BOX: Record<'unchecked' | 'checked', string> = {
-  unchecked: '☐ ',
-  checked: '☑ ',
+export class Radio extends Checkbox { }
+
+const BOX: Record<'checkbox' | 'radio', Record<'unchecked' | 'checked', string>> = {
+  checkbox: {
+    unchecked: '☐ ',
+    checked: '☑ ',
+  },
+  radio: {
+    unchecked: '◯ ',
+    checked: '⦿ ',
+  }
 }

@@ -30,7 +30,7 @@ interface BorderChars {
 }
 
 interface SharedProps<T> extends ViewProps {
-  choices: [string, T][]
+  choices: readonly [string, T][]
 }
 
 interface StyleProps {
@@ -42,13 +42,13 @@ type SelectOneFn<T> = (value: T) => void
 
 interface SelectMultiple<T> {
   multiple: true
-  selected: number[]
+  selected: readonly T[]
   onSelect: SelectMultipleFn<T>
 }
 
 interface SelectOne<T> {
   multiple?: false
-  selected?: number
+  selected?: T
   onSelect: SelectOneFn<T>
 }
 
@@ -71,14 +71,23 @@ export class Dropdown<T> extends View {
   }: Props<T>) {
     super(viewProps)
 
-    let selectedRows: number[]
+    let selectedItems: T[]
     if (multiple) {
-      selectedRows = selected as number[]
+      selectedItems = selected as T[]
     } else if (selected !== undefined) {
-      selectedRows = [selected as number]
+      selectedItems = [selected as T]
     } else {
-      selectedRows = []
+      selectedItems = []
     }
+
+    const selectedRows = selectedItems.flatMap(item => {
+      const index = choices.findIndex(([_, choice]) => choice === item)
+      if (index === -1) {
+        return []
+      }
+
+      return [index]
+    })
 
     this.#title = title ? title.split('\n') : undefined
     this.#dropdown = new DropdownSelector({
@@ -88,12 +97,12 @@ export class Dropdown<T> extends View {
       selected: selectedRows,
       onSelect: () => {
         if (multiple) {
-          ;(onSelect as SelectMultipleFn<T>)(this.#dropdown.selectedValues)
+          ; (onSelect as SelectMultipleFn<T>)(this.#dropdown.selectedValues)
         } else {
           this.#showModal = false
           const value = this.#dropdown.selectedValue
           if (value !== undefined) {
-            ;(onSelect as SelectOneFn<T>)(value)
+            ; (onSelect as SelectOneFn<T>)(value)
           }
         }
         this.invalidateSize()
@@ -253,6 +262,7 @@ class DropdownSelector<T> extends Container {
         } else {
           this.#selected = new Set()
         }
+        onSelect()
         this.#scrollView.invalidateAllRows('view')
       },
     })
@@ -326,7 +336,14 @@ class DropdownSelector<T> extends Container {
       content: new Text({
         width: 'fill',
         lines: lines.map((line, index) => {
-          const prefix = index === 0 ? (isSelected ? '⦿ ' : '◯ ') : '  '
+          let prefix: string
+          if (this.#multiple) {
+            prefix = index === 0 ? (isSelected ? BOX.multiple.checked : BOX.multiple.unchecked) : '  '
+          }
+          else {
+            prefix = index === 0 ? (isSelected ? BOX.single.checked : BOX.single.unchecked) : '  '
+          }
+
           return prefix + line
         }),
       }),
@@ -413,4 +430,16 @@ const BORDERS: BorderChars = {
   hover: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
   below: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
   above: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
+}
+
+
+const BOX: Record<'multiple' | 'single', Record<'unchecked' | 'checked', string>> = {
+  multiple: {
+    unchecked: '☐ ',
+    checked: '☑ ',
+  },
+  single: {
+    unchecked: '◯ ',
+    checked: '⦿ ',
+  }
 }
