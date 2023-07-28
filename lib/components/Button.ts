@@ -115,7 +115,7 @@ export class Button extends Container {
   }
 
   receiveKey(_: KeyEvent) {
-    this.onClick?.()
+    this.#onClick?.()
   }
 
   render(viewport: Viewport) {
