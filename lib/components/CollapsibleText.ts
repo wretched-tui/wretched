@@ -55,7 +55,6 @@ export class CollapsibleText extends View {
       lineWidth += 2
     }
     const lineHeight = Math.ceil(lineWidth / availableSize.width)
-    console.log({lineWidth, lineHeight, availableSize})
     size.width = availableSize.width
     size.height += lineHeight
     return size
