@@ -1,12 +1,10 @@
 import type {Viewport} from '../Viewport'
-import type {MouseEvent} from '../events'
-import type {Props as ViewProps} from '../View'
 
-import {View} from '../View'
-import {Style} from '../Style'
+import {type Props as ViewProps, View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {
+  type MouseEvent,
   isMousePressed,
   isMouseReleased,
   isMouseEnter,

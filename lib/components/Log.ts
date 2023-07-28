@@ -63,10 +63,12 @@ interface LogLineViewProps {
 class LogLineView extends Container {
   constructor({level, args}: LogLineViewProps) {
     super({})
-    const header =
-      styled(centerPad(level.toUpperCase(), 7), 'black fg;white bg')
-    const lines = args.flatMap((arg) => {
-      return `${arg}`.split('\n').map((line) => {
+    const header = styled(
+      centerPad(level.toUpperCase(), 7),
+      'black fg;white bg',
+    )
+    const lines = args.flatMap(arg => {
+      return `${arg}`.split('\n').map(line => {
         return line
       })
     })
@@ -100,17 +102,16 @@ class LogLineView extends Container {
             text: header,
             wrap: false,
           }),
-          logView
-        ]
-      })
+          logView,
+        ],
+      }),
     )
   }
-
 }
 
 export class ConsoleLog extends Log {
   render(viewport: Viewport) {
-    fetchLogs().forEach((log) => this.appendLog(log))
+    fetchLogs().forEach(log => this.appendLog(log))
     super.render(viewport)
   }
 }

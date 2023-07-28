@@ -1,13 +1,24 @@
-import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
-import type {MouseEvent} from '../events'
 import {unicode} from '../sys'
-import {View} from '../View'
+
+import type {Viewport} from '../Viewport'
+import {type Props as ViewProps, View} from '../View'
 import {Container} from '../Container'
 import {Point, Size, Rect} from '../geometry'
-import {isMouseEnter, isMouseExit, isMouseClicked} from '../events'
-import {Box, Button, Flex, ScrollableList, Separator, Text} from '../components'
-import type {BorderChars as BoxBorderChars} from '../components/Box'
+import {
+  type BorderChars as BoxBorderChars,
+  Box,
+  Button,
+  Flex,
+  ScrollableList,
+  Separator,
+  Text,
+} from '../components'
+import {
+  type MouseEvent,
+  isMouseEnter,
+  isMouseExit,
+  isMouseClicked,
+} from '../events'
 
 interface BorderChars {
   control: BoxBorderChars
@@ -92,15 +103,6 @@ export class Dropdown<T> extends View {
         textStyle,
       )
     } else {
-      // const [top, side, tl, tr, bl, br] =
-      //   this.#isHover || this.#showModal ? BORDERS.hover : BORDERS.control
-      const [top, side, br] = [' ', ' ', '▏  ']
-
-      // viewport.write(
-      //   top.repeat(viewport.contentSize.width - 3) + tr,
-      //   new Point(0, 0),
-      //   textStyle,
-      // )
       const pt = new Point(0, 0).mutableCopy()
       for (; pt.y < viewport.contentSize.height; pt.y++) {
         viewport.write(
@@ -112,16 +114,11 @@ export class Dropdown<T> extends View {
           viewport.write(lines[pt.y], pt.offset(1, 0), textStyle)
         }
         viewport.write(
-          `▏ ${side}`,
+          `▏  `,
           pt.offset(viewport.contentSize.width - 3, 0),
           textStyle,
         )
       }
-      // viewport.write(
-      //   top.repeat(viewport.contentSize.width - 3) + br,
-      //   new Point(0, viewport.contentSize.height - 1),
-      //   textStyle,
-      // )
 
       viewport.write(
         this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',

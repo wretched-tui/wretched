@@ -11,7 +11,6 @@ import {
   isMouseClicked,
 } from '../events'
 
-
 interface Props extends ViewProps {
   text: string
   style?: Style
@@ -86,7 +85,11 @@ export class CollapsibleText extends View {
       let offsetX = 0
       if (viewport.visibleRect.size.width < width) {
         viewport.registerMouse('mouse.button.left')
-        viewport.write(this.#isCollapsed ? '► ' : '▼ ', Point.zero, this.theme.text({isPressed: this.#isPressed}))
+        viewport.write(
+          this.#isCollapsed ? '► ' : '▼ ',
+          Point.zero,
+          this.theme.text({isPressed: this.#isPressed}),
+        )
         offsetX = 2
       }
       point.x = offsetX

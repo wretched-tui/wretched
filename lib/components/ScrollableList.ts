@@ -1,15 +1,17 @@
 import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
-import {View} from '../View'
+import {type Props as ViewProps, View} from '../View'
 import {Container} from '../Container'
 import {Style} from '../Style'
 import {Rect, Point, Size, interpolate} from '../geometry'
-import type {MouseEvent} from '../events'
-import {isMouseDragging} from '../events'
+import {type MouseEvent, isMouseDragging} from '../events'
 
 interface StyleProps extends ViewProps {
   cellAtIndex: (row: number) => View | undefined
   showScrollbars?: boolean
+  /**
+   * How many rows to scroll by when using the mouse wheel.
+   * @default 1
+   */
   scrollHeight?: number
 }
 

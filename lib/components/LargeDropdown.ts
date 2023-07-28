@@ -1,13 +1,24 @@
-import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
-import type {MouseEvent} from '../events'
 import {unicode} from '../sys'
-import {View} from '../View'
+
+import type {Viewport} from '../Viewport'
+import {type Props as ViewProps, View} from '../View'
 import {Container} from '../Container'
 import {Point, Size, Rect} from '../geometry'
-import {isMouseEnter, isMouseExit, isMouseClicked} from '../events'
-import {Box, Button, Flex, ScrollableList, Separator, Text} from '../components'
-import type {BorderChars as BoxBorderChars} from '../components/Box'
+import {
+  type BorderChars as BoxBorderChars,
+  Box,
+  Button,
+  Flex,
+  ScrollableList,
+  Separator,
+  Text,
+} from '../components'
+import {
+  type MouseEvent,
+  isMouseEnter,
+  isMouseExit,
+  isMouseClicked,
+} from '../events'
 
 type Placement = 'above' | 'below'
 
@@ -154,6 +165,7 @@ interface SelectorProps<T> extends Props<T> {
 }
 
 class DropdownSelector<T> extends Container {
+  // [lines, value][]
   #choices: [string[], T][]
   #selected: number
   #onSelect: () => void
@@ -213,7 +225,7 @@ class DropdownSelector<T> extends Container {
       direction: 'leftToRight',
       children: [
         ['flex1', button],
-        new Separator({direction: 'vertical', border: 'bold'}),
+        new Separator({direction: 'vertical', border: 'single'}),
       ],
     })
   }

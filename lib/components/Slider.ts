@@ -1,10 +1,12 @@
-import type {MouseEvent} from '../events'
-import type {Props as ViewProps} from '../View'
-
 import {Viewport} from '../Viewport'
-import {View} from '../View'
+import {type Props as ViewProps, View} from '../View'
 import {Point, Size, interpolate} from '../geometry'
-import {isMouseDragging, isMouseEnter, isMouseExit} from '../events'
+import {
+  type MouseEvent,
+  isMouseDragging,
+  isMouseEnter,
+  isMouseExit,
+} from '../events'
 
 type Direction = 'vertical' | 'horizontal'
 type Border = 'line' | 'fill'

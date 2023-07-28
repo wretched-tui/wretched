@@ -46,4 +46,3 @@ const OBJ = {
     long: 'finally, a long sentence, one that goes on a little too long, it could be argued.',
   },
 }
-

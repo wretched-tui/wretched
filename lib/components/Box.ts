@@ -1,12 +1,11 @@
 import {unicode} from '../sys'
+
 import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
-import type {MouseEvent} from '../events'
-import {View} from '../View'
+import {type Props as ViewProps, View} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {Style} from '../Style'
-import {isMouseEnter, isMouseExit} from '../events'
+import {type MouseEvent, isMouseEnter, isMouseExit} from '../events'
 
 export type Border = 'single' | 'bold' | 'double' | 'round'
 
