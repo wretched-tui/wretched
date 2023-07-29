@@ -116,8 +116,12 @@ export class Viewport {
       }
   }
 
-  registerTick(view: View) {
-    return this.#screen.registerTick(view)
+  registerTick() {
+    if (!this.#currentRender) {
+      return
+    }
+
+    return this.#screen.registerTick(this.#currentRender)
   }
 
   /**

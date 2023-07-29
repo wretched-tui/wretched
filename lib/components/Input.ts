@@ -149,7 +149,7 @@ export class Input extends View {
   render(viewport: Viewport) {
     const hasFocus = viewport.registerFocus()
     if (hasFocus) {
-      viewport.registerTick(this)
+      viewport.registerTick()
     }
 
     const visibleWidth = viewport.contentSize.width

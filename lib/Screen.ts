@@ -184,7 +184,7 @@ export class Screen {
     this.#tickManager.registerTick(view)
   }
 
-  triggerTick(dt: number) { }
+  triggerTick(dt: number) {}
 
   preRender(rootView: View) {
     this.#modalManager.reset()

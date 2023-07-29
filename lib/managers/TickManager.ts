@@ -1,5 +1,4 @@
 import {View} from '../View'
-import type {KeyEvent} from '../events'
 
 export class TickManager {
   #render: () => void
@@ -55,7 +54,7 @@ export class TickManager {
   triggerTick(dt: number) {
     let needsRender = false
     for (const view of this.#tickViews) {
-      needsRender = Boolean(view.receiveTick(dt)) || needsRender
+      needsRender = view.receiveTick(dt) || needsRender
     }
 
     if (needsRender) {

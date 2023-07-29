@@ -109,7 +109,7 @@ export class Drawer extends Container {
 
   render(viewport: Viewport) {
     if (this.#currentDx !== this.#targetDx) {
-      viewport.registerTick(this)
+      viewport.registerTick()
     }
 
     const drawerButtonRect = new Rect(
