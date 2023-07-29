@@ -6,14 +6,7 @@ import {interceptConsoleLog} from '../log'
 import {Screen} from '../Screen'
 
 import {TrackMouse} from '../components/utility'
-import {
-  Button,
-  LargeButton,
-  ConsoleLog,
-  Flex,
-  Separator,
-  Space,
-} from '../components'
+import {Button, ConsoleLog, Flex, Separator, Space} from '../components'
 
 async function run() {
   process.title = 'Wretched'
@@ -36,29 +29,33 @@ async function run() {
             }),
 
             ['flex1', new Space()],
-            new LargeButton({
+            new Button({
               height: 3,
+              border: 'large',
               theme: 'primary',
               text: 'Launch',
             }),
 
             ['flex1', new Space()],
-            new LargeButton({
+            new Button({
               height: 3,
+              border: 'large',
               theme: 'proceed',
               text: 'Proceed',
             }),
 
             ['flex1', new Space()],
-            new LargeButton({
+            new Button({
               height: 3,
+              border: 'large',
               theme: 'cancel',
               text: 'Cancel',
             }),
 
             ['flex1', new Space()],
-            new LargeButton({
+            new Button({
               height: 3,
+              border: 'large',
               theme: 'secondary',
               text: 'Do it!',
             }),

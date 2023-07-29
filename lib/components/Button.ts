@@ -17,8 +17,9 @@ import {
   styleTextForHotKey,
 } from '../events'
 
-type Border = 'default' | 'arrows' | 'none'
-type BorderChars = [string, string]
+type Border = 'default' | 'arrows' | 'large' | 'none'
+type ButtonSize = 'compact' | 'large'
+type BorderChars = [string, string, ButtonSize]
 
 interface TextProps {
   text: string
@@ -86,14 +87,18 @@ export class Button extends Container {
     }
   }
 
-  #borderSize(): [number, number] {
-    const [left, right] = BORDERS[this.#border]
-    return [unicode.lineWidth(left), unicode.lineWidth(right)]
+  #borderSize(): [number, number, number] {
+    const [left, right, size] = BORDERS[this.#border]
+    return [
+      unicode.lineWidth(left),
+      unicode.lineWidth(right),
+      size === 'compact' ? 0 : 2,
+    ]
   }
 
   naturalSize(availableSize: Size): Size {
-    const [left, right] = this.#borderSize()
-    return super.naturalSize(availableSize).grow(left + right, 0)
+    const [left, right, height] = this.#borderSize()
+    return super.naturalSize(availableSize).grow(left + right, height)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -138,25 +143,22 @@ export class Button extends Container {
       viewport.contentSize.shrink(leftWidth + rightWidth, 0),
     )
     const offsetLeft = Math.round(
-      (viewport.contentSize.width - naturalSize.width) / 2,
-    )
-    const offset = new Point(
-      offsetLeft,
-      Math.round((viewport.contentSize.height - naturalSize.height) / 2),
-    )
+        (viewport.contentSize.width - naturalSize.width) / 2,
+      ),
+      offset = new Point(
+        offsetLeft,
+        Math.round((viewport.contentSize.height - naturalSize.height) / 2),
+      )
 
-    const [left, right] = BORDERS[this.#border]
+    const [left, right, size] = BORDERS[this.#border],
+      leftX = size === 'compact' ? offset.x - leftWidth : 0,
+      rightX =
+        size === 'compact'
+          ? offset.x + naturalSize.width
+          : viewport.contentSize.width - rightWidth
     for (let y = 0; y < naturalSize.height; y++) {
-      viewport.write(
-        left,
-        new Point(offset.x - leftWidth, offset.y + y),
-        textStyle,
-      )
-      viewport.write(
-        right,
-        new Point(offset.x + naturalSize.width, offset.y + y),
-        textStyle,
-      )
+      viewport.write(left, new Point(leftX, offset.y + y), textStyle)
+      viewport.write(right, new Point(rightX, offset.y + y), textStyle)
     }
     viewport.clipped(new Rect(offset, naturalSize), textStyle, inside => {
       this.renderChildren(inside)
@@ -165,9 +167,10 @@ export class Button extends Container {
 }
 
 const BORDERS: Record<Border, BorderChars> = {
-  default: ['[ ', ' ]'],
-  arrows: [' ', ' '],
-  none: [' ', ' '],
+  default: ['[ ', ' ]', 'compact'],
+  large: ['▌', '▐', 'large'],
+  arrows: [' ', ' ', 'compact'],
+  none: [' ', ' ', 'compact'],
 }
 
 // E0A0 
