@@ -9,11 +9,11 @@ import {
   Box,
   Button,
   Flex,
+  Flow,
   ScrollableList,
   Separator,
   Text,
   Checkbox,
-  Space,
 } from '../components'
 import {
   type MouseEvent,
@@ -270,12 +270,12 @@ class DropdownSelector<T> extends Container {
       items: this.#choices.map(([, choice]) => choice),
       cellForItem: (choice, row) => this.cellForItem(choice, row),
     })
-    const content = new Flex({direction: 'topToBottom', children: []})
+    const content = new Flow({direction: 'topToBottom', children: []})
 
     if (multiple) {
       content.add(this.#checkbox)
     }
-    content.addFlex('flex1', this.#scrollView)
+    content.add(this.#scrollView)
     this.#box.add(content)
     this.add(this.#box)
 

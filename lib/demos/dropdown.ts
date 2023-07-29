@@ -9,7 +9,6 @@ import {
   Button,
   ConsoleLog,
   Dropdown,
-  LargeDropdown,
   Flex,
   Separator,
   Space,
@@ -55,8 +54,11 @@ async function run() {
         content: new Flex({
           direction: 'topToBottom',
           children: [
-            new LargeDropdown({
+            new Dropdown({
               theme: 'primary',
+              onSelect(value: any) {
+                console.log(value)
+              },
               padding: {left: 2, right: 2},
               choices,
               selected: 1,
@@ -105,8 +107,11 @@ async function run() {
               selected: [],
             }),
             new Space({height: 1}),
-            new LargeDropdown({
+            new Dropdown({
               theme: 'cancel',
+              onSelect(value: any) {
+                console.log(value)
+              },
               padding: {left: 2, right: 2},
               choices,
               selected: 1,
