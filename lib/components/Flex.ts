@@ -42,19 +42,38 @@ export class Flex extends Container {
     const size = Size.zero.mutableCopy()
     let remainingSize =
       availableSize[isVertical(this.direction) ? 'height' : 'width']
+    let hasFlex = false
     for (const child of this.children) {
+      const flexSize = this.sizes.get(child) ?? 'natural'
       const availableChildSize = isVertical(this.direction)
         ? new Size(availableSize.width, remainingSize)
         : new Size(remainingSize, availableSize.height)
       const childSize = child.naturalSize(availableChildSize)
-      if (isVertical(this.direction)) {
-        remainingSize = Math.max(0, remainingSize - childSize.height)
-        size.width = Math.max(size.width, childSize.width)
-        size.height += childSize.height
+      if (flexSize === 'natural') {
+        if (isVertical(this.direction)) {
+          remainingSize = Math.max(0, remainingSize - childSize.height)
+          size.width = Math.max(size.width, childSize.width)
+          size.height += childSize.height
+        } else {
+          remainingSize = Math.max(0, remainingSize - childSize.width)
+          size.width += childSize.width
+          size.height = Math.max(size.height, childSize.height)
+        }
       } else {
-        remainingSize = Math.max(0, remainingSize - childSize.width)
-        size.width += childSize.width
-        size.height = Math.max(size.height, childSize.height)
+        hasFlex = true
+        if (isVertical(this.direction)) {
+          size.width = Math.max(size.width, childSize.width)
+        } else {
+          size.height = Math.max(size.height, childSize.height)
+        }
+      }
+    }
+
+    if (hasFlex) {
+      if (isVertical(this.direction)) {
+        return new Size(size.width, Math.max(size.height, availableSize.height))
+      } else {
+        return new Size(Math.max(size.width, availableSize.width), size.height)
       }
     }
 
