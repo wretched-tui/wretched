@@ -1,7 +1,7 @@
 import {unicode} from './sys'
 
 import type {Terminal} from './terminal'
-import {RESET} from './ansi'
+import {RESET, BG_DRAW} from './ansi'
 import {Style} from './Style'
 import {Rect, Point, Size} from './geometry'
 import {Screen} from './Screen'
@@ -128,6 +128,19 @@ export class Viewport {
   }
 
   /**
+   * Clears out, and optionally "paints" default foreground/background colors. If no
+   * region is provided, the entire visibleRect is painted.
+   */
+  paint(defaultStyle: Style, region?: Point | Rect) {
+    if (region instanceof Point) {
+      this.write(BG_DRAW, region, defaultStyle)
+    } else {
+      region ??= this.visibleRect
+      region.forEachPoint(pt => this.paint(defaultStyle, pt))
+    }
+  }
+
+  /**
    * Does not support newlines (no default wrapping behavior),
    * always prints left-to-right.
    */
@@ -245,8 +258,8 @@ export class Viewport {
     const visibleMaxY = Math.min(
       clip.size.height,
       this.#visibleRect.origin.y +
-      this.#visibleRect.size.height -
-      clip.origin.y,
+        this.#visibleRect.size.height -
+        clip.origin.y,
     )
 
     const contentSize = new Size(contentWidth, contentHeight)

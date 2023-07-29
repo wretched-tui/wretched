@@ -2,6 +2,7 @@ import {unicode} from './sys'
 
 import type {Terminal, SGRTerminal} from './terminal'
 import type {Color} from './Color'
+import {BG_DRAW} from './ansi'
 import {Style} from './Style'
 import {Size} from './geometry'
 
@@ -35,45 +36,50 @@ export class Buffer implements Terminal {
     if (char === '\n') {
       return
     }
+
     const width = unicode.charWidth(char)
     if (width === 0) {
       return
     }
 
-    if (x >= this.size.width || y < 0 || y >= this.size.height) {
+    if (x < 0 || x >= this.size.width || y < 0 || y >= this.size.height) {
       return
     }
 
     let line = this.#canvas.get(y)
-    if (x >= 0) {
-      if (line) {
-        const prev = line.get(x - 1)
-        if (prev && prev.width === 2) {
-          // hides a 2-width character that this character is overlapping
-          line.set(x - 1, {char: ' ', width: 1, style: prev.style})
+    if (line) {
+      const prev = line.get(x)
+      if (prev?.char === BG_DRAW) {
+        const {foreground, background} = prev.style
+        style = style.merge({foreground, background})
+      }
 
-          // actually writes the character, and records the hidden character
-          line.set(x, {char, width, style, hiding: prev})
+      const leftChar = line.get(x - 1)
+      if (leftChar && leftChar.width === 2) {
+        // hides a 2-width character that this character is overlapping
+        line.set(x - 1, {char: ' ', width: 1, style: leftChar.style})
 
-          const hiding = prev.hiding
-          if (hiding) {
-            line.set(x - 2, hiding)
-          }
-        } else {
-          // actually writes the character
-          line.set(x, {char, width, style})
+        // actually writes the character, and records the hidden character
+        line.set(x, {char, width, style, hiding: leftChar})
 
-          const next = line.get(x + 1)
-          if (next && next.hiding) {
-            // the next character can no longer be "hiding" the previous character (this
-            // character)
-            line.set(x + 1, {...next, hiding: undefined})
-          }
+        const hiding = leftChar.hiding
+        if (hiding) {
+          line.set(x - 2, hiding)
         }
       } else {
-        line = new Map([[x, {char, width, style}]])
-        this.#canvas.set(y, line)
+        // actually writes the character
+        line.set(x, {char, width, style})
+
+        const next = line.get(x + 1)
+        if (next && next.hiding) {
+          // the next character can no longer be "hiding" the previous character (this
+          // character)
+          line.set(x + 1, {...next, hiding: undefined})
+        }
       }
+    } else {
+      line = new Map([[x, {char, width, style}]])
+      this.#canvas.set(y, line)
     }
   }
 
@@ -112,7 +118,10 @@ export class Buffer implements Terminal {
           terminal.move(x, y)
         }
 
-        const {char, style} = chrInfo
+        let {char, style} = chrInfo
+        if (char === BG_DRAW) {
+          char = ' '
+        }
 
         if (prevStyle !== style) {
           terminal.write(style.toSGR(prevStyle) + char)

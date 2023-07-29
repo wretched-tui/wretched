@@ -106,9 +106,7 @@ export class Checkbox extends Container {
       isHover: this.#isHover,
     })
 
-    viewport.visibleRect.forEachPoint(pt => {
-      viewport.write(' ', pt, uiStyle)
-    })
+    viewport.paint(uiStyle)
 
     const boxWidth = this.#boxWidth()
     const naturalSize = super.naturalSize(

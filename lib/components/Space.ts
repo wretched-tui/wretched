@@ -31,8 +31,6 @@ export class Space extends View {
       this.#prev = this.background
     }
     const style = new Style({background: this.background})
-    viewport.visibleRect.forEachPoint(pt => {
-      viewport.write(' ', pt, style)
-    })
+    viewport.paint(style)
   }
 }

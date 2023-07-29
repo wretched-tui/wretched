@@ -2,6 +2,13 @@ import {program} from './sys'
 
 export const RESET = '\x1b[0m'
 
+// unicode.charWidth considers this "drawable" (width: 1). Buffer translates it
+// to a space when it flushes to a terminal. It's used by Viewport.paint to
+// put foreground/background colors into a region – subsequent draws that do
+// _not_ specify foreground/background (value: undefined) will "inherit" this
+// "paint" color.
+export const BG_DRAW = '\x14'
+
 export function styled(input: string, attr: string) {
   return program.global?.text(input, attr) ?? input
 }

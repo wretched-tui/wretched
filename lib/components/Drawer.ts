@@ -131,10 +131,7 @@ export class Drawer extends Container {
         new Point(this.#currentDx - this.#drawerWidth, 1),
         new Size(this.#drawerWidth, drawerButtonRect.size.height - 2),
       )
-      for (let y = drawerRect.minY(); y < drawerRect.maxY(); y++)
-        for (let x = drawerRect.minX(); x < drawerRect.maxX(); x++) {
-          viewport.write(' ', new Point(x, y))
-        }
+      viewport.paint(this.theme.text(), drawerRect)
       viewport.clipped(drawerRect, inside => {
         this.drawer.render(inside)
       })

@@ -72,9 +72,7 @@ export class Collapsible extends Container {
       isHover: this.#isHover,
     })
 
-    viewport.visibleRect.forEachPoint(pt => {
-      viewport.write(' ', pt, textStyle)
-    })
+    viewport.paint(textStyle)
 
     const contentSize = viewport.contentSize.shrink(2, 0)
     const naturalSize = this.#isCollapsed
