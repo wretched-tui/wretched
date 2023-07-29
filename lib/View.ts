@@ -3,6 +3,7 @@ import type {Viewport} from './Viewport'
 import type {Screen} from './Screen'
 import type {Purpose} from './Theme'
 import {Theme} from './Theme'
+import {Container} from './Container'
 import type {KeyEvent, MouseEvent} from './events'
 import {Point, Size, Rect} from './geometry'
 
@@ -30,7 +31,7 @@ interface Edges {
 }
 
 export abstract class View {
-  parent: View | null = null
+  parent: Container | null = null
   debug: boolean
 
   #screen: Screen | null = null
@@ -100,6 +101,10 @@ export abstract class View {
 
   get screen(): Screen | null {
     return this.#screen
+  }
+
+  get children(): View[] {
+    return []
   }
 
   #toDimension(
@@ -285,6 +290,14 @@ export abstract class View {
   didMoveFrom(parent: View) {}
   didMount(screen: Screen) {}
   didUnmount(screen: Screen) {}
+
+  removeFromParent() {
+    if (!this.parent) {
+      return
+    }
+
+    this.parent.removeChild(this)
+  }
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {

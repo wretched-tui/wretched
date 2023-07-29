@@ -4,12 +4,16 @@ import {View} from './View'
 import {Screen} from './Screen'
 
 export abstract class Container extends View {
-  children: View[] = []
+  #children: View[] = []
+
+  get children() {
+    return this.#children
+  }
 
   naturalSize(availableSize: Size): Size {
     let width = 0
     let height = 0
-    for (const child of this.children) {
+    for (const child of this.#children) {
       const naturalSize = child.naturalSize(availableSize)
       width = Math.max(width, naturalSize.width)
       height = Math.max(height, naturalSize.height)
@@ -22,7 +26,7 @@ export abstract class Container extends View {
   }
 
   renderChildren(viewport: Viewport) {
-    for (const child of this.children) {
+    for (const child of this.#children) {
       child.render(viewport)
     }
   }
@@ -38,18 +42,18 @@ export abstract class Container extends View {
     // don't call 'remove' - we don't want to call didUnmount, and only call
     // didMoveFrom if we changed from one parent view to another
     if (child.parent === this) {
-      this.children = this.children.filter(view => view !== child)
+      this.#children = this.#children.filter(view => view !== child)
     } else {
       child.willMoveTo(this)
       if (child.parent && child.parent instanceof Container) {
-        const index = child.parent.children.indexOf(child)
+        const index = child.parent.#children.indexOf(child)
         if (~index) {
-          child.parent.children.splice(index, 1)
+          child.parent.#children.splice(index, 1)
         }
       }
     }
 
-    this.children.splice(at ?? this.children.length, 0, child)
+    this.#children.splice(at ?? this.#children.length, 0, child)
 
     if (child.parent !== this) {
       const parent = child.parent
@@ -64,11 +68,11 @@ export abstract class Container extends View {
     child.moveToScreen(this.screen)
   }
 
-  remove(remove: View | number) {
+  removeChild(remove: View | number) {
     if (typeof remove === 'number') {
-      if (remove >= 0 && remove < this.children.length) {
-        const child = this.children[remove]
-        this.children.splice(remove, 1)
+      if (remove >= 0 && remove < this.#children.length) {
+        const child = this.#children[remove]
+        this.#children.splice(remove, 1)
         child.parent = null
         child.didMoveFrom(this)
 
@@ -80,9 +84,9 @@ export abstract class Container extends View {
         return
       }
 
-      const index = this.children.indexOf(remove)
+      const index = this.#children.indexOf(remove)
       if (~index) {
-        this.remove(index)
+        this.removeChild(index)
       }
     }
   }
@@ -90,7 +94,7 @@ export abstract class Container extends View {
   moveToScreen(screen: Screen | null) {
     super.moveToScreen(screen)
 
-    for (const child of this.children) {
+    for (const child of this.#children) {
       child.moveToScreen(this.screen)
     }
   }

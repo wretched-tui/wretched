@@ -72,7 +72,7 @@ class Modal extends Container {
     }
 
     if (this.#view) {
-      this.remove(this.#view)
+      this.removeChild(this.#view)
     }
     this.add(view)
     this.#view = view

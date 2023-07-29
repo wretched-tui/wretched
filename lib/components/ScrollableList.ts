@@ -336,7 +336,7 @@ export class ScrollableList<T> extends Container {
 
     for (const prevRow of prevRows) {
       if (!visibleRows.has(prevRow)) {
-        this.remove(prevRow)
+        this.removeChild(prevRow)
       }
     }
 
