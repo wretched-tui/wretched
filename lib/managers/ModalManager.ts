@@ -47,7 +47,7 @@ export class ModalManager {
       this.#modalView.updateView(view, onClose)
       this.#modalView.naturalSize(viewport.contentSize)
 
-      screen.preRender()
+      screen.preRender(view)
       viewport.parentRect = rect
       this.#modalView.render(viewport)
     }

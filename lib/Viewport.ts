@@ -87,13 +87,6 @@ export class Viewport {
     return this.#screen.registerFocus(this.#currentRender)
   }
 
-  hasFocus() {
-    if (!this.#currentRender) {
-      return false
-    }
-    return this.#screen.hasFocus(this.#currentRender)
-  }
-
   /**
    * @see MouseManager.registerMouse
    */

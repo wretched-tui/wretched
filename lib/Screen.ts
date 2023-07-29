@@ -160,10 +160,6 @@ export class Screen {
     this.#focusManager.trigger(event)
   }
 
-  hasFocus(view: View) {
-    return this.#focusManager.hasFocus(view)
-  }
-
   /**
    * @see MouseManager.registerMouse
    */
@@ -190,11 +186,11 @@ export class Screen {
 
   triggerTick(dt: number) { }
 
-  preRender() {
+  preRender(rootView: View) {
     this.#modalManager.reset()
     this.#tickManager.reset()
     this.#mouseManager.reset()
-    this.#focusManager.reset()
+    this.#focusManager.reset(rootView)
   }
 
   render() {
@@ -202,7 +198,7 @@ export class Screen {
     this.#buffer.resize(screenSize)
 
     // this may be called again by renderModals, before the last modal renders
-    this.preRender()
+    this.preRender(this.rootView)
 
     const size = this.rootView.naturalSize(screenSize).max(screenSize)
     const viewport = new Viewport(this, this.#buffer, size)
