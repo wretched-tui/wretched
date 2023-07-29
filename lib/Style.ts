@@ -3,6 +3,8 @@ import {program} from './sys'
 import type {Color} from './Color'
 import {colorToSGR} from './Color'
 
+type Nullable<T> = {[K in keyof T]?: null | undefined | T[K]}
+
 export class Style {
   underline?: boolean
   inverse?: boolean
@@ -210,7 +212,7 @@ export class Style {
     })
   }
 
-  merge(style?: Partial<Style>): Style {
+  merge(style?: Nullable<Style>): Style {
     if (style === undefined) {
       return this
     }
@@ -222,9 +224,17 @@ export class Style {
       blink: style.blink ?? this.blink,
       invisible: style.invisible ?? this.invisible,
       foreground:
-        style.foreground === undefined ? this.foreground : style.foreground,
+        style.foreground === null
+          ? undefined
+          : style.foreground === undefined
+          ? this.foreground
+          : style.foreground,
       background:
-        style.background === undefined ? this.background : style.background,
+        style.background === null
+          ? undefined
+          : style.background === undefined
+          ? this.background
+          : style.background,
     })
   }
 
