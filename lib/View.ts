@@ -7,13 +7,15 @@ import {Container} from './Container'
 import type {KeyEvent, MouseEvent} from './events'
 import {Point, Size, Rect} from './geometry'
 
+type Dimension = number | 'fill' | 'natural'
+
 export interface Props {
   theme?: Theme | Purpose
   x?: number
   y?: number
   //
-  width?: number | 'fill' | 'natural'
-  height?: number | 'fill' | 'natural'
+  width?: Dimension
+  height?: Dimension
   minWidth?: number
   minHeight?: number
   maxWidth?: number
@@ -78,19 +80,22 @@ export abstract class View {
     this.debug = debug ?? false
 
     const render = this.render.bind(this)
-    this.render = this.#renderWrap(render).bind(this)
     const naturalSize = this.naturalSize.bind(this)
-    this.naturalSize = this.#naturalSizeWrap(naturalSize).bind(this)
 
     Object.defineProperties(this, {
       render: {
         enumerable: false,
+        configurable: true,
+        value: this.#renderWrap(render).bind(this),
       },
       naturalSize: {
         enumerable: false,
+        configurable: true,
+        value: this.#naturalSizeWrap(naturalSize).bind(this),
       },
       parent: {
         enumerable: false,
+        configurable: true,
       },
     })
   }
@@ -108,7 +113,7 @@ export abstract class View {
   }
 
   #toDimension(
-    dim: number | 'fill' | 'natural',
+    dim: Dimension,
     available: number,
     natural: () => number,
   ): number {
