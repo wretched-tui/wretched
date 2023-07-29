@@ -4,18 +4,7 @@ import {iTerm2} from '../iTerm2'
 import {interceptConsoleLog} from '../log'
 
 import {Screen} from '../Screen'
-import {TrackMouse} from '../components/utility'
-import {
-  Button,
-  ConsoleLog,
-  Dropdown,
-  LargeDropdown,
-  Flex,
-  Separator,
-  Space,
-  Box,
-  Text,
-} from '../components'
+import {ConsoleLog, Box, Text} from '../components'
 
 async function run() {
   interceptConsoleLog()

@@ -31,6 +31,7 @@ interface Edges {
 
 export abstract class View {
   parent: View | null = null
+  debug: boolean
 
   #screen: Screen | null = null
   #theme: Theme | undefined
@@ -48,7 +49,6 @@ export abstract class View {
   #maxWidth: Props['maxWidth']
   #maxHeight: Props['maxHeight']
   #padding: Edges | undefined
-  #debug: boolean
 
   constructor({
     theme,
@@ -74,7 +74,7 @@ export abstract class View {
     this.#maxHeight = maxHeight
 
     this.#padding = toEdges(padding)
-    this.#debug = debug ?? false
+    this.debug = debug ?? false
 
     const render = this.render.bind(this)
     this.render = this.#renderWrap(render).bind(this)
@@ -100,10 +100,6 @@ export abstract class View {
 
   get screen(): Screen | null {
     return this.#screen
-  }
-
-  get debug() {
-    return this.#debug
   }
 
   #toDimension(
@@ -132,10 +128,10 @@ export abstract class View {
     if (this.#width !== undefined && this.#height !== undefined) {
       // shortcut for explicit or 'fill' on both width & height, skip all the rest
       const width = this.#toDimension(
-        this.#width,
-        availableSize.width,
-        () => calcSize().width,
-      ),
+          this.#width,
+          availableSize.width,
+          () => calcSize().width,
+        ),
         height = this.#toDimension(
           this.#height,
           availableSize.height,
@@ -279,16 +275,16 @@ export abstract class View {
     }
   }
 
-  receiveKey(event: KeyEvent) { }
-  receiveMouse(event: MouseEvent) { }
+  receiveKey(event: KeyEvent) {}
+  receiveMouse(event: MouseEvent) {}
   receiveTick(dt: number): boolean | undefined {
     return
   }
 
-  willMoveTo(parent: View) { }
-  didMoveFrom(parent: View) { }
-  didMount(screen: Screen) { }
-  didUnmount(screen: Screen) { }
+  willMoveTo(parent: View) {}
+  didMoveFrom(parent: View) {}
+  didMount(screen: Screen) {}
+  didUnmount(screen: Screen) {}
 
   moveToScreen(screen: Screen | null) {
     if (this.#screen !== screen) {

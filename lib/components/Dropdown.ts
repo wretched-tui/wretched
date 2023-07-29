@@ -97,12 +97,12 @@ export class Dropdown<T> extends View {
       selected: selectedRows,
       onSelect: () => {
         if (multiple) {
-          ; (onSelect as SelectMultipleFn<T>)(this.#dropdown.selectedValues)
+          ;(onSelect as SelectMultipleFn<T>)(this.#dropdown.selectedValues)
         } else {
           this.#showModal = false
           const value = this.#dropdown.selectedValue
           if (value !== undefined) {
-            ; (onSelect as SelectOneFn<T>)(value)
+            ;(onSelect as SelectOneFn<T>)(value)
           }
         }
         this.invalidateSize()
@@ -338,10 +338,19 @@ class DropdownSelector<T> extends Container {
         lines: lines.map((line, index) => {
           let prefix: string
           if (this.#multiple) {
-            prefix = index === 0 ? (isSelected ? BOX.multiple.checked : BOX.multiple.unchecked) : '  '
-          }
-          else {
-            prefix = index === 0 ? (isSelected ? BOX.single.checked : BOX.single.unchecked) : '  '
+            prefix =
+              index === 0
+                ? isSelected
+                  ? BOX.multiple.checked
+                  : BOX.multiple.unchecked
+                : '  '
+          } else {
+            prefix =
+              index === 0
+                ? isSelected
+                  ? BOX.single.checked
+                  : BOX.single.unchecked
+                : '  '
           }
 
           return prefix + line
@@ -417,8 +426,7 @@ class DropdownSelector<T> extends Container {
       y = viewport.parentRect.minY() - height
     }
 
-    const border: BoxBorderChars = [...BORDERS[placement]]
-    this.#box.border = border
+    this.#box.border = BORDERS[placement]
 
     const rect = new Rect(new Point(x, y), new Size(width, height))
     viewport.clipped(rect, inside => this.renderChildren(inside))
@@ -432,8 +440,10 @@ const BORDERS: BorderChars = {
   above: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
 }
 
-
-const BOX: Record<'multiple' | 'single', Record<'unchecked' | 'checked', string>> = {
+const BOX: Record<
+  'multiple' | 'single',
+  Record<'unchecked' | 'checked', string>
+> = {
   multiple: {
     unchecked: '☐ ',
     checked: '☑ ',
@@ -441,5 +451,5 @@ const BOX: Record<'multiple' | 'single', Record<'unchecked' | 'checked', string>
   single: {
     unchecked: '◯ ',
     checked: '⦿ ',
-  }
+  },
 }
