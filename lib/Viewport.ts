@@ -37,6 +37,7 @@ export class Viewport {
     this.#offset = Point.zero
     this.#style = Style.NONE
 
+    // so that these get included in inspect(viewport)
     Object.defineProperty(this, 'contentSize', {
       enumerable: true,
       get: () => {

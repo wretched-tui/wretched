@@ -4,10 +4,10 @@
   "author": "Blessed by Christopher Jeffrey, Wretched by Colin T.A. Gray",
   "version": "0.1.0",
   "license": "MIT",
-  "main": "dist/index.js",
   "preferGlobal": false,
   "repository": "git://github.com/colinta/wretched.git",
   "homepage": "https://github.com/colinta/wretched",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bugs": {
     "url": "http://github.com/colinta/wretched/issues"

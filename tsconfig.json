@@ -1,21 +1,19 @@
 {
+  "include": ["lib"],
   "exclude": ["bin/", "dist/", "test/"],
   "compilerOptions": {
-    "declaration": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "rootDir": "lib/",
     "outDir": "dist",
     "target": "esnext",
     "module": "commonjs",
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true,
     "jsx": "preserve",
     "moduleResolution": "node",
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
     "allowJs": true
   }
 }

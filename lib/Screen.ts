@@ -44,7 +44,7 @@ export class Screen {
     program.clear()
     program.setMouse({sendFocus: true}, true)
 
-    const fn = function () { }
+    const fn = function () {}
     program.on('keypress', fn)
 
     const rootView =
