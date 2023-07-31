@@ -3,9 +3,12 @@ import {Style} from './Style'
 
 export type Purpose =
   | 'primary'
+  | 'blue'
   | 'secondary'
   | 'proceed'
+  | 'green'
   | 'cancel'
+  | 'red'
   | 'selected'
   | 'plain'
 
@@ -61,6 +64,9 @@ export class Theme {
     highlight: '#616161(241)',
     darken: '#3F3F3F(237)',
   })
+  static red = Theme.cancel
+  static green = Theme.proceed
+  static blue = Theme.primary
 
   constructor({
     text,
