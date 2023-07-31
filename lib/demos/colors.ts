@@ -6,7 +6,15 @@ import {interceptConsoleLog} from '../log'
 
 import {Screen} from '../Screen'
 
-import {ConsoleLog, Flex, Input, Slider, Space} from '../components'
+import {Text, ConsoleLog, Flex, Input, Slider, Space} from '../components'
+
+function pad(num: number) {
+  if (num < 10) {
+    return `0${num}`
+  } else {
+    return `${num}`
+  }
+}
 
 async function run() {
   process.title = 'Wretched'
@@ -19,177 +27,116 @@ async function run() {
       await iTerm2.setBackground(program, [23, 23, 23])
 
       const space = new Space({background: '#000', height: 'fill'})
-      const hsb = [
-        Math.floor(Math.random() * 360),
-        Math.floor(Math.random() * 100),
-        Math.floor(Math.random() * 100),
-      ]
-      const hueInput = new Input({
-          text: `${hsb[0]}`,
+      const rgb = [
+        Math.floor(Math.random() * 255),
+        Math.floor(Math.random() * 255),
+        Math.floor(Math.random() * 255),
+      ] as [number, number, number]
+
+      const redInput = new Input({
+          text: `${pad(rgb[0])}`,
           padding: {top: 1},
           onChange: text => {
             const value = Number.parseFloat(text)
             if (!Number.isNaN(value)) {
-              hsb[0] = value
+              rgb[0] = Math.round(value)
               update()
             }
           },
         }),
-        saturationInput = new Input({
-          text: `${hsb[1]}`,
+        greenInput = new Input({
+          text: `${pad(rgb[1])}`,
           padding: {top: 1},
           onChange: text => {
             const value = Number.parseFloat(text)
             if (!Number.isNaN(value)) {
-              hsb[1] = value
+              rgb[1] = Math.round(value)
               update()
             }
           },
         }),
-        brightnessInput = new Input({
-          text: `${hsb[2]}`,
+        blueInput = new Input({
+          text: `${pad(rgb[2])}`,
           padding: {top: 1},
           onChange: text => {
             const value = Number.parseFloat(text)
             if (!Number.isNaN(value)) {
-              hsb[2] = value
+              rgb[2] = Math.round(value)
               update()
             }
           },
         })
+      const rgbText = new Text()
 
       const update = () => {
-        hsb[0] = Math.max(0, Math.min(360, hsb[0]))
-        hsb[1] = Math.max(0, Math.min(100, hsb[1]))
-        hsb[2] = Math.max(0, Math.min(100, hsb[2]))
-        const rgb = colors.HSBtoRGB(hsb[0] / 360, hsb[1] / 100, hsb[2] / 100)
-        space.background = rgb
+        rgb[0] = Math.max(0, Math.min(255, rgb[0]))
+        rgb[1] = Math.max(0, Math.min(255, rgb[1]))
+        rgb[2] = Math.max(0, Math.min(255, rgb[2]))
+        // const rgb = colors.HSBtoRGB(rgb[0] / 360, rgb[1] / 100, rgb[2] / 100)
+        const sgr = colors.match(rgb)
+        const ansi = `\x1b[38;5;${sgr};48;5;${sgr}m      \x1b[39;49m (${sgr})`
+        rgbText.text = colors.RGBtoHex(rgb) + ' – ' + ansi
+        space.background = colors.RGBtoHex(rgb)
 
-        hueInput.text = `${hsb[0]}`
-        saturationInput.text = `${hsb[1]}`
-        brightnessInput.text = `${hsb[2]}`
+        redInput.text = `${rgb[0]}`
+        greenInput.text = `${rgb[1]}`
+        blueInput.text = `${rgb[2]}`
       }
       update()
 
       return new Flex({
         direction: 'leftToRight',
         children: [
-          ['flex1', space],
-          new Slider({
-            theme: 'primary',
-            direction: 'vertical',
-            border: 'line',
-            range: [0, 360],
-            position: hsb[0],
-            width: 1,
-            onChange(value) {
-              hsb[0] = value
-              update()
-            },
-          }),
-          new Slider({
-            theme: 'secondary',
-            direction: 'vertical',
-            border: 'line',
-            range: [0, 360],
-            position: hsb[0],
-            width: 2,
-            onChange(value) {
-              hsb[0] = value
-              update()
-            },
-          }),
-          new Slider({
-            theme: 'proceed',
-            direction: 'vertical',
-            border: 'line',
-            range: [0, 360],
-            position: hsb[0],
-            width: 3,
-            onChange(value) {
-              hsb[0] = value
-              update()
-            },
-          }),
-          new Slider({
-            theme: 'cancel',
-            direction: 'vertical',
-            border: 'line',
-            range: [0, 360],
-            position: hsb[0],
-            width: 4,
-            onChange(value) {
-              hsb[0] = value
-              update()
-            },
-          }),
+          [
+            'flex1',
+            new Flex({
+              direction: 'topToBottom',
+              children: [['flex1', space], rgbText],
+            }),
+          ],
           [
             'flex1',
             new Flex({
               direction: 'topToBottom',
               children: [
                 new Slider({
-                  theme: 'primary',
-                  direction: 'horizontal',
-                  range: [0, 100],
-                  position: hsb[1],
-                  height: 2,
-                  onChange(value) {
-                    hsb[1] = value
-                    update()
-                  },
-                }),
-                hueInput,
-                new Slider({
-                  theme: 'secondary',
+                  theme: 'red',
                   direction: 'horizontal',
                   border: 'line',
-                  range: [0, 100],
-                  position: hsb[2],
-                  height: 1,
-                  onChange(value) {
-                    hsb[2] = value
-                    update()
-                  },
-                }),
-                new Slider({
-                  theme: 'proceed',
-                  direction: 'horizontal',
-                  border: 'line',
-                  range: [0, 100],
-                  position: hsb[2],
-                  height: 2,
-                  onChange(value) {
-                    hsb[2] = value
-                    update()
-                  },
-                }),
-                new Slider({
-                  theme: 'cancel',
-                  direction: 'horizontal',
-                  border: 'line',
-                  range: [0, 100],
-                  position: hsb[2],
-                  height: 3,
-                  onChange(value) {
-                    hsb[2] = value
-                    update()
-                  },
-                }),
-                new Slider({
-                  theme: 'selected',
-                  direction: 'horizontal',
-                  border: 'line',
-                  range: [0, 100],
-                  position: hsb[2],
+                  range: [0, 255],
+                  position: rgb[0],
                   height: 4,
                   onChange(value) {
-                    hsb[2] = value
+                    rgb[0] = Math.round(value)
                     update()
                   },
                 }),
-                saturationInput,
-                brightnessInput,
+                new Slider({
+                  theme: 'green',
+                  direction: 'horizontal',
+                  range: [0, 255],
+                  position: rgb[1],
+                  height: 4,
+                  onChange(value) {
+                    rgb[1] = Math.round(value)
+                    update()
+                  },
+                }),
+                new Slider({
+                  theme: 'blue',
+                  direction: 'horizontal',
+                  border: 'line',
+                  range: [0, 255],
+                  position: rgb[2],
+                  height: 4,
+                  onChange(value) {
+                    rgb[2] = Math.round(value)
+                    update()
+                  },
+                }),
+                redInput,
+                greenInput,
+                blueInput,
                 consoleLog,
               ],
             }),
