@@ -33,7 +33,7 @@ export class MouseManager {
     this.#mouseListeners = new Map()
   }
 
-  needsRender() {
+  commit() {
     if (this.#mouseDownEvent || !this.#mousePosition) {
       return false
     }
@@ -115,13 +115,6 @@ export class MouseManager {
   }
 
   checkMouse(view: View, x: number, y: number) {
-    function foo(view: any) {
-      return view.constructor.name === 'Button'
-        ? {name: view.constructor.name, text: (view as any).text}
-        : view.constructor.name
-    }
-
-    const debug = x === 25 && y === 5
     const listener = this.getMouseListener(x, y)
     if (!listener) {
       return

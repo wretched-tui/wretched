@@ -2,6 +2,7 @@ import {View} from '../View'
 import {match, type HotKey, type KeyEvent} from '../events'
 
 export class FocusManager {
+  #didCommit = false
   #currentFocus: View | undefined
   #prevFocus: View | undefined
   #focusRing: View[] = []
@@ -15,17 +16,14 @@ export class FocusManager {
    * that until _after_ the first render. In that case, after render, 'needsRerender'
    * selects the first focus-view and triggers a re-render.
    */
-  reset(rootView: View) {
-    const prevIsMounted =
-      this.#currentFocus && findView(rootView, this.#currentFocus)
-    if (prevIsMounted) {
+  reset(isRootView: boolean) {
+    if (isRootView) {
       this.#prevFocus = this.#currentFocus
-    } else {
-      this.#prevFocus = undefined
     }
     this.#currentFocus = undefined
     this.#focusRing = []
     this.#hotKeys = []
+    this.#didCommit = false
   }
 
   trigger(event: KeyEvent) {
@@ -50,24 +48,33 @@ export class FocusManager {
    * Returns whether the current view has focus.
    */
   registerFocus(view: View) {
-    this.#focusRing.push(view)
+    if (!this.#didCommit) {
+      this.#focusRing.push(view)
+    }
 
     if (!this.#currentFocus && (!this.#prevFocus || this.#prevFocus === view)) {
       this.#currentFocus = view
       return true
+      } else if (this.#currentFocus === view) {
+        return true
     } else {
       return false
     }
   }
 
   registerHotKey(view: View, key: HotKey) {
-    return this.#hotKeys.push([view, key])
+    if (this.#didCommit) {
+      return
+    }
+
+    this.#hotKeys.push([view, key])
   }
 
-  needsRerender() {
+  commit() {
+    this.#didCommit = true
+
     if (this.#focusRing.length > 0 && this.#prevFocus && !this.#currentFocus) {
-      this.#prevFocus = undefined
-      this.#currentFocus = this.#focusRing.shift()
+      this.#currentFocus = this.#focusRing[0]
       return true
     } else {
       return false
@@ -75,35 +82,43 @@ export class FocusManager {
   }
 
   #reorderRing() {
-    if (this.#currentFocus && this.#focusRing[0] !== this.#currentFocus) {
-      const index = this.#focusRing.indexOf(this.#currentFocus)
-      if (~index) {
-        const pre = this.#focusRing.slice(0, index)
-        this.#focusRing = this.#focusRing.slice(index).concat(pre)
-      }
+    if (!this.#currentFocus) {
+      return
+    }
+
+    const index = this.#focusRing.indexOf(this.#currentFocus)
+    if (~index) {
+      const pre = this.#focusRing.slice(0, index)
+      this.#focusRing = this.#focusRing.slice(index).concat(pre)
     }
   }
 
   prevFocus() {
+    if (this.#focusRing.length <= 1) {
+      return
+    }
+
     this.#reorderRing()
 
-    const last = this.#focusRing.pop()
-    if (last) {
-      this.#focusRing.unshift(last)
-      this.#currentFocus = this.#focusRing[0]
-    }
+    const last = this.#focusRing.pop()!
+    this.#focusRing.unshift(last)
+    this.#currentFocus = last
 
     return this.#currentFocus
   }
 
   nextFocus() {
+    if (this.#focusRing.length <= 1) {
+      return
+    }
+
     this.#reorderRing()
 
-    const first = this.#focusRing.shift()
-    if (first) {
-      this.#focusRing.push(first)
-      this.#currentFocus = this.#focusRing[0]
-    }
+    const first = this.#focusRing.shift()!
+    this.#focusRing.push(first)
+
+    const next = this.#focusRing[0]
+    this.#currentFocus = next
 
     return this.#currentFocus
   }

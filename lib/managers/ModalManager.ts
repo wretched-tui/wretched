@@ -39,15 +39,16 @@ export class ModalManager {
   renderModals(screen: Screen, viewport: Viewport) {
     this.#modalView.moveToScreen(screen)
 
-    let lastView: View | undefined
+    let lastView: View = screen.rootView
     while (this.#modal) {
       const [view, onClose, rect] = this.#modal
 
+      screen.preRender(view)
       lastView = view
+
       this.#modalView.updateView(view, onClose)
       this.#modalView.naturalSize(viewport.contentSize)
 
-      screen.preRender(view)
       viewport.parentRect = rect
       this.#modalView.render(viewport)
     }

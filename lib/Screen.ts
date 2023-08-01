@@ -186,11 +186,17 @@ export class Screen {
 
   triggerTick(dt: number) {}
 
-  preRender(rootView: View) {
+  preRender(view: View) {
     this.#modalManager.reset()
     this.#tickManager.reset()
     this.#mouseManager.reset()
-    this.#focusManager.reset(rootView)
+    this.#focusManager.reset(view === this.rootView)
+  }
+
+  commit() {
+    const focusNeedsRender = this.#focusManager.commit()
+    const mouseNeedsRender = this.#mouseManager.commit()
+    return focusNeedsRender || mouseNeedsRender
   }
 
   render() {
@@ -203,14 +209,11 @@ export class Screen {
     const size = this.rootView.naturalSize(screenSize).max(screenSize)
     const viewport = new Viewport(this, this.#buffer, size)
     this.rootView.render(viewport)
-    const rerenderView =
-      this.#modalManager.renderModals(this, viewport) ?? this.rootView
-
-    const focusNeedsRender = this.#focusManager.needsRerender()
-    const mouseNeedsRender = this.#mouseManager.needsRender()
+    const rerenderView = this.#modalManager.renderModals(this, viewport)
+    const needsRerender = this.commit()
 
     // one -and only one- re-render if a change is detected to focus or mouse-hover
-    if (focusNeedsRender || mouseNeedsRender) {
+    if (needsRerender) {
       rerenderView.render(viewport)
     }
 
