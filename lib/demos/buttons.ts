@@ -29,13 +29,19 @@ async function run() {
             }),
 
             ['flex1', new Space()],
-            new Button({
-              height: 3,
-              border: 'large',
-              theme: 'primary',
-              text: 'Launch',
+            new Flex({
+              direction: 'leftToRight',
+              children: Array(8)
+                .fill(0)
+                .map((_, index): ['flex1', Button] => [
+                  'flex1',
+                  new Button({
+                    height: 1,
+                    theme: 'primary',
+                    text: `Launch ${8 - index}`,
+                  }),
+                ]),
             }),
-
             ['flex1', new Space()],
             new Button({
               height: 3,
