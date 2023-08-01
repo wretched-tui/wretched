@@ -6,23 +6,25 @@
     "Shawn Chen",
     "Christopher Jeffrey (via Blessed)"
   ],
-  "version": "1.0.1.beta",
+  "version": "1.0.1-alpha",
   "license": "MIT",
   "preferGlobal": false,
   "repository": "git://github.com/wretched-tui/wretched.git",
   "homepage": "https://github.com/wretched-tui/wretched",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "bugs": {
     "url": "http://github.com/wretched-tui/wretched/issues"
   },
   "scripts": {
-    "publish": "npm publish --tag beta",
-    "prepublishOnly": "yarn build",
-    "clean": "rm -f dist/**/*.js",
-    "cp-usr": "mkdir -p dist/sys/user/ && cp lib/sys/usr/* dist/sys/usr/",
-    "build": "yarn clean && yarn cp-usr && yarn tsc",
+    "publish": "npm publish --tag alpha",
+    "prepublishOnly": "yarn clean && yarn tsc --declaration dist/index.d.ts && yarn cp-usr && rm -rf dist/demos/",
+    "clean": "rm -rf dist/",
+    "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
+    "build": "yarn clean && yarn tsc && yarn cp-usr",
     "demo": "yarn build && cd dist/demos/ && node --enable-source-maps --"
   },
   "keywords": [
