@@ -3,7 +3,7 @@
   "description": "A low-level terminal interface library for node.js.",
   "author": "Colin T.A. Gray <colinta@colinta.com>",
   "contributors": [
-    "Shawn Chen",
+    "Shawn Chen <meishangchen@gmail.com>",
     "Christopher Jeffrey (via Blessed)"
   ],
   "version": "1.0.1-alpha",
