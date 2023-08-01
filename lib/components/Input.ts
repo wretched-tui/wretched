@@ -150,6 +150,9 @@ export class Input extends View {
     const hasFocus = viewport.registerFocus()
     if (hasFocus) {
       viewport.registerTick()
+    } else if (this.#dt !== 0) {
+      this.#showCursor = true
+      this.#dt = 0
     }
 
     const visibleWidth = viewport.contentSize.width
