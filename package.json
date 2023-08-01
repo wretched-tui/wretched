@@ -21,7 +21,7 @@
   },
   "scripts": {
     "publish": "npm publish --tag alpha",
-    "prepublishOnly": "yarn clean && yarn tsc --declaration dist/index.d.ts && yarn cp-usr && rm -rf dist/demos/",
+    "prepublishOnly": "yarn clean && yarn tsc && yarn cp-usr && rm -rf dist/demos/",
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
     "build": "yarn clean && yarn tsc && yarn cp-usr",
