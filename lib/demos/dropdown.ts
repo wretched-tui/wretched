@@ -25,8 +25,8 @@ async function run() {
     async (program: BlessedProgram) => {
       await iTerm2.setBackground(program, [23, 23, 23])
       const dropdown = new Dropdown({
-        theme: 'proceed',
         multiple: true,
+        theme: 'proceed',
         onSelect(value: any) {
           console.log(value)
         },
@@ -56,8 +56,8 @@ async function run() {
           children: [
             new Dropdown({
               theme: 'primary',
-              onSelect(value: any) {
-                console.log(value)
+              onSelect(value: number) {
+                dropdown.selected = [value]
               },
               padding: {left: 2, right: 2},
               choices,
@@ -66,8 +66,8 @@ async function run() {
             new Space({height: 1}),
             new Dropdown({
               theme: 'secondary',
-              onSelect(value: any) {
-                console.log(value)
+              onSelect(value: number) {
+                dropdown.selected = [value]
               },
               padding: {left: 2, right: 2},
               choices,
@@ -76,8 +76,8 @@ async function run() {
             new Space({height: 1}),
             new Dropdown({
               padding: {left: 2, right: 2},
-              onSelect(value: any) {
-                console.log(value)
+              onSelect(value: number) {
+                dropdown.selected = [value]
               },
               height: 1,
               choices,
@@ -96,11 +96,11 @@ async function run() {
             dropdown,
             new Space({height: 1}),
             new Dropdown({
+              multiple: true,
               theme: 'plain',
               title: 'Select many options…',
-              multiple: true,
-              onSelect(value: any) {
-                console.log(value)
+              onSelect(value: number[]) {
+                dropdown.selected = value
               },
               padding: {left: 2, right: 2},
               choices,
@@ -109,11 +109,11 @@ async function run() {
             new Space({height: 1}),
             new Dropdown({
               theme: 'cancel',
-              onSelect(value: any) {
-                console.log(value)
+              onSelect(value: number) {
+                dropdown.selected = [value]
               },
               padding: {left: 2, right: 2},
-              choices,
+              choices: choices.slice(0, 4),
               selected: 1,
             }),
             // consoleLog,
