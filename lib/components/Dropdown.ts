@@ -202,7 +202,7 @@ interface SelectorProps<T> extends SharedProps<T> {
 }
 
 class DropdownSelector<T> extends Container {
-  #choices: [string[], T][]
+  #choices: [string[], T, string][]
   #selected: Set<number>
   #multiple: boolean
   #onSelect: () => void
@@ -219,7 +219,11 @@ class DropdownSelector<T> extends Container {
   }: SelectorProps<T>) {
     super({...viewProps})
 
-    this.#choices = choices.map(([text, value]) => [text.split('\n'), value])
+    this.#choices = choices.map(([text, value]) => [
+      text.split('\n'),
+      value,
+      text,
+    ])
     this.#selected = new Set(selected)
     this.#multiple = multiple
     this.#onSelect = onSelect
@@ -269,7 +273,7 @@ class DropdownSelector<T> extends Container {
     this.#selected = new Set(rows)
   }
 
-  get selectedText() {
+  get selectedText(): string[] | undefined {
     if (this.#selected.size === 0) {
       return undefined
     }
@@ -277,9 +281,15 @@ class DropdownSelector<T> extends Container {
     if (this.#selected.size > 1) {
       const rows = [...this.#selected]
       rows.sort()
+      // honestly, it's strange to use multiple lines in your dropdown choices...
+      // but we support it! When multiple items are selected, the text becomes:
+      // 1. join each line with a space
+      // 2. join each entry with a comma
+      // e.g. "Selected\n1", "Selected\n2" becomes "Selected 1, Selected 2"
       return [rows.map(index => this.#choices[index][0].join(' ')).join(', ')]
     }
 
+    // if only one item is selected, make that the title, preserving multiple lines
     const [row] = [...this.#selected]
     return this.#choices[row][0]
   }
@@ -297,12 +307,19 @@ class DropdownSelector<T> extends Container {
   }
 
   get choices() {
-    return this.#choices.map(([lines, choice]) => [lines.join('\n'), choice])
+    return this.#choices.map(([_, choice, text]) => [text, choice])
   }
 
+  /**
+   * Sets new choices, preserving the previously selected items.
+   */
   set choices(choices: SharedProps<T>['choices']) {
     const selected = [...this.#selected].map(index => this.#choices[index][1])
-    this.#choices = choices.map(([text, choice]) => [text.split('\n'), choice])
+    this.#choices = choices.map(([text, choice]) => [
+      text.split('\n'),
+      choice,
+      text,
+    ])
     this.#selected = new Set(
       selected.flatMap(item => {
         const index = choices.findIndex(([_, choice]) => choice === item)
