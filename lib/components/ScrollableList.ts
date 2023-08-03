@@ -183,6 +183,7 @@ export class ScrollableList<T> extends Container {
   updateItems(items: T[]) {
     this.#items = items
     this.invalidateAllRows('view')
+    this.invalidateSize()
   }
 
   viewForRow(row: number): View | undefined {
