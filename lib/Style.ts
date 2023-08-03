@@ -6,9 +6,12 @@ import {colorToSGR} from './Color'
 type Nullable<T> = {[K in keyof T]?: null | undefined | T[K]}
 
 export class Style {
+  bold?: boolean
+  dim?: boolean
+  italic?: boolean
+  strikeout?: boolean
   underline?: boolean
   inverse?: boolean
-  bold?: boolean
   blink?: boolean
   invisible?: boolean
   foreground?: Color
@@ -60,17 +63,48 @@ export class Style {
         case '1':
           style.bold = true
           break
+        case '2':
+          style.dim = true
+          break
+        case '22':
+          style.bold = false
+          style.dim = false
+          break
+        case '3':
+          style.italic = true
+          break
+        case '23':
+          style.italic = false
+          break
         case '4':
           style.underline = true
+          break
+        case '24':
+          style.underline = false
           break
         case '5':
           style.blink = true
           break
+        case '25':
+          style.blink = false
+          break
         case '7':
           style.inverse = true
           break
+        case '27':
+          style.inverse = false
+          break
         case '8':
           style.invisible = true
+          break
+        case '28':
+          style.invisible = false
+          break
+        case '9':
+          style.strikeout = true
+          break
+        case '29':
+          style.strikeout = false
           break
         case '30':
           style.foreground = 'black'
@@ -180,9 +214,12 @@ export class Style {
   }
 
   constructor({
+    bold,
+    dim,
+    italic,
+    strikeout,
     underline,
     inverse,
-    bold,
     blink,
     invisible,
     foreground,
@@ -191,6 +228,9 @@ export class Style {
     underline?: boolean
     inverse?: boolean
     bold?: boolean
+    dim?: boolean
+    italic?: boolean
+    strikeout?: boolean
     blink?: boolean
     invisible?: boolean
     foreground?: Color
@@ -199,6 +239,9 @@ export class Style {
     this.underline = underline
     this.inverse = inverse
     this.bold = bold
+    this.dim = dim
+    this.italic = italic
+    this.strikeout = strikeout
     this.blink = blink
     this.invisible = invisible
     this.foreground = foreground
@@ -221,6 +264,9 @@ export class Style {
       underline: style.underline ?? this.underline,
       inverse: style.inverse ?? this.inverse,
       bold: style.bold ?? this.bold,
+      dim: style.dim ?? this.dim,
+      italic: style.italic ?? this.italic,
+      strikeout: style.strikeout ?? this.strikeout,
       blink: style.blink ?? this.blink,
       invisible: style.invisible ?? this.invisible,
       foreground:
@@ -243,6 +289,9 @@ export class Style {
       this.underline === style.underline &&
       this.inverse === style.inverse &&
       this.bold === style.bold &&
+      this.dim === style.dim &&
+      this.italic === style.italic &&
+      this.strikeout === style.strikeout &&
       this.blink === style.blink &&
       this.invisible === style.invisible &&
       this.foreground === style.foreground &&
@@ -253,9 +302,12 @@ export class Style {
   toDebug() {
     return (
       [
+        ['bold', this.bold],
+        ['dim', this.dim],
+        ['italic', this.italic],
+        ['strikeout', this.strikeout],
         ['underline', this.underline],
         ['inverse', this.inverse],
-        ['bold', this.bold],
         ['blink', this.blink],
         ['invisible', this.invisible],
         ['foreground', this.foreground],
@@ -289,6 +341,24 @@ export class Style {
       parts.push('bold')
     } else if (!this.bold && prevStyle.bold) {
       parts.push('!bold')
+    }
+
+    if (this.dim && !prevStyle.dim) {
+      parts.push('dim')
+    } else if (!this.dim && prevStyle.dim) {
+      parts.push('!dim')
+    }
+
+    if (this.italic && !prevStyle.italic) {
+      parts.push('italic')
+    } else if (!this.italic && prevStyle.italic) {
+      parts.push('!italic')
+    }
+
+    if (this.strikeout && !prevStyle.strikeout) {
+      parts.push('strikeout')
+    } else if (!this.strikeout && prevStyle.strikeout) {
+      parts.push('!strikeout')
     }
 
     if (this.inverse && !prevStyle.inverse) {
