@@ -30,7 +30,7 @@ interface BorderChars {
 }
 
 interface SharedProps<T> extends ViewProps {
-  choices: readonly [string, T][]
+  choices: Choices<T>
 }
 
 interface StyleProps {
@@ -41,25 +41,28 @@ type SelectMultipleFn<T> = (value: T[]) => void
 type SelectOneFn<T> = (value: T) => void
 
 interface SelectMultiple<T> {
-  multiple: true
   selected: readonly T[]
   onSelect: SelectMultipleFn<T>
 }
 
 interface SelectOne<T> {
-  multiple?: false
   selected?: T
   onSelect: SelectOneFn<T>
 }
 
-type Props<T> = SharedProps<T> & StyleProps & (SelectMultiple<T> | SelectOne<T>)
+type Props<T, M extends boolean | undefined> = SharedProps<T> &
+  StyleProps & {multiple?: M} & (M extends true
+    ? SelectMultiple<T>
+    : SelectOne<T>)
+type Choices<T> = [string, T][]
 
-export class Dropdown<T> extends View {
-  #dropdown: DropdownSelector<T>
+export class Dropdown<T, M extends boolean> extends View {
+  dropdownSelector: DropdownSelector<T>
   #title?: string[]
   #isHover = false
   #showModal = false
-  #selectedSize = Size.zero
+  readonly #multiple: boolean
+  #onSelectCallback: SelectMultipleFn<T> | SelectOneFn<T>
 
   constructor({
     title,
@@ -68,69 +71,77 @@ export class Dropdown<T> extends View {
     multiple,
     onSelect,
     ...viewProps
-  }: Props<T>) {
+  }: Props<T, M>) {
     super(viewProps)
 
-    let selectedItems: T[]
-    if (multiple) {
-      selectedItems = selected as T[]
-    } else if (selected !== undefined) {
-      selectedItems = [selected as T]
-    } else {
-      selectedItems = []
-    }
-
-    const selectedRows = selectedItems.flatMap(item => {
-      const index = choices.findIndex(([_, choice]) => choice === item)
-      if (index === -1) {
-        return []
-      }
-
-      return [index]
-    })
-
-    this.#title = title ? title.split('\n') : undefined
-    this.#dropdown = new DropdownSelector({
+    this.#multiple = multiple ?? false
+    this.#onSelectCallback = onSelect
+    const selectedRows = dropdownSelectedRows(selected, choices, this.#multiple)
+    this.dropdownSelector = new DropdownSelector({
       theme: this.theme,
-      multiple: multiple ?? false,
+      multiple: this.#multiple,
       choices,
       selected: selectedRows,
-      onSelect: () => {
-        if (multiple) {
-          ;(onSelect as SelectMultipleFn<T>)(this.#dropdown.selectedValues)
-        } else {
-          this.#showModal = false
-          const value = this.#dropdown.selectedValue
-          if (value !== undefined) {
-            ;(onSelect as SelectOneFn<T>)(value)
-          }
-        }
-        this.invalidateSize()
-      },
+      onSelect: () => this.#onSelect(),
     })
+    this.#title = title ? title.split('\n') : undefined
   }
 
   get choices() {
-    return this.#dropdown.choices
+    return this.dropdownSelector.choices
   }
   set choices(choices: SharedProps<T>['choices']) {
-    this.#dropdown.choices = choices
+    this.dropdownSelector.choices = choices
   }
 
   #titleLines() {
     if (
       this.#title !== undefined &&
-      this.#dropdown.selectedValues.length === 0
+      this.dropdownSelector.selectedValues.length === 0
     ) {
       return this.#title
     }
 
-    return this.#dropdown.selectedText ?? ['<select>']
+    return this.dropdownSelector.selectedText ?? ['<select>']
   }
 
-  naturalSize(size: Size): Size {
-    this.#selectedSize = new Size(unicode.stringSize(this.#titleLines()))
-    return this.#selectedSize.grow(5, 0)
+  dismissModal() {
+    this.#showModal = false
+  }
+
+  get selected(): M extends true ? () => T[] : T | undefined {
+    if (this.#multiple) {
+      return this.dropdownSelector.selectedValues as any
+    } else {
+      return this.dropdownSelector.selectedValue as any
+    }
+  }
+
+  set selected(selected: M extends true ? T[] : T | undefined) {
+    this.dropdownSelector.selectedRows = dropdownSelectedRows<T>(
+      selected,
+      this.dropdownSelector.choices,
+      this.#multiple,
+    )
+  }
+
+  #onSelect() {
+    if (this.#multiple) {
+      ;(this.#onSelectCallback as any)(this.dropdownSelector.selectedValues)
+    } else {
+      this.dismissModal()
+      const value = this.dropdownSelector.selectedValue
+      if (value !== undefined) {
+        ;(this.#onSelectCallback as any)(value)
+      }
+    }
+
+    this.invalidateSize()
+  }
+
+  naturalSize(): Size {
+    const size = new Size(unicode.stringSize(this.#titleLines()))
+    return size.grow(5, 0)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -147,7 +158,7 @@ export class Dropdown<T> extends View {
 
   render(viewport: Viewport) {
     if (this.#showModal) {
-      viewport.requestModal(this.#dropdown, () => {
+      viewport.requestModal(this.dropdownSelector, () => {
         this.#showModal = false
       })
     }
@@ -158,51 +169,29 @@ export class Dropdown<T> extends View {
       isHover: this.#isHover && !this.#showModal,
     })
 
-    if (viewport.contentSize.height === 1) {
-      viewport.write(
-        ' '.repeat(viewport.contentSize.width - 3) + `▏  `,
-        Point.zero,
-        textStyle,
-      )
-      viewport.clipped(
-        new Rect(Point.zero, viewport.contentSize.shrink(3, 0)),
-        textStyle,
-        () => {
-          viewport.write(lines[0], Point.zero.offset(1, 0))
-        },
-      )
-      viewport.write(
-        this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',
-        new Point(viewport.contentSize.width - 2, 0),
-        textStyle,
-      )
-    } else {
-      const pt = new Point(0, 0).mutableCopy()
-      for (; pt.y < viewport.contentSize.height; pt.y++) {
-        viewport.write(
-          ' '.repeat(viewport.contentSize.width - 3),
-          pt,
-          textStyle,
-        )
-        if (pt.y < lines.length) {
-          viewport.write(lines[pt.y], pt.offset(1, 0), textStyle)
-        }
-        viewport.write(
-          `▏  `,
-          pt.offset(viewport.contentSize.width - 3, 0),
-          textStyle,
-        )
+    viewport.paint(textStyle)
+
+    const pt = new Point(0, 0).mutableCopy()
+    for (; pt.y < viewport.contentSize.height; pt.y++) {
+      if (pt.y < lines.length) {
+        viewport.write(lines[pt.y], pt.offset(1, 0), textStyle)
       }
 
       viewport.write(
-        this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',
-        new Point(
-          viewport.contentSize.width - 2,
-          viewport.contentSize.height - 2,
-        ),
+        `▏  `,
+        pt.offset(viewport.contentSize.width - 3, 0),
         textStyle,
       )
     }
+
+    viewport.write(
+      this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',
+      new Point(
+        viewport.contentSize.width - 2,
+        viewport.contentSize.height / 2,
+      ),
+      textStyle,
+    )
   }
 }
 
@@ -220,25 +209,6 @@ class DropdownSelector<T> extends Container {
   #scrollView: ScrollableList<T>
   #box = new Box({maxHeight: 24, border: BORDERS.below})
   #checkbox: Checkbox
-
-  get choices() {
-    return this.#choices.map(([lines, choice]) => [lines.join('\n'), choice])
-  }
-
-  set choices(choices: SharedProps<T>['choices']) {
-    const selected = [...this.#selected].map(index => this.#choices[index][1])
-    this.#choices = choices.map(([text, choice]) => [text.split('\n'), choice])
-    this.#selected = new Set(
-      selected.flatMap(item => {
-        const index = choices.findIndex(([_, choice]) => choice === item)
-        if (index === -1) {
-          return []
-        }
-        return [index]
-      }),
-    )
-    this.#scrollView.updateItems(choices.map(([, choice]) => choice))
-  }
 
   constructor({
     choices,
@@ -286,18 +256,30 @@ class DropdownSelector<T> extends Container {
     return this.#selected.size === this.#choices.length
   }
 
+  get selectedRows() {
+    return [...this.#selected]
+  }
+
+  set selectedRows(rows: number[]) {
+    new Set([...this.#selected, ...rows]).forEach(selected => {
+      const item = this.#choices[selected][1]
+      this.#scrollView.invalidateItem(item, 'view')
+    })
+
+    this.#selected = new Set(rows)
+  }
+
   get selectedText() {
     if (this.#selected.size === 0) {
       return undefined
     }
+
     if (this.#selected.size > 1) {
-      // return [`${this.#selected.size} items selected`]
-      return [
-        [...this.#selected]
-          .map(index => this.#choices[index][0].join(' '))
-          .join(', '),
-      ]
+      const rows = [...this.#selected]
+      rows.sort()
+      return [rows.map(index => this.#choices[index][0].join(' ')).join(', ')]
     }
+
     const [row] = [...this.#selected]
     return this.#choices[row][0]
   }
@@ -312,6 +294,25 @@ class DropdownSelector<T> extends Container {
 
   get selectedValues() {
     return [...this.#selected].map(index => this.#choices[index][1])
+  }
+
+  get choices() {
+    return this.#choices.map(([lines, choice]) => [lines.join('\n'), choice])
+  }
+
+  set choices(choices: SharedProps<T>['choices']) {
+    const selected = [...this.#selected].map(index => this.#choices[index][1])
+    this.#choices = choices.map(([text, choice]) => [text.split('\n'), choice])
+    this.#selected = new Set(
+      selected.flatMap(item => {
+        const index = choices.findIndex(([_, choice]) => choice === item)
+        if (index === -1) {
+          return []
+        }
+        return [index]
+      }),
+    )
+    this.#scrollView.updateItems(choices.map(([, choice]) => choice))
   }
 
   cellForItem(choice: T, row: number) {
@@ -336,24 +337,7 @@ class DropdownSelector<T> extends Container {
       content: new Text({
         width: 'fill',
         lines: lines.map((line, index) => {
-          let prefix: string
-          if (this.#multiple) {
-            prefix =
-              index === 0
-                ? isSelected
-                  ? BOX.multiple.checked
-                  : BOX.multiple.unchecked
-                : '  '
-          } else {
-            prefix =
-              index === 0
-                ? isSelected
-                  ? BOX.single.checked
-                  : BOX.single.unchecked
-                : '  '
-          }
-
-          return prefix + line
+          return dropdownPrefix(this.#multiple, index, isSelected) + line
         }),
       }),
       onClick: () => {
@@ -430,6 +414,42 @@ class DropdownSelector<T> extends Container {
 
     const rect = new Rect(new Point(x, y), new Size(width, height))
     viewport.clipped(rect, inside => this.renderChildren(inside))
+  }
+}
+
+function dropdownSelectedRows<T>(
+  selected: T | readonly T[] | undefined,
+  choices: Choices<T>,
+  multiple: boolean,
+): number[] {
+  let selectedItems: T[]
+  if (multiple) {
+    selectedItems = selected as T[]
+  } else if (selected !== undefined) {
+    selectedItems = [selected as T]
+  } else {
+    return []
+  }
+
+  return selectedItems.flatMap(item => {
+    const index = choices.findIndex(([_, choice]) => choice === item)
+    if (index === -1) {
+      return []
+    }
+
+    return [index]
+  })
+}
+
+function dropdownPrefix(multiple: boolean, index: number, isSelected: boolean) {
+  if (index === 0) {
+    return '  '
+  }
+
+  if (multiple) {
+    return isSelected ? BOX.multiple.checked : BOX.multiple.unchecked
+  } else {
+    return isSelected ? BOX.single.checked : BOX.single.unchecked
   }
 }
 
