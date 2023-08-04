@@ -1,4 +1,4 @@
-import {program} from './sys'
+import {program, colors} from './sys'
 
 import type {Color} from './Color'
 import {colorToSGR} from './Color'
@@ -20,6 +20,114 @@ export class Style {
   static NONE = new Style()
   static underlined = new Style({underline: true})
   static bold = new Style({bold: true})
+
+  constructor({
+    bold,
+    dim,
+    italic,
+    strikeout,
+    underline,
+    inverse,
+    blink,
+    invisible,
+    foreground,
+    background,
+  }: {
+    underline?: boolean
+    inverse?: boolean
+    bold?: boolean
+    dim?: boolean
+    italic?: boolean
+    strikeout?: boolean
+    blink?: boolean
+    invisible?: boolean
+    foreground?: Color
+    background?: Color
+  } = {}) {
+    this.underline = underline
+    this.inverse = inverse
+    this.bold = bold
+    this.dim = dim
+    this.italic = italic
+    this.strikeout = strikeout
+    this.blink = blink
+    this.invisible = invisible
+    this.foreground = foreground
+    this.background = background
+  }
+
+  invert(): Style {
+    return this.merge({
+      foreground: this.background,
+      background: this.foreground,
+    })
+  }
+
+  merge(style?: Nullable<Style>): Style {
+    if (style === undefined) {
+      return this
+    }
+
+    return new Style({
+      underline: style.underline ?? this.underline,
+      inverse: style.inverse ?? this.inverse,
+      bold: style.bold ?? this.bold,
+      dim: style.dim ?? this.dim,
+      italic: style.italic ?? this.italic,
+      strikeout: style.strikeout ?? this.strikeout,
+      blink: style.blink ?? this.blink,
+      invisible: style.invisible ?? this.invisible,
+      foreground:
+        style.foreground === null
+          ? undefined
+          : style.foreground === undefined
+          ? this.foreground
+          : style.foreground,
+      background:
+        style.background === null
+          ? undefined
+          : style.background === undefined
+          ? this.background
+          : style.background,
+    })
+  }
+
+  isEqual(style: Style) {
+    return (
+      this.underline === style.underline &&
+      this.inverse === style.inverse &&
+      this.bold === style.bold &&
+      this.dim === style.dim &&
+      this.italic === style.italic &&
+      this.strikeout === style.strikeout &&
+      this.blink === style.blink &&
+      this.invisible === style.invisible &&
+      this.foreground === style.foreground &&
+      this.background === style.background
+    )
+  }
+
+  toDebug() {
+    return (
+      [
+        ['bold', this.bold],
+        ['dim', this.dim],
+        ['italic', this.italic],
+        ['strikeout', this.strikeout],
+        ['underline', this.underline],
+        ['inverse', this.inverse],
+        ['blink', this.blink],
+        ['invisible', this.invisible],
+        ['foreground', this.foreground],
+        ['background', this.background],
+      ] as const
+    )
+      .filter(([name, value]) => value !== undefined)
+      .reduce((o: any, [name, value]) => {
+        o[name] = value
+        return o
+      }, {} as any)
+  }
 
   static fromSGR(ansi: string): Style {
     let match = ansi.match(/^\x1b\[([\d;]*)m$/)
@@ -55,10 +163,23 @@ export class Style {
       } else if ((match = code.match(/^48;5;(\d+)$/))) {
         style.background = {sgr: match[1]}
         continue
+      } else if ((match = code.match(/^38;2;([\d;]+)$/))) {
+        const [r, g, b] = match[1]
+          .split(';')
+          .map(i => Math.max(0, Math.min(255, parseInt(i, 10))))
+        style.foreground = [r, g, b]
+        continue
+      } else if ((match = code.match(/^48;2;([\d;]+)$/))) {
+        const [r, g, b] = match[1]
+          .split(';')
+          .map(i => Math.max(0, Math.min(255, parseInt(i, 10))))
+        style.background = [r, g, b]
+        continue
       }
 
       switch (code) {
         case '':
+        case '0':
           break
         case '1':
           style.bold = true
@@ -210,121 +331,14 @@ export class Style {
           break
       }
     }
+
     return style
-  }
-
-  constructor({
-    bold,
-    dim,
-    italic,
-    strikeout,
-    underline,
-    inverse,
-    blink,
-    invisible,
-    foreground,
-    background,
-  }: {
-    underline?: boolean
-    inverse?: boolean
-    bold?: boolean
-    dim?: boolean
-    italic?: boolean
-    strikeout?: boolean
-    blink?: boolean
-    invisible?: boolean
-    foreground?: Color
-    background?: Color
-  } = {}) {
-    this.underline = underline
-    this.inverse = inverse
-    this.bold = bold
-    this.dim = dim
-    this.italic = italic
-    this.strikeout = strikeout
-    this.blink = blink
-    this.invisible = invisible
-    this.foreground = foreground
-    this.background = background
-  }
-
-  invert(): Style {
-    return this.merge({
-      foreground: this.background,
-      background: this.foreground,
-    })
-  }
-
-  merge(style?: Nullable<Style>): Style {
-    if (style === undefined) {
-      return this
-    }
-
-    return new Style({
-      underline: style.underline ?? this.underline,
-      inverse: style.inverse ?? this.inverse,
-      bold: style.bold ?? this.bold,
-      dim: style.dim ?? this.dim,
-      italic: style.italic ?? this.italic,
-      strikeout: style.strikeout ?? this.strikeout,
-      blink: style.blink ?? this.blink,
-      invisible: style.invisible ?? this.invisible,
-      foreground:
-        style.foreground === null
-          ? undefined
-          : style.foreground === undefined
-          ? this.foreground
-          : style.foreground,
-      background:
-        style.background === null
-          ? undefined
-          : style.background === undefined
-          ? this.background
-          : style.background,
-    })
-  }
-
-  isEqual(style: Style) {
-    return (
-      this.underline === style.underline &&
-      this.inverse === style.inverse &&
-      this.bold === style.bold &&
-      this.dim === style.dim &&
-      this.italic === style.italic &&
-      this.strikeout === style.strikeout &&
-      this.blink === style.blink &&
-      this.invisible === style.invisible &&
-      this.foreground === style.foreground &&
-      this.background === style.background
-    )
-  }
-
-  toDebug() {
-    return (
-      [
-        ['bold', this.bold],
-        ['dim', this.dim],
-        ['italic', this.italic],
-        ['strikeout', this.strikeout],
-        ['underline', this.underline],
-        ['inverse', this.inverse],
-        ['blink', this.blink],
-        ['invisible', this.invisible],
-        ['foreground', this.foreground],
-        ['background', this.background],
-      ] as const
-    )
-      .filter(([name, value]) => value !== undefined)
-      .reduce((o: any, [name, value]) => {
-        o[name] = value
-        return o
-      }, {} as any)
   }
 
   /**
    * @param prevStyle Used by the buffer to reset foreground/background colors and attrs
    */
-  toSGR(prevStyle: Style) {
+  toSGR(prevStyle: Style): string {
     const {global: globalProgram} = program
     if (!globalProgram) {
       return ''
@@ -379,6 +393,15 @@ export class Style {
       parts.push(colorToSGR('default', 'bg'))
     }
 
-    return globalProgram.style(parts.join(';'))
+    if (
+      (this.bold && parts.includes('!dim')) ||
+      (this.dim && parts.includes('!bold'))
+    ) {
+      return globalProgram.style('') + this.toSGR(Style.NONE)
+    } else if (parts.length) {
+      return globalProgram.style(parts.join(';'))
+    } else {
+      return ''
+    }
   }
 }

@@ -99,7 +99,7 @@ export class Text extends View {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            pen.mergePen(Style.fromSGR(char))
+            pen.replacePen(Style.fromSGR(char))
             continue
           }
 

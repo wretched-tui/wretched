@@ -124,11 +124,10 @@ export class Buffer implements Terminal {
         }
 
         if (prevStyle !== style) {
-          terminal.write(style.toSGR(prevStyle) + char)
+          terminal.write(style.toSGR(prevStyle))
           prevStyle = style
-        } else {
-          terminal.write(char)
         }
+        terminal.write(char)
         prevLine.set(x, chrInfo)
       }
     }

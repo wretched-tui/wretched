@@ -288,15 +288,17 @@ export class Viewport {
 
 class Pen {
   #setter: (style?: Style) => void
+  #initial: Style
   #stack: Style[]
 
   constructor(initialStyle: Style, setter: (style?: Style) => void) {
     this.#setter = setter
-    this.#stack = [initialStyle]
+    this.#initial = initialStyle
+    this.#stack = []
   }
 
   mergePen(style: Style) {
-    const current = this.#stack[0] ?? Style.NONE
+    const current = this.#stack[0] ?? this.#initial
     style = current.merge(style)
     this.replacePen(style)
   }
@@ -307,7 +309,7 @@ class Pen {
   }
 
   pushPen(style: Style | undefined = undefined) {
-    style ??= this.#stack[0] ?? Style.NONE
+    style ??= this.#stack[0] ?? this.#initial
     // yeah I know I said pushPen but #style[0] is easier!
     this.#stack.unshift(style)
     this.#setter(style)
