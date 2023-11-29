@@ -563,12 +563,20 @@ export class BlessedProgram extends EventEmitter {
 
   resume: () => void
 
-  on(event: 'resize', fn: () => void): this
   on(event: 'mouse', fn: (data: MouseEvent) => void): this
   on(event: 'keypress', fn: (char: string, key: KeyEvent) => void): this
-  on(event: 'focus', fn: () => void): this
-  on(event: 'blur', fn: () => void): this
+  on(event: 'resize' | 'focus' | 'blur', fn: () => void): this
   on(event: string, fn: (...args: any[]) => void): this
+
+  once(event: 'mouse', fn: (data: MouseEvent) => void): this
+  once(event: 'keypress', fn: (char: string, key: KeyEvent) => void): this
+  once(event: 'resize' | 'focus' | 'blur', fn: () => void): this
+  once(event: string, fn: (...args: any[]) => void): this
+
+  off(event: 'mouse', fn: (data: MouseEvent) => void): this
+  off(event: 'keypress', fn: (char: string, key: KeyEvent) => void): this
+  off(event: 'resize' | 'focus' | 'blur', fn: () => void): this
+  off(event: string, fn: (...args: any[]) => void): this
 
   key(
     key: string | string[],

@@ -20,6 +20,7 @@ import {FocusManager} from './managers/FocusManager'
 import {ModalManager} from './managers/ModalManager'
 import {MouseManager} from './managers/MouseManager'
 import {TickManager} from './managers/TickManager'
+import {Window} from './components/Window'
 
 export class Screen {
   program: SGRTerminal
@@ -32,8 +33,10 @@ export class Screen {
   #tickManager = new TickManager(() => this.render())
 
   static async start(
-    viewConstructor: View | ((program: BlessedProgram) => View | Promise<View>),
-  ): Promise<[Screen, BlessedProgram]> {
+    viewConstructor:
+      | View
+      | ((program: BlessedProgram) => View | Promise<View>) = new Window(),
+  ): Promise<[Screen, BlessedProgram, View]> {
     const program = blessedProgram({
       useBuffer: true,
     })
@@ -98,7 +101,7 @@ export class Screen {
 
     screen.start()
 
-    return [screen, program]
+    return [screen, program, rootView]
   }
 
   constructor(program: SGRTerminal, rootView: View) {
