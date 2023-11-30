@@ -8,26 +8,24 @@ import {Screen} from '../Screen'
 import {TrackMouse} from '../components/utility'
 import {ConsoleLog, Collapsible, Text} from '../components'
 
-async function run() {
+function run() {
   interceptConsoleLog()
   process.title = 'Wretched'
 
   const consoleLog = new ConsoleLog({
     minHeight: 10,
   })
-  const [screen, program] = await Screen.start(
-    async (program: BlessedProgram) => {
-      await iTerm2.setBackground(program, [23, 23, 23])
+  const [screen, program] = Screen.start((program: BlessedProgram) => {
+    iTerm2.setBackground(program, [23, 23, 23])
 
-      return new TrackMouse({
-        content: new Collapsible({
-          isCollapsed: false,
-          collapsedView: new Text({text: inspect(OBJ, false)}),
-          expandedView: new Text({text: inspect(OBJ, true)}),
-        }),
-      })
-    },
-  )
+    return new TrackMouse({
+      content: new Collapsible({
+        isCollapsed: false,
+        collapsedView: new Text({text: inspect(OBJ, false)}),
+        expandedView: new Text({text: inspect(OBJ, true)}),
+      }),
+    })
+  })
 
   program.key('escape', function () {
     consoleLog.clear()

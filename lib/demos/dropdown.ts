@@ -14,114 +14,112 @@ import {
   Space,
 } from '../components'
 
-async function run() {
+function run() {
   interceptConsoleLog()
   process.title = 'Wretched'
 
   const consoleLog = new ConsoleLog({
     minHeight: 10,
   })
-  const [screen, program] = await Screen.start(
-    async (program: BlessedProgram) => {
-      await iTerm2.setBackground(program, [23, 23, 23])
-      const dropdown = new Dropdown({
-        multiple: true,
-        theme: 'proceed',
-        onSelect(value: any) {
-          console.log(value)
-        },
-        padding: {left: 2, right: 2},
-        height: 1,
-        choices,
-        selected: [1],
-      })
-      const button = new Button({
-        height: 3,
-        padding: {left: 1, right: 1},
-        theme: 'primary',
-        text: 'Launch',
-        onClick() {
-          const choices = [
-            ...dropdown.choices,
-            [`${dropdown.choices.length}`, dropdown.choices.length],
-          ] as any
-          // reverse order of choices
-          dropdown.choices = choices.reverse()
-        },
-      })
+  const [screen, program] = Screen.start((program: BlessedProgram) => {
+    iTerm2.setBackground(program, [23, 23, 23])
+    const dropdown = new Dropdown({
+      multiple: true,
+      theme: 'proceed',
+      onSelect(value: any) {
+        console.log(value)
+      },
+      padding: {left: 2, right: 2},
+      height: 1,
+      choices,
+      selected: [1],
+    })
+    const button = new Button({
+      height: 3,
+      padding: {left: 1, right: 1},
+      theme: 'primary',
+      text: 'Launch',
+      onClick() {
+        const choices = [
+          ...dropdown.choices,
+          [`${dropdown.choices.length}`, dropdown.choices.length],
+        ] as any
+        // reverse order of choices
+        dropdown.choices = choices.reverse()
+      },
+    })
 
-      return new TrackMouse({
-        content: new Flex({
-          direction: 'topToBottom',
-          children: [
-            new Dropdown({
-              theme: 'primary',
-              onSelect(value: number) {
-                dropdown.selected = [value]
-              },
-              padding: {left: 2, right: 2},
-              choices,
-              selected: 1,
+    return new TrackMouse({
+      content: new Flex({
+        direction: 'topToBottom',
+        children: [
+          new Dropdown({
+            theme: 'primary',
+            onSelect(value: number) {
+              dropdown.selected = [value]
+            },
+            padding: {left: 2, right: 2},
+            choices,
+            selected: 1,
+          }),
+          new Space({height: 1}),
+          new Dropdown({
+            theme: 'secondary',
+            onSelect(value: number) {
+              dropdown.selected = [value]
+            },
+            padding: {left: 2, right: 2},
+            choices,
+            selected: 1,
+          }),
+          new Space({height: 1}),
+          new Dropdown({
+            padding: {left: 2, right: 2},
+            onSelect(value: number) {
+              dropdown.selected = [value]
+            },
+            height: 1,
+            choices,
+            selected: 1,
+          }),
+          ['flex1', new Space()],
+          button,
+          [
+            'flex1',
+            new Separator({
+              direction: 'horizontal',
+              border: 'trailing',
+              padding: 1,
             }),
-            new Space({height: 1}),
-            new Dropdown({
-              theme: 'secondary',
-              onSelect(value: number) {
-                dropdown.selected = [value]
-              },
-              padding: {left: 2, right: 2},
-              choices,
-              selected: 1,
-            }),
-            new Space({height: 1}),
-            new Dropdown({
-              padding: {left: 2, right: 2},
-              onSelect(value: number) {
-                dropdown.selected = [value]
-              },
-              height: 1,
-              choices,
-              selected: 1,
-            }),
-            ['flex1', new Space()],
-            button,
-            [
-              'flex1',
-              new Separator({
-                direction: 'horizontal',
-                border: 'trailing',
-                padding: 1,
-              }),
-            ],
-            dropdown,
-            new Space({height: 1}),
-            new Dropdown({
-              multiple: true,
-              theme: 'plain',
-              title: 'Select many options…',
-              onSelect(value: number[]) {
-                dropdown.selected = value
-              },
-              padding: {left: 2, right: 2},
-              choices,
-              selected: [],
-            }),
-            new Space({height: 1}),
-            new Dropdown({
-              theme: 'cancel',
-              onSelect(value: number) {
-                dropdown.selected = [value]
-              },
-              padding: {left: 2, right: 2},
-              choices: choices.slice(0, 4),
-              selected: 1,
-            }),
-            // consoleLog,
           ],
-        }),
-      })
-    },
-  )
+          dropdown,
+          new Space({height: 1}),
+          new Dropdown({
+            multiple: true,
+            theme: 'plain',
+            title: 'Select many options…',
+            onSelect(value: number[]) {
+              dropdown.selected = value
+            },
+            padding: {left: 2, right: 2},
+            choices,
+            selected: [],
+          }),
+          new Space({height: 1}),
+          new Dropdown({
+            theme: 'cancel',
+            onSelect(value: number) {
+              dropdown.selected = [value]
+            },
+            padding: {left: 2, right: 2},
+            choices: choices.slice(0, 4),
+            selected: 1,
+          }),
+          // consoleLog,
+        ],
+      }),
+    })
+  })
 
   program.key('escape', function () {
     consoleLog.clear()
