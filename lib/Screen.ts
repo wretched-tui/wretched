@@ -23,7 +23,7 @@ import {TickManager} from './managers/TickManager'
 import {Window} from './components/Window'
 
 export class Screen {
-  program: SGRTerminal
+  #program: SGRTerminal
   rootView: View
 
   #buffer: Buffer
@@ -32,11 +32,14 @@ export class Screen {
   #mouseManager = new MouseManager()
   #tickManager = new TickManager(() => this.render())
 
-  static async start(
-    viewConstructor:
-      | View
-      | ((program: BlessedProgram) => View | Promise<View>) = new Window(),
-  ): Promise<[Screen, BlessedProgram, View]> {
+  static start(
+    viewConstructor: View | ((program: BlessedProgram) => View),
+  ): [Screen, BlessedProgram, View]
+  static start(): [Screen, BlessedProgram, Window]
+
+  static start(
+    viewConstructor: View | ((program: BlessedProgram) => View) = new Window(),
+  ): [Screen, BlessedProgram, View] {
     const program = blessedProgram({
       useBuffer: true,
     })
@@ -47,14 +50,17 @@ export class Screen {
     program.clear()
     program.setMouse({sendFocus: true}, true)
 
+    // weird quirk of blessed - bind anything to 'keypress' before
+    // attaching the screen or else I-don't-remember-what will happen.
     const fn = function () {}
     program.on('keypress', fn)
 
     const rootView =
       viewConstructor instanceof View
         ? viewConstructor
-        : await viewConstructor(program)
+        : viewConstructor(program)
     const screen = new Screen(program, rootView)
+
     program.off('keypress', fn)
 
     program.on('focus', function () {
@@ -105,9 +111,13 @@ export class Screen {
   }
 
   constructor(program: SGRTerminal, rootView: View) {
-    this.program = program
+    this.#program = program
     this.#buffer = new Buffer()
     this.rootView = rootView
+
+    Object.defineProperty(this, 'program', {
+      enumerable: false,
+    })
   }
 
   start() {
@@ -203,7 +213,7 @@ export class Screen {
   }
 
   render() {
-    const screenSize = new Size(this.program.cols, this.program.rows)
+    const screenSize = new Size(this.#program.cols, this.#program.rows)
     this.#buffer.resize(screenSize)
 
     // this may be called again by renderModals, before the last modal renders
@@ -222,7 +232,7 @@ export class Screen {
 
     this.#tickManager.endRender()
 
-    this.#buffer.flush(this.program)
+    this.#buffer.flush(this.#program)
   }
 }
 

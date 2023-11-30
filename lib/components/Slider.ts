@@ -17,7 +17,7 @@ interface Props extends ViewProps {
   range?: [number, number]
   position?: number
   integer?: boolean
-  onChange: (value: number) => void
+  onChange?: (value: number) => void
 }
 
 export class Slider extends View {
@@ -28,7 +28,7 @@ export class Slider extends View {
   #contentSize?: Size
   #integer: boolean
   #isHover = false
-  #onChange: (value: number) => void
+  #onChange?: (value: number) => void
 
   constructor({
     direction,
@@ -85,7 +85,7 @@ export class Slider extends View {
       )
 
       if (this.#position !== prev) {
-        this.#onChange(this.#position)
+        this.#onChange?.(this.#position)
       }
     }
   }

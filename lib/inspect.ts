@@ -9,34 +9,45 @@ export function isDebugging(enabled?: boolean) {
   return _debug
 }
 
+function isEmpty(object: object) {
+  for (const key in object) {
+    return false
+  }
+  return true
+}
+
 export function inspect(
   value: any,
   wrap: boolean = true,
-  recursion = 0,
+  recursionDepth = 0,
 ): string {
-  if (recursion >= 10) {
+  if (recursionDepth >= 4) {
     return red('...')
   }
 
   if (value instanceof Set) {
-    return `new Set(${inspect(Array.from(value.values()), wrap, recursion)})`
+    return `new Set(${inspect(
+      Array.from(value.values()),
+      wrap,
+      recursionDepth,
+    )})`
   }
 
   if (value instanceof Map) {
-    return `new Map(${inspect(value.entries(), wrap, recursion)})`
+    return `new Map(${inspect(value.entries(), wrap, recursionDepth)})`
   }
 
-  const tab = '  '.repeat(recursion)
+  const tab = '  '.repeat(recursionDepth)
   const innerTab = tab + '  '
 
   if (
     value instanceof Object &&
     value.constructor !== Object &&
-    Object.keys(value).length === 0
+    isEmpty(value)
   ) {
     return nodeInspect(value).replace('\n', `\n${innerTab}`)
   } else if (typeof value === 'string') {
-    return colorize.string(value, recursion > 0)
+    return colorize.string(value, recursionDepth > 0)
   } else if (
     typeof value === 'number' ||
     typeof value === 'boolean' ||
@@ -51,7 +62,7 @@ export function inspect(
       return '[]'
     }
 
-    const values = value.map(val => inspect(val, wrap, recursion + 1))
+    const values = value.map(val => inspect(val, wrap, recursionDepth + 1))
     const count = values.reduce((len, val) => len + val.length, 0)
     const newline = wrap && count > 100
     let inner: string
@@ -75,8 +86,15 @@ export function inspect(
     return '{}'
   }
 
+  // weird ReactFiberNode one-off
+  if ('$$typeof' in value && '_owner' in value) {
+    const {_owner: _, ...remainder} = value
+    return inspect(remainder, wrap, recursionDepth)
+  }
+
   const values = keys.map(
-    key => `${colorize.key(key)}: ${inspect(value[key], wrap, recursion + 1)}`,
+    key =>
+      `${colorize.key(key)}: ${inspect(value[key], wrap, recursionDepth + 1)}`,
   )
   const count = values.reduce((len, val) => len + val.length, 0)
   const newline = wrap && count > 100

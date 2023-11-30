@@ -10,7 +10,17 @@ let _restoreBg: string | undefined
  * Sets iTerm2 proprietary ANSI codes
  */
 export class iTerm2 {
-  static async setBackground(program: BlessedProgram, bg: Color) {
+  /**
+   * Returns a promise in case you really want to do flow control here, but it's not
+   * necessary; you can fire and forget this as part of `Screen.start()`
+   *
+   * @example
+   * const [screen, program] = Screen.start((program) => {
+   *   iTerm2.setBackground(program, [23, 23, 23])
+   *   return new Box({ … })
+   * })
+   */
+  static setBackground(program: BlessedProgram, bg: Color) {
     process.on('exit', () => {
       iTerm2.restoreBg(program)
     })

@@ -9,7 +9,7 @@ import {Point, Size} from '../geometry'
 type Alignment = 'left' | 'right' | 'center'
 
 interface TextProps {
-  text: string
+  text?: string
   lines?: undefined
 }
 
@@ -28,22 +28,12 @@ type Props = Partial<StyleProps> & (TextProps | LinesProps) & ViewProps
 
 export class Text extends View {
   #text: string
-  get text(): string {
-    return this.#text
-  }
-  set text(value: string) {
-    if (this.#text === value) {
-      return
-    }
-    this.#text = value
-    this.#lines = value.split('\n').map(line => [line, unicode.lineWidth(line)])
-    this.invalidateSize()
-  }
-
   #lines: [string, number][]
   #style: StyleProps['style']
   #alignment: StyleProps['alignment']
   #wrap: StyleProps['wrap']
+
+  declare text: string
 
   constructor(
     {text, lines, style, alignment, wrap, ...viewProps}: Props = {text: ''},
@@ -54,11 +44,18 @@ export class Text extends View {
     this.#alignment = alignment ?? 'left'
     this.#wrap = wrap ?? false
 
-    this.#text = text ?? lines.join('\n')
-    this.#lines = (lines ?? text.split('\n')).map(line => [
-      line,
-      unicode.lineWidth(line),
-    ])
+    if (text !== undefined) {
+      this.#text = text
+      this.#lines = text
+        .split('\n')
+        .map(line => [line, unicode.lineWidth(line)])
+    } else if (lines !== undefined) {
+      this.#text = lines.join('\n')
+      this.#lines = lines.map(line => [line, unicode.lineWidth(line)])
+    } else {
+      this.#text = ''
+      this.#lines = []
+    }
   }
 
   naturalSize(availableSize: Size): Size {
@@ -79,7 +76,7 @@ export class Text extends View {
   render(viewport: Viewport) {
     const lines: [string, number][] = this.#lines
 
-    viewport.usingPen(pen => {
+    viewport.usingPen(this.#style, pen => {
       const point = new Point(0, 0).mutableCopy()
       for (const [line, width] of lines) {
         if (!line.length) {

@@ -5,13 +5,16 @@ import {Screen, Box, Flow, Text, interceptConsoleLog} from 'wretched'
 
 Screen.start(
   new Box({
-    content: new Flow({
-      direction: 'topToBottom',
-      children: [
-        new Text({text: 'First, there was Ncurses'}),
-        new Button({text: 'Tell me more!'}),
-      ],
-    }),
+    border: 'single',
+    children: [
+      new Flow({
+        direction: 'topToBottom',
+        children: [
+          new Text({text: 'First, there was Ncurses'}),
+          new Button({text: 'Tell me more!'}),
+        ],
+      })
+    ],
   }),
 )
 

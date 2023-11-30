@@ -7,20 +7,21 @@ import {Rect, Point, Size, MutablePoint} from '../geometry'
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 
 interface Props extends ViewProps {
-  children: View[]
+  children?: View[]
   direction: Direction
   spaceBetween?: number
 }
 
 export class Flow extends Container {
   direction: Direction
-  #spaceBetween: number
+  spaceBetween: number
+
   constructor({children, direction, spaceBetween, ...viewProps}: Props) {
     super(viewProps)
     this.direction = direction
-    this.#spaceBetween = spaceBetween ?? 0
-    for (const child of children) {
-      this.add(child)
+    this.spaceBetween = spaceBetween ?? 0
+    if (children) {
+      this.addAll(children)
     }
   }
 
@@ -31,18 +32,18 @@ export class Flow extends Container {
       const childSize = child.naturalSize(remainingSize)
       if (isVertical(this.direction)) {
         if (size.height > 0) {
-          size.height += this.#spaceBetween
+          size.height += this.spaceBetween
         }
         size.width = Math.max(size.width, childSize.width)
         size.height += childSize.height
-        remainingSize.height -= childSize.height + this.#spaceBetween
+        remainingSize.height -= childSize.height + this.spaceBetween
       } else {
         if (size.width > 0) {
-          size.width += this.#spaceBetween
+          size.width += this.spaceBetween
         }
         size.width += childSize.width
         size.height = Math.max(size.height, childSize.height)
-        remainingSize.width -= childSize.width + this.#spaceBetween
+        remainingSize.width -= childSize.width + this.spaceBetween
       }
     }
 
@@ -71,10 +72,10 @@ export class Flow extends Container {
       const childSize = child.naturalSize(remainingSize).mutableCopy()
       if (isVertical(this.direction)) {
         childSize.width = viewport.contentSize.width
-        remainingSize.height -= childSize.height + this.#spaceBetween
+        remainingSize.height -= childSize.height + this.spaceBetween
       } else {
         childSize.height = viewport.contentSize.height
-        remainingSize.width -= childSize.width + this.#spaceBetween
+        remainingSize.width -= childSize.width + this.spaceBetween
       }
 
       if (this.direction === 'rightToLeft') {
@@ -95,15 +96,15 @@ export class Flow extends Container {
       }
 
       if (this.direction === 'rightToLeft') {
-        origin.x -= this.#spaceBetween
+        origin.x -= this.spaceBetween
       } else if (this.direction === 'bottomToTop') {
-        origin.y -= this.#spaceBetween
+        origin.y -= this.spaceBetween
       }
 
       if (this.direction === 'leftToRight') {
-        origin.x += childSize.width + this.#spaceBetween
+        origin.x += childSize.width + this.spaceBetween
       } else if (this.direction === 'topToBottom') {
-        origin.y += childSize.height + this.#spaceBetween
+        origin.y += childSize.height + this.spaceBetween
       }
     }
   }

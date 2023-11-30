@@ -85,17 +85,18 @@ export abstract class View {
     Object.defineProperties(this, {
       render: {
         enumerable: false,
-        configurable: true,
         value: this.#renderWrap(render).bind(this),
       },
       naturalSize: {
         enumerable: false,
-        configurable: true,
         value: this.#naturalSizeWrap(naturalSize).bind(this),
       },
+      // don't want to include these in console.log output
       parent: {
         enumerable: false,
-        configurable: true,
+      },
+      debug: {
+        enumerable: false,
       },
     })
   }
