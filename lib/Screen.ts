@@ -32,6 +32,23 @@ export class Screen {
   #mouseManager = new MouseManager()
   #tickManager = new TickManager(() => this.render())
 
+  static reset() {
+    const program = blessedProgram({
+      useBuffer: true,
+    })
+
+    program.alternateBuffer()
+    program.enableMouse()
+    program.hideCursor()
+    program.setMouse({sendFocus: true}, true)
+    program.clear()
+    program.disableMouse()
+    program.showCursor()
+    program.normalBuffer()
+    flushLogs()
+    process.exit(0)
+  }
+
   static start(
     viewConstructor: View | ((program: BlessedProgram) => View),
   ): [Screen, BlessedProgram, View]
