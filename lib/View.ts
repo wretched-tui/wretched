@@ -34,7 +34,7 @@ interface Edges {
 
 export abstract class View {
   parent: Container | null = null
-  debug: boolean
+  debug: boolean = false
 
   #screen: Screen | null = null
   #theme: Theme | undefined
@@ -53,31 +53,8 @@ export abstract class View {
   #maxHeight: Props['maxHeight']
   #padding: Edges | undefined
 
-  constructor({
-    theme,
-    x,
-    y,
-    width,
-    height,
-    minWidth,
-    minHeight,
-    maxWidth,
-    maxHeight,
-    padding,
-    debug,
-  }: Props = {}) {
-    this.#theme = typeof theme === 'string' ? Theme[theme] : theme
-    this.#x = x
-    this.#y = y
-    this.#width = width
-    this.#height = height
-    this.#minWidth = minWidth
-    this.#minHeight = minHeight
-    this.#maxWidth = maxWidth
-    this.#maxHeight = maxHeight
-
-    this.#padding = toEdges(padding)
-    this.debug = debug ?? false
+  constructor(props: Props = {}) {
+    this.#update(props)
 
     const render = this.render.bind(this)
     const naturalSize = this.naturalSize.bind(this)
@@ -101,8 +78,44 @@ export abstract class View {
     })
   }
 
+  update(props: Props) {
+    this.#update(props)
+    this.invalidateSize()
+  }
+
+  #update({
+    theme,
+    x,
+    y,
+    width,
+    height,
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
+    padding,
+    debug,
+  }: Props) {
+    this.#theme = typeof theme === 'string' ? Theme[theme] : theme
+    this.#x = x
+    this.#y = y
+    this.#width = width
+    this.#height = height
+    this.#minWidth = minWidth
+    this.#minHeight = minHeight
+    this.#maxWidth = maxWidth
+    this.#maxHeight = maxHeight
+
+    this.#padding = toEdges(padding)
+    this.debug = debug ?? false
+  }
+
   get theme(): Theme {
     return this.#theme ?? this.parent?.theme ?? Theme.plain
+  }
+
+  set theme(value: Theme | undefined) {
+    this.#theme = value
   }
 
   get screen(): Screen | null {

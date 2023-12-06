@@ -6,8 +6,7 @@ let _debug = false
  * otherwise output way too much, ie console.log in render()
  */
 export function debug(value?: boolean): boolean {
-  _debug = value ?? _debug
-  return _debug
+  return (_debug = value ?? _debug)
 }
 
 export function leftPad(str: string, length: number): string {

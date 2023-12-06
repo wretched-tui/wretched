@@ -42,35 +42,45 @@ interface Props extends ViewProps {
 }
 
 export class Box extends Container {
-  #borderChars: BorderChars
-  #borderSizes: BorderSizes
-  #highlight: boolean
+  #border: Border | BorderChars = 'single'
+  #borderChars: BorderChars = BORDERS.single
+  #borderSizes: BorderSizes = BORDER_SIZE_ZERO
+  #highlight: boolean = false
   #isHover = false
+  declare border: Border | BorderChars
 
-  constructor({children, border, highlight, ...viewProps}: Props) {
-    super(viewProps)
+  constructor({children, ...props}: Props) {
+    super(props)
 
     if (children) {
       this.addAll(children)
     }
 
-    this.#highlight = highlight ?? false
-    ;[this.#borderChars, this.#borderSizes] = calculateBorder(
-      border ?? 'single',
-    )
+    this.#update(props)
 
     Object.defineProperty(this, 'border', {
       enumerable: true,
       get: () => {
-        return border ?? 'single'
+        return this.#border
       },
       set: (value: Border | BorderChars) => {
+        this.#border = value
         ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
       },
     })
   }
 
-  declare border: Border | BorderChars
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({highlight, border}: Props) {
+    this.#highlight = highlight ?? false
+    ;[this.#borderChars, this.#borderSizes] = calculateBorder(
+      border ?? 'single',
+    )
+  }
 
   naturalSize(size: Size): Size {
     const naturalSize = super.naturalSize(
@@ -230,7 +240,7 @@ const BORDERS: Record<Border, BorderChars> = {
   popout: [' \n─', '│', ' \n┌', ' /\\   \n/  \\─┐', '└', '┘', '─', '│'],
 }
 
-const BORDER_SIZE_ZERO = {
+const BORDER_SIZE_ZERO: BorderSizes = {
   maxTop: 0,
   maxRight: 0,
   maxBottom: 0,

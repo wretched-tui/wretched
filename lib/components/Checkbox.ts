@@ -26,22 +26,29 @@ interface LinesProps {
 
 interface StyleProps {
   isChecked: boolean
-  onCheck?: (checked: boolean) => void
+  onCheck?: (isChecked: boolean) => void
 }
 
 type Props = StyleProps & (TextProps | LinesProps) & ViewProps
 
 export class Checkbox extends Container {
-  isChecked: boolean
-
+  isChecked: boolean = false
   #onCheck: StyleProps['onCheck']
   #textView?: Text
   #isPressed = false
   #isHover = false
 
-  constructor({text, isChecked, content, onCheck, ...viewProps}: Props) {
-    super(viewProps)
+  constructor(props: Props) {
+    super(props)
+    this.#update(props)
+  }
 
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({text, isChecked, content, onCheck}: Props) {
     if (text !== undefined) {
       this.add(
         (this.#textView = new Text({

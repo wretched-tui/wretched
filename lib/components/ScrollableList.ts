@@ -65,6 +65,34 @@ export class ScrollableList<T> extends Container {
     this.#keepAtBottom = keepAtBottom ?? false
   }
 
+  update(props: Props<T>) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({}: Props<T>) {}
+
+  naturalSize(availableSize: Size): Size {
+    let {row, offset: y} = this.#contentOffset
+
+    while (y < availableSize.height) {
+      const view = this.viewForRow(row)
+      if (!view) {
+        break
+      }
+
+      const rowSize = this.sizeForRow(row, availableSize.width, view)
+      this.#maxWidth = Math.max(this.#maxWidth, rowSize.width)
+      y += rowSize.height
+      row += 1
+    }
+
+    return new Size(
+      this.#maxWidth + (this.#showScrollbars ? 1 : 0),
+      Math.min(availableSize.height, y),
+    )
+  }
+
   /**
    * Tells ScrollableList to re-fetch the visible rows.
    * @param forCache: 'size' | 'view'   representing which cache to invalidate
@@ -252,27 +280,6 @@ export class ScrollableList<T> extends Container {
     return {row, offset: this.contentSize.height - y}
   }
 
-  naturalSize(availableSize: Size): Size {
-    let {row, offset: y} = this.#contentOffset
-
-    while (y < availableSize.height) {
-      const view = this.viewForRow(row)
-      if (!view) {
-        break
-      }
-
-      const rowSize = this.sizeForRow(row, availableSize.width, view)
-      this.#maxWidth = Math.max(this.#maxWidth, rowSize.width)
-      y += rowSize.height
-      row += 1
-    }
-
-    return new Size(
-      this.#maxWidth + (this.#showScrollbars ? 1 : 0),
-      Math.min(availableSize.height, y),
-    )
-  }
-
   render(viewport: Viewport) {
     viewport.registerMouse('mouse.wheel')
 
@@ -411,10 +418,8 @@ export class ScrollableList<T> extends Container {
   #scrollDownToNextRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset <= -height) {
-      const nextHeight = this.sizeForRow(
-        nextRow + 1,
-        this.contentSize.width,
-      )?.height
+      const nextHeight = this.sizeForRow(nextRow + 1, this.contentSize.width)
+        ?.height
       if (nextHeight === undefined) {
         nextOffset = -height
         break
@@ -430,10 +435,8 @@ export class ScrollableList<T> extends Container {
   #scrollUpToPrevRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset > 0) {
-      const nextHeight = this.sizeForRow(
-        nextRow - 1,
-        this.contentSize.width,
-      )?.height
+      const nextHeight = this.sizeForRow(nextRow - 1, this.contentSize.width)
+        ?.height
       if (nextHeight === undefined) {
         nextOffset = 0
         break

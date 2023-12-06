@@ -15,10 +15,26 @@ levels.forEach(level => {
 })
 
 export function interceptConsoleLog() {
+  decorateConsoleLog()
+
   levels.forEach(level => {
-    console[level] = function () {
-      const args = [...arguments].map(arg => inspect(arg, true))
-      appendLog({level, args})
+    console[level] = function (...args) {
+      appendLog({level, args: [...args]})
+    }
+  })
+}
+
+export function decorateConsoleLog() {
+  levels.forEach(level => {
+    const log = console[level]
+    if ((log as any).isDecorated) {
+      return
+    }
+    ;(log as any).isDecorated = true
+
+    console[level] = function (...args) {
+      args = args.map(arg => inspect(arg, true))
+      log({level, args})
     }
   })
 }

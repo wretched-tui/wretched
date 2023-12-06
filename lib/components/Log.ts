@@ -30,8 +30,8 @@ export class Log extends Container {
     keepAtBottom: true,
   })
 
-  constructor(viewProps: ViewProps = {}) {
-    super(viewProps)
+  constructor(props: ViewProps = {}) {
+    super(props)
 
     this.add(this.#scrollableList)
   }

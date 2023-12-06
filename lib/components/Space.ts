@@ -12,8 +12,17 @@ interface Props extends ViewProps {
 export class Space extends View {
   background?: Color
 
-  constructor({background, ...viewProps}: Props = {}) {
-    super(viewProps)
+  constructor(props: Props = {}) {
+    super(props)
+    this.#update(props)
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({background}: Props) {
     this.background = background
   }
 

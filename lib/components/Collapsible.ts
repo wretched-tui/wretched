@@ -14,11 +14,14 @@ import {
 
 interface StyleProps {
   isCollapsed?: boolean
-  collapsedView: View
-  expandedView: View
 }
 
 type Props = StyleProps & ViewProps
+
+interface ConstructorProps extends Props {
+  collapsedView: View
+  expandedView: View
+}
 
 export class Collapsible extends Container {
   #collapsedView: View
@@ -26,15 +29,26 @@ export class Collapsible extends Container {
   #isCollapsed = true
   #isPressed = false
   #isHover = false
-  constructor({isCollapsed, collapsedView, expandedView, ...viewProps}: Props) {
-    super(viewProps)
 
-    this.#isCollapsed = isCollapsed ?? false
+  constructor({collapsedView, expandedView, ...props}: ConstructorProps) {
+    super(props)
+
     this.#collapsedView = collapsedView
     this.#expandedView = expandedView
 
     this.add(collapsedView)
     this.add(expandedView)
+
+    this.#update(props)
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({isCollapsed}: Props) {
+    this.#isCollapsed = isCollapsed ?? false
   }
 
   naturalSize(availableSize: Size): Size {

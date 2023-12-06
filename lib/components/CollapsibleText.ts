@@ -17,7 +17,11 @@ interface Props extends ViewProps {
 }
 
 export class CollapsibleText extends View {
-  #text: string
+  #text: string = ''
+  #style: Props['style']
+  #isCollapsed = true
+  #isPressed = false
+
   get text(): string {
     return this.#text
   }
@@ -29,15 +33,18 @@ export class CollapsibleText extends View {
     this.invalidateSize()
   }
 
-  #style: Props['style']
-  #isCollapsed = true
-  #isPressed = false
+  constructor(props: Props) {
+    super(props)
+    this.#update(props)
+  }
 
-  constructor({text, style, ...viewProps}: Props) {
-    super(viewProps)
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
 
+  #update({text, style}: Props) {
     this.#style = style
-
     this.#text = text.split('\n')[0]
   }
 

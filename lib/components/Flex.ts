@@ -33,9 +33,13 @@ export class Flex extends Container {
     }
   }
 
-  addFlex(flexSize: FlexSize, child: View) {
-    this.add(child)
-    this.sizes.set(child, flexSize)
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({direction}: Props) {
+    this.direction = direction
   }
 
   naturalSize(availableSize: Size): Size {
@@ -78,6 +82,11 @@ export class Flex extends Container {
     }
 
     return size
+  }
+
+  addFlex(flexSize: FlexSize, child: View) {
+    this.add(child)
+    this.sizes.set(child, flexSize)
   }
 
   render(viewport: Viewport) {

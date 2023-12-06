@@ -21,26 +21,26 @@ interface Props extends ViewProps {
 }
 
 export class Slider extends View {
-  #direction: Direction
-  #border: Border
-  #range: [number, number]
-  #position: number
-  #contentSize?: Size
-  #integer: boolean
+  #direction: Direction = 'vertical'
+  #border: Border = 'line'
+  #range: [number, number] = [0, 0]
+  #position: number = 0
+  #contentSize?: Size = Size.zero
+  #integer: boolean = false
   #isHover = false
   #onChange?: (value: number) => void
 
-  constructor({
-    direction,
-    border,
-    range,
-    position,
-    integer,
-    onChange,
-    ...viewProps
-  }: Props) {
-    super(viewProps)
+  constructor(props: Props) {
+    super(props)
+    this.#update(props)
+  }
 
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({direction, border, range, position, integer, onChange}: Props) {
     this.#direction = direction
     this.#border = border ?? 'fill'
     this.#range = range ?? [0, 1]

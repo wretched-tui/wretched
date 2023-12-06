@@ -26,6 +26,8 @@ export class Viewport {
    * For modals, this offset points to the Rect of the view that presented the modal
    */
   parentRect: Rect
+  declare contentSize: Size
+  declare visibleRect: Rect
 
   constructor(screen: Screen, terminal: Terminal, contentSize: Size) {
     const rect = new Rect(Point.zero, contentSize)
@@ -52,9 +54,6 @@ export class Viewport {
       },
     })
   }
-
-  declare contentSize: Size
-  declare visibleRect: Rect
 
   requestModal(modal: View, onClose: () => void) {
     if (!this.#currentRender) {

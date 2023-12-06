@@ -23,12 +23,21 @@ interface Props extends ViewProps {
 }
 
 export class Separator extends View {
-  #direction: Direction
-  #padding: number
-  #border: Border
+  #direction: Direction = 'vertical'
+  #padding: number = 0
+  #border: Border = 'single'
 
-  constructor({direction, padding, border, ...viewProps}: Props) {
-    super(viewProps)
+  constructor(props: Props) {
+    super(props)
+    this.#update(props)
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({direction, padding, border}: Props) {
     this.#direction = direction
     this.#padding = padding ?? 0
     this.#border = border ?? 'single'

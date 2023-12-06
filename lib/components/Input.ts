@@ -26,15 +26,40 @@ export class Input extends View {
   /**
    * Array of graphemes
    */
-  #chars: string[]
-  onChange?: (text: string) => void
-  onSubmit?: (text: string) => void
+  #chars: string[] = []
+  #onChange?: (text: string) => void
+  #onSubmit?: (text: string) => void
 
   // Printable width
-  #width: number
+  #width: number = 0
   // Text drawing starts at this offset (if it can't fit on screen)
-  #offset: number
-  #cursor: Cursor
+  #offset: number = 0
+  #cursor: Cursor = {start: 0, end: 0}
+
+  constructor(props: Props) {
+    super(props)
+    this.#update(props)
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({text, onChange, onSubmit}: Props) {
+    this.#onChange = onChange
+    this.#onSubmit = onSubmit
+    text = unicode.removeAnsi(text ?? '')
+
+    this.#chars = unicode.printableChars(text)
+    this.#width = unicode.lineWidth(text)
+    this.#offset = 0
+    this.#cursor = {start: this.#chars.length, end: this.#chars.length}
+  }
+
+  naturalSize(): Size {
+    return new Size(this.#width + 1, 1)
+  }
 
   minSelected() {
     return Math.min(this.#cursor.start, this.#cursor.end)
@@ -44,19 +69,6 @@ export class Input extends View {
     return isEmptySelection(this.#cursor)
       ? this.#cursor.start + 1
       : Math.max(this.#cursor.start, this.#cursor.end)
-  }
-
-  constructor({text, onChange, onSubmit, ...viewProps}: Props) {
-    super(viewProps)
-
-    this.onChange = onChange
-    this.onSubmit = onSubmit
-    text = unicode.removeAnsi(text ?? '')
-
-    this.#chars = unicode.printableChars(text)
-    this.#width = unicode.lineWidth(text)
-    this.#offset = 0
-    this.#cursor = {start: this.#chars.length, end: this.#chars.length}
   }
 
   get text() {
@@ -92,7 +104,7 @@ export class Input extends View {
     this.#dt = 0
 
     if (event.name === 'enter' || event.name === 'return') {
-      this.onSubmit?.(this.#chars.join(''))
+      this.#onSubmit?.(this.#chars.join(''))
       return
     }
 
@@ -119,12 +131,8 @@ export class Input extends View {
     }
 
     if (prevChars !== this.#chars) {
-      this.onChange?.(this.#chars.join(''))
+      this.#onChange?.(this.#chars.join(''))
     }
-  }
-
-  naturalSize(): Size {
-    return new Size(this.#width + 1, 1)
   }
 
   toPosition(offset: number) {

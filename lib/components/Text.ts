@@ -27,19 +27,40 @@ interface StyleProps {
 type Props = Partial<StyleProps> & (TextProps | LinesProps) & ViewProps
 
 export class Text extends View {
-  #text: string
-  #lines: [string, number][]
+  #text: string = ''
+  #lines: [string, number][] = []
   #style: StyleProps['style']
-  #alignment: StyleProps['alignment']
-  #wrap: StyleProps['wrap']
-
+  #alignment: StyleProps['alignment'] = 'left'
+  #wrap: StyleProps['wrap'] = false
   declare text: string
 
-  constructor(
-    {text, lines, style, alignment, wrap, ...viewProps}: Props = {text: ''},
-  ) {
-    super(viewProps)
+  constructor(props: Props = {}) {
+    super(props)
 
+    this.#update(props)
+
+    Object.defineProperty(this, 'text', {
+      enumerable: true,
+      get: () => this.#text,
+      set: (value: string) => {
+        if (this.#text === value) {
+          return
+        }
+        this.#text = value
+        this.#lines = value
+          .split('\n')
+          .map(line => [line, unicode.lineWidth(line)])
+        this.invalidateSize()
+      },
+    })
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({text, lines, style, alignment, wrap}: Props) {
     this.#style = style
     this.#alignment = alignment ?? 'left'
     this.#wrap = wrap ?? false

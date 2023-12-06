@@ -13,17 +13,22 @@ import {
 } from '../events'
 
 interface Props extends ViewProps {
-  drawer: View
-  content: View
+  isOpen?: boolean
+  onToggle?: (isOpen: boolean) => void
+}
+
+interface ConstructorProps extends Props {
+  drawerView: View
+  contentView: View
 }
 
 const DRAWER_BTN_SIZE = new Size(3, 8)
-const GRAY_TEXT = 156
-const GRAY_HOVER = 255
+// const GRAY_TEXT = 156
+// const GRAY_HOVER = 255
 
 export class Drawer extends Container {
-  readonly drawer: View
-  readonly content: View
+  readonly drawerView: View
+  readonly contentView: View
 
   #isHover = false
   #isPressed = false
@@ -31,33 +36,60 @@ export class Drawer extends Container {
   #isOpen = false
   #targetDx = 0
   #currentDx = 0
+  #onToggle: Props['onToggle']
 
-  constructor({content, drawer, ...viewProps}: Props) {
-    super(viewProps)
+  constructor({contentView, drawerView, ...props}: ConstructorProps) {
+    super(props)
 
-    this.add((this.drawer = drawer))
-    this.add((this.content = content))
+    this.add((this.drawerView = drawerView))
+    this.add((this.contentView = contentView))
+
+    this.#update(props)
   }
 
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({isOpen, onToggle}: Props) {
+    if (isOpen !== undefined) {
+      this.#setIsOpen(isOpen, false)
+    }
+    this.#onToggle = onToggle
+  }
+
+  /**
+   * Not called internally, and so never reports to onToggle
+   */
   open() {
-    this.#setIsOpen(true)
+    this.#setIsOpen(true, false)
   }
 
+  /**
+   * Not called internally, and so never reports to onToggle
+   */
   close() {
-    this.#setIsOpen(false)
+    this.#setIsOpen(false, false)
   }
 
+  /**
+   * Not called internally, and so never reports to onToggle
+   */
   toggle() {
-    this.#setIsOpen(!this.#isOpen)
+    this.#setIsOpen(!this.#isOpen, false)
   }
 
-  #setIsOpen(value: boolean) {
+  #setIsOpen(value: boolean, report: boolean) {
     this.#isOpen = value
     this.#targetDx = value ? this.#drawerWidth : 0
+    if (report) {
+      this.#onToggle?.(value)
+    }
   }
 
   naturalSize(size: Size): Size {
-    const drawerSize = this.drawer.naturalSize(
+    const drawerSize = this.drawerView.naturalSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
     this.#drawerWidth = drawerSize.width
@@ -65,7 +97,7 @@ export class Drawer extends Container {
       this.#targetDx = this.#drawerWidth
     }
 
-    const contentSize = this.content.naturalSize(
+    const contentSize = this.contentView.naturalSize(
       size.shrink(DRAWER_BTN_SIZE.width, 0),
     )
 
@@ -103,7 +135,7 @@ export class Drawer extends Container {
     }
 
     if (isMouseClicked(event)) {
-      this.toggle()
+      this.#setIsOpen(!this.#isOpen, true)
     }
   }
 
@@ -123,17 +155,17 @@ export class Drawer extends Container {
     )
 
     viewport.clipped(contentRect, inside => {
-      this.content.render(inside)
+      this.contentView.render(inside)
     })
 
-    if (this.drawer && this.#currentDx > 0) {
+    if (this.drawerView && this.#currentDx > 0) {
       const drawerRect = new Rect(
         new Point(this.#currentDx - this.#drawerWidth, 1),
         new Size(this.#drawerWidth, drawerButtonRect.size.height - 2),
       )
       viewport.paint(this.theme.text(), drawerRect)
       viewport.clipped(drawerRect, inside => {
-        this.drawer.render(inside)
+        this.drawerView.render(inside)
       })
     }
 

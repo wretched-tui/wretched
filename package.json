@@ -1,6 +1,6 @@
 {
   "name": "wretched",
-  "description": "A low-level terminal interface library for node.js.",
+  "description": "A high-level terminal UI library for Node",
   "author": "Colin T.A. Gray <colinta@colinta.com>",
   "contributors": [
     "Shawn Chen <meishangchen@gmail.com>",

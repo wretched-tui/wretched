@@ -21,52 +21,62 @@ type Border = 'default' | 'arrows' | 'large' | 'none'
 type ButtonSize = 'compact' | 'large'
 type BorderChars = [string, string, ButtonSize]
 
-interface TextProps {
-  text: string
-  content?: undefined
-}
-
-interface LinesProps {
-  text?: undefined
-  content: View
-}
-
-interface StyleProps {
+export interface Props extends ViewProps {
+  text?: string
   border?: Border
   onClick?: () => void
   hotKey?: HotKey
 }
 
-export type Props = StyleProps & (TextProps | LinesProps) & ViewProps
+interface ConstructorProps extends Props {
+  contentView?: View
+}
 
 export class Button extends Container {
   #hotKey?: HotKey
-  #onClick: StyleProps['onClick']
-  #textView?: Text
-  #border: Border
+  #onClick?: Props['onClick']
+  #textView: Text
+  #border: Border = 'default'
   #isPressed = false
   #isHover = false
 
-  constructor({text, border, content, hotKey, onClick, ...viewProps}: Props) {
-    super(viewProps)
+  constructor({contentView, ...props}: ConstructorProps) {
+    super(props)
 
-    if (text !== undefined) {
-      this.add(
-        (this.#textView = new Text({
-          text: hotKey ? styleTextForHotKey(text, hotKey) : text,
-          alignment: 'center',
-        })),
-      )
-    } else {
-      if (content instanceof Text) {
-        this.#textView = content
+    this.add(
+      (this.#textView = new Text({
+        alignment: 'center',
+      })),
+    )
+
+    if (contentView) {
+      if (contentView instanceof Text) {
+        this.#textView = contentView
       }
-      this.add(content)
+      this.add(contentView)
     }
+
+    this.#update(props)
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({text, border, hotKey, onClick}: Props) {
+    text = text ?? ''
+    const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
+    this.#textView.text = styledText
 
     this.#border = border ?? 'default'
     this.#hotKey = hotKey
     this.#onClick = onClick
+  }
+
+  naturalSize(availableSize: Size): Size {
+    const [left, right, height] = this.#borderSize()
+    return super.naturalSize(availableSize).grow(left + right, height)
   }
 
   get isHover() {
@@ -94,11 +104,6 @@ export class Button extends Container {
       unicode.lineWidth(right),
       size === 'compact' ? 0 : 2,
     ]
-  }
-
-  naturalSize(availableSize: Size): Size {
-    const [left, right, height] = this.#borderSize()
-    return super.naturalSize(availableSize).grow(left + right, height)
   }
 
   receiveMouse(event: MouseEvent) {

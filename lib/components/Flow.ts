@@ -13,16 +13,27 @@ interface Props extends ViewProps {
 }
 
 export class Flow extends Container {
-  direction: Direction
-  spaceBetween: number
+  #direction: Direction = 'leftToRight'
+  #spaceBetween: number = 0
 
-  constructor({children, direction, spaceBetween, ...viewProps}: Props) {
-    super(viewProps)
-    this.direction = direction
-    this.spaceBetween = spaceBetween ?? 0
+  constructor({children, ...props}: Props) {
+    super(props)
+
     if (children) {
       this.addAll(children)
     }
+
+    this.#update(props)
+  }
+
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({direction, spaceBetween}: Props) {
+    this.#direction = direction
+    this.#spaceBetween = spaceBetween ?? 0
   }
 
   naturalSize(availableSize: Size): Size {
@@ -30,20 +41,20 @@ export class Flow extends Container {
     const size = Size.zero.mutableCopy()
     for (const child of this.children) {
       const childSize = child.naturalSize(remainingSize)
-      if (isVertical(this.direction)) {
+      if (isVertical(this.#direction)) {
         if (size.height > 0) {
-          size.height += this.spaceBetween
+          size.height += this.#spaceBetween
         }
         size.width = Math.max(size.width, childSize.width)
         size.height += childSize.height
-        remainingSize.height -= childSize.height + this.spaceBetween
+        remainingSize.height -= childSize.height + this.#spaceBetween
       } else {
         if (size.width > 0) {
-          size.width += this.spaceBetween
+          size.width += this.#spaceBetween
         }
         size.width += childSize.width
         size.height = Math.max(size.height, childSize.height)
-        remainingSize.width -= childSize.width + this.spaceBetween
+        remainingSize.width -= childSize.width + this.#spaceBetween
       }
     }
 
@@ -53,7 +64,7 @@ export class Flow extends Container {
   render(viewport: Viewport) {
     const remainingSize = viewport.contentSize.mutableCopy()
     let origin: MutablePoint
-    switch (this.direction) {
+    switch (this.#direction) {
       case 'leftToRight':
       case 'topToBottom':
         origin = Point.zero.mutableCopy()
@@ -70,17 +81,17 @@ export class Flow extends Container {
       maxVisibleX = viewport.visibleRect.maxX()
     for (const child of this.children) {
       const childSize = child.naturalSize(remainingSize).mutableCopy()
-      if (isVertical(this.direction)) {
+      if (isVertical(this.#direction)) {
         childSize.width = viewport.contentSize.width
-        remainingSize.height -= childSize.height + this.spaceBetween
+        remainingSize.height -= childSize.height + this.#spaceBetween
       } else {
         childSize.height = viewport.contentSize.height
-        remainingSize.width -= childSize.width + this.spaceBetween
+        remainingSize.width -= childSize.width + this.#spaceBetween
       }
 
-      if (this.direction === 'rightToLeft') {
+      if (this.#direction === 'rightToLeft') {
         origin.x -= childSize.width
-      } else if (this.direction === 'bottomToTop') {
+      } else if (this.#direction === 'bottomToTop') {
         origin.y -= childSize.height
       }
 
@@ -95,16 +106,16 @@ export class Flow extends Container {
         break
       }
 
-      if (this.direction === 'rightToLeft') {
-        origin.x -= this.spaceBetween
-      } else if (this.direction === 'bottomToTop') {
-        origin.y -= this.spaceBetween
+      if (this.#direction === 'rightToLeft') {
+        origin.x -= this.#spaceBetween
+      } else if (this.#direction === 'bottomToTop') {
+        origin.y -= this.#spaceBetween
       }
 
-      if (this.direction === 'leftToRight') {
-        origin.x += childSize.width + this.spaceBetween
-      } else if (this.direction === 'topToBottom') {
-        origin.y += childSize.height + this.spaceBetween
+      if (this.#direction === 'leftToRight') {
+        origin.x += childSize.width + this.#spaceBetween
+      } else if (this.#direction === 'topToBottom') {
+        origin.y += childSize.height + this.#spaceBetween
       }
     }
   }

@@ -29,11 +29,10 @@ interface BorderChars {
   below: BoxBorderChars
 }
 
+type Choices<T> = [string, T][]
+
 interface SharedProps<T> extends ViewProps {
   choices: Choices<T>
-}
-
-interface StyleProps {
   title?: string
 }
 
@@ -42,19 +41,20 @@ type SelectOneFn<T> = (value: T) => void
 
 interface SelectMultiple<T> {
   selected: readonly T[]
-  onSelect: SelectMultipleFn<T>
+  onSelect?: SelectMultipleFn<T>
 }
 
 interface SelectOne<T> {
   selected?: T
-  onSelect: SelectOneFn<T>
+  onSelect?: SelectOneFn<T>
 }
 
 type Props<T, M extends boolean | undefined> = SharedProps<T> &
-  StyleProps & {multiple?: M} & (M extends true
-    ? SelectMultiple<T>
-    : SelectOne<T>)
-type Choices<T> = [string, T][]
+  (M extends true ? SelectMultiple<T> : SelectOne<T>)
+
+type ConstructorProps<T, M extends boolean | undefined> = Props<T, M> & {
+  multiple?: M
+}
 
 export class Dropdown<T, M extends boolean> extends View {
   dropdownSelector: DropdownSelector<T>
@@ -62,29 +62,35 @@ export class Dropdown<T, M extends boolean> extends View {
   #isHover = false
   #showModal = false
   readonly #multiple: boolean
-  #onSelectCallback: SelectMultipleFn<T> | SelectOneFn<T>
+  #onSelectCallback?: SelectMultipleFn<T> | SelectOneFn<T>
 
-  constructor({
-    title,
-    choices,
-    selected,
-    multiple,
-    onSelect,
-    ...viewProps
-  }: Props<T, M>) {
-    super(viewProps)
+  constructor({multiple, ...props}: ConstructorProps<T, M>) {
+    super(props)
 
     this.#multiple = multiple ?? false
-    this.#onSelectCallback = onSelect
-    const selectedRows = dropdownSelectedRows(selected, choices, this.#multiple)
     this.dropdownSelector = new DropdownSelector({
       theme: this.theme,
       multiple: this.#multiple,
-      choices,
-      selected: selectedRows,
+      choices: [],
+      selected: [],
       onSelect: () => this.#onSelect(),
     })
+
+    this.#update(props as Props<T, M>)
+  }
+
+  update(props: Props<T, M>) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({title, choices, selected, onSelect}: Props<T, M>) {
+    this.#onSelectCallback = onSelect
     this.#title = title ? title.split('\n') : undefined
+
+    this.choices = choices
+    this.selected = selected as any
+    this.dropdownSelector.theme = this.theme
   }
 
   get choices() {
@@ -127,12 +133,12 @@ export class Dropdown<T, M extends boolean> extends View {
 
   #onSelect() {
     if (this.#multiple) {
-      ;(this.#onSelectCallback as any)(this.dropdownSelector.selectedValues)
+      ;(this.#onSelectCallback as any)?.(this.dropdownSelector.selectedValues)
     } else {
       this.dismissModal()
       const value = this.dropdownSelector.selectedValue
       if (value !== undefined) {
-        ;(this.#onSelectCallback as any)(value)
+        ;(this.#onSelectCallback as any)?.(value)
       }
     }
 
@@ -351,7 +357,7 @@ class DropdownSelector<T> extends Container {
     return new Button({
       theme: isSelected ? 'selected' : undefined,
       border: 'none',
-      content: new Text({
+      contentView: new Text({
         width: 'fill',
         lines: lines.map((line, index) => {
           return dropdownPrefix(this.#multiple, index, isSelected) + line
