@@ -19,7 +19,7 @@ export function interceptConsoleLog() {
 
   levels.forEach(level => {
     console[level] = function (...args) {
-      appendLog({level, args: [...args]})
+      appendLog({level, args})
     }
   })
 }
@@ -33,8 +33,7 @@ export function decorateConsoleLog() {
     ;(log as any).isDecorated = true
 
     console[level] = function (...args) {
-      args = args.map(arg => inspect(arg, true))
-      log({level, args})
+      log(...args.map(arg => inspect(arg, true)))
     }
   })
 }

@@ -6,10 +6,13 @@
     "Shawn Chen <meishangchen@gmail.com>",
     "Christopher Jeffrey (via Blessed)"
   ],
-  "version": "1.0.3-alpha",
+  "version": "1.0.5-alpha",
   "license": "MIT",
   "preferGlobal": false,
-  "repository": "git://github.com/wretched-tui/wretched.git",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/wretched-tui/wretched.git"
+  },
   "homepage": "https://github.com/wretched-tui/wretched",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
