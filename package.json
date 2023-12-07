@@ -23,8 +23,8 @@
     "url": "http://github.com/wretched-tui/wretched/issues"
   },
   "scripts": {
-    "publish": "npm publish --tag alpha",
     "prepublishOnly": "yarn clean && yarn tsc && yarn cp-usr && rm -rf dist/demos/",
+    "gittag": "git tag $(node -e 'console.log(require(\"./package\").version)')",
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
     "build": "yarn clean && yarn tsc && yarn cp-usr",
