@@ -1,23 +1,9 @@
-import type {BlessedProgram} from '../sys'
-
-import {iTerm2} from '../iTerm2'
-import {interceptConsoleLog} from '../log'
-
-import {Screen} from '../Screen'
-import {Text, Flow} from '../components'
+import {Text} from '../components'
 import {Size} from '../geometry'
 import {View} from '../View'
 import {Viewport} from '../Viewport'
 
-function run() {
-  interceptConsoleLog()
-  process.title = 'Wretched'
-  const [screen, program] = Screen.start((program: BlessedProgram) => {
-    iTerm2.setBackground(program, [23, 23, 23])
-
-    return new AnimatedText({frames: animations})
-  })
-}
+import {demo} from './demo'
 
 class AnimatedText extends View {
   #frameTime = 0
@@ -58,238 +44,238 @@ class AnimatedText extends View {
   }
 }
 
-run()
+const frames = [
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+───╴━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+──╴━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+─╴━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+╴━━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━━╶─────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━╶──────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━╶───────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━╶────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━╶─────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━╶────────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━╶───────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━╶──────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━━╶─────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+━━━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+╴━━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+─╴━━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+──╴━━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+───╴━━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━╶───`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━╶──`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━╶─`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━━╶`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────╴━━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+──────╴━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+───────╴━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+────────╴━━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────────╴━━━━`,
+  `
+Tab1 Tab2 Tab3
+────────╴━━━━━`,
+  `
+Tab1 Tab2 Tab3
+───────╴━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+──────╴━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+─────╴━━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━━━`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━━╶`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━━╶─`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━━╶──`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━━╶───`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+  `
+Tab1 Tab2 Tab3
+────╴━━━━╶────`,
+].map(t => t.slice(1))
 
-const animations = [
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-───╴━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-──╴━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─╴━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-╴━━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━━╶─────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━╶──────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━╶───────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━╶────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━╶─────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━╶────────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━╶───────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━╶──────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━━╶─────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-━━━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-╴━━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─╴━━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-──╴━━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-───╴━━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━╶───`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━╶──`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━╶─`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━━╶`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────╴━━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-──────╴━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-───────╴━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────────╴━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────────╴━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────────╴━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-───────╴━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-──────╴━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-─────╴━━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━━━`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━━╶`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━━╶─`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━━╶──`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━━╶───`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-  `
-Tab1 Tab2 Tab3
-────╴━━━━╶────`.slice(1),
-]
+demo(new AnimatedText({frames}))

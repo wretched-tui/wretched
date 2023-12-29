@@ -1,39 +1,7 @@
-import type {BlessedProgram} from '../sys'
-
-import {iTerm2} from '../iTerm2'
-import {interceptConsoleLog} from '../log'
 import {inspect} from '../inspect'
+import {Collapsible, Text} from '../components'
 
-import {Screen} from '../Screen'
-import {TrackMouse} from '../components/utility'
-import {ConsoleLog, Collapsible, Text} from '../components'
-
-function run() {
-  interceptConsoleLog()
-  process.title = 'Wretched'
-
-  const consoleLog = new ConsoleLog({
-    minHeight: 10,
-  })
-  const [screen, program] = Screen.start((program: BlessedProgram) => {
-    iTerm2.setBackground(program, [23, 23, 23])
-
-    return new TrackMouse({
-      content: new Collapsible({
-        isCollapsed: false,
-        collapsedView: new Text({text: inspect(OBJ, false)}),
-        expandedView: new Text({text: inspect(OBJ, true)}),
-      }),
-    })
-  })
-
-  program.key('escape', function () {
-    consoleLog.clear()
-    screen.render()
-  })
-}
-
-run()
+import {demo} from './demo'
 
 const OBJ = {
   word: 'something',
@@ -44,3 +12,11 @@ const OBJ = {
     long: 'finally, a long sentence, one that goes on a little too long, it could be argued.',
   },
 }
+
+demo(
+  new Collapsible({
+    isCollapsed: false,
+    collapsedView: new Text({text: inspect(OBJ, false)}),
+    expandedView: new Text({text: inspect(OBJ, true)}),
+  }),
+)
