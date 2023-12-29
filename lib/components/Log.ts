@@ -47,6 +47,7 @@ export class Log extends Container {
 
   clear() {
     this.#logs = []
+    this.#scrollableList.updateItems(this.#logs)
   }
 }
 

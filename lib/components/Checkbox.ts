@@ -44,8 +44,8 @@ export class Checkbox extends Container {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({text, isChecked, content, onCheck}: Props) {

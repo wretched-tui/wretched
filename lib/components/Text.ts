@@ -56,8 +56,8 @@ export class Text extends View {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({text, lines, style, alignment, wrap}: Props) {

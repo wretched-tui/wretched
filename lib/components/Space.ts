@@ -18,8 +18,8 @@ export class Space extends View {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({background}: Props) {

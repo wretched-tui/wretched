@@ -16,6 +16,19 @@ export class Flow extends Container {
   #direction: Direction = 'leftToRight'
   #spaceBetween: number = 0
 
+  static down(props: Omit<Props, 'direction'> = {}) {
+    return new Flow({...props, direction: 'topToBottom'})
+  }
+  static up(props: Omit<Props, 'direction'> = {}) {
+    return new Flow({...props, direction: 'bottomToTop'})
+  }
+  static right(props: Omit<Props, 'direction'> = {}) {
+    return new Flow({...props, direction: 'leftToRight'})
+  }
+  static left(props: Omit<Props, 'direction'> = {}) {
+    return new Flow({...props, direction: 'rightToLeft'})
+  }
+
   constructor({children, ...props}: Props) {
     super(props)
 
@@ -27,8 +40,8 @@ export class Flow extends Container {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({direction, spaceBetween}: Props) {

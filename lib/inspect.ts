@@ -45,7 +45,7 @@ export function inspect(
     value.constructor !== Object &&
     isEmpty(value)
   ) {
-    return nodeInspect(value).replace('\n', `\n${innerTab}`)
+    return nodeInspect(value, {getters: true}).replace('\n', `\n${innerTab}`)
   } else if (typeof value === 'string') {
     return colorize.string(value, recursionDepth > 0)
   } else if (

@@ -27,6 +27,7 @@ export class Viewport {
    */
   parentRect: Rect
   declare contentSize: Size
+  declare contentRect: Rect
   declare visibleRect: Rect
 
   constructor(screen: Screen, terminal: Terminal, contentSize: Size) {
@@ -39,18 +40,25 @@ export class Viewport {
     this.#offset = Point.zero
     this.#style = Style.NONE
 
-    // so that these get included in inspect(viewport)
-    Object.defineProperty(this, 'contentSize', {
-      enumerable: true,
-      get: () => {
-        return this.#contentSize
+    // control visibility of props for inspect(viewport)
+    Object.defineProperties(this, {
+      contentSize: {
+        enumerable: true,
+        get: () => {
+          return this.#contentSize
+        },
       },
-    })
-
-    Object.defineProperty(this, 'visibleRect', {
-      enumerable: true,
-      get: () => {
-        return this.#visibleRect
+      contentRect: {
+        enumerable: false,
+        get: () => {
+          return new Rect(Point.zero, this.#contentSize)
+        },
+      },
+      visibleRect: {
+        enumerable: true,
+        get: () => {
+          return this.#visibleRect
+        },
       },
     })
   }

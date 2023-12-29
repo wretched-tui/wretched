@@ -22,6 +22,8 @@ import {MouseManager} from './managers/MouseManager'
 import {TickManager} from './managers/TickManager'
 import {Window} from './components/Window'
 
+type ViewConstructor = (program: BlessedProgram) => View | Promise<View>
+
 export class Screen {
   #program: SGRTerminal
   rootView: View
@@ -49,14 +51,14 @@ export class Screen {
     process.exit(0)
   }
 
-  static start(
-    viewConstructor: View | ((program: BlessedProgram) => View),
-  ): [Screen, BlessedProgram, View]
-  static start(): [Screen, BlessedProgram, Window]
+  static async start(
+    viewConstructor: View | ViewConstructor,
+  ): Promise<[Screen, BlessedProgram, View]>
+  static async start(): Promise<[Screen, BlessedProgram, Window]>
 
-  static start(
-    viewConstructor: View | ((program: BlessedProgram) => View) = new Window(),
-  ): [Screen, BlessedProgram, View] {
+  static async start(
+    viewConstructor: View | ViewConstructor = new Window(),
+  ): Promise<[Screen, BlessedProgram, View]> {
     const program = blessedProgram({
       useBuffer: true,
     })
@@ -71,15 +73,14 @@ export class Screen {
     // attaching the screen or else I-don't-remember-what will happen.
     const fn = function () {}
     program.on('keypress', fn)
+    program.off('keypress', fn)
 
     const rootView =
       viewConstructor instanceof View
         ? viewConstructor
-        : viewConstructor(program)
+        : await viewConstructor(program)
+
     const screen = new Screen(program, rootView)
-
-    program.off('keypress', fn)
-
     program.on('focus', function () {
       screen.trigger({type: 'focus'})
     })

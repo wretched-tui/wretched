@@ -33,8 +33,8 @@ export class Separator extends View {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({direction, padding, border}: Props) {

@@ -8,20 +8,33 @@ import type {KeyEvent, MouseEvent} from './events'
 import {Point, Size, Rect} from './geometry'
 
 type Dimension = number | 'fill' | 'natural'
+export type FlexSize = 'natural' | number
+export type FlexShorthand = FlexSize | `flex${number}`
+
+export function parseFlexShorthand(flex: FlexShorthand): FlexSize {
+  if (flex === 'natural') {
+    return 'natural'
+  } else if (typeof flex === 'string') {
+    return +flex.slice('flex'.length) // 'flexN'
+  }
+  return flex
+}
 
 export interface Props {
   theme?: Theme | Purpose
+  // size and positioning
   x?: number
   y?: number
-  //
   width?: Dimension
   height?: Dimension
   minWidth?: number
   minHeight?: number
   maxWidth?: number
   maxHeight?: number
-  //
   padding?: number | Partial<Edges>
+  // only used as a child of <Flex> views
+  flex?: FlexShorthand
+  // use this however you want
   debug?: boolean
 }
 
@@ -51,7 +64,8 @@ export abstract class View {
   #minHeight: Props['minHeight']
   #maxWidth: Props['maxWidth']
   #maxHeight: Props['maxHeight']
-  #padding: Edges | undefined
+  padding: Edges | undefined
+  flex: FlexSize = 'natural'
 
   constructor(props: Props = {}) {
     this.#update(props)
@@ -94,6 +108,7 @@ export abstract class View {
     maxWidth,
     maxHeight,
     padding,
+    flex,
     debug,
   }: Props) {
     this.#theme = typeof theme === 'string' ? Theme[theme] : theme
@@ -106,8 +121,19 @@ export abstract class View {
     this.#maxWidth = maxWidth
     this.#maxHeight = maxHeight
 
-    this.#padding = toEdges(padding)
+    this.padding = toEdges(padding)
+    this.flex = flex === undefined ? 'natural' : parseFlexShorthand(flex)
     this.debug = debug ?? false
+
+    Object.defineProperties(this, {
+      // only include these if they were defined
+      padding: {
+        enumerable: padding !== undefined,
+      },
+      flex: {
+        enumerable: flex !== undefined,
+      },
+    })
   }
 
   get theme(): Theme {
@@ -217,10 +243,10 @@ export abstract class View {
       const size = this.#restrictSize(
         () => {
           let size = naturalSize(availableSize)
-          if (this.#padding) {
+          if (this.padding) {
             size = size.grow(
-              this.#padding.left + this.#padding.right,
-              this.#padding.top + this.#padding.bottom,
+              this.padding.left + this.padding.right,
+              this.padding.top + this.padding.bottom,
             )
           }
           return size
@@ -270,10 +296,10 @@ export abstract class View {
         origin = Point.zero
       }
 
-      if (this.#padding) {
-        origin = origin.offset(this.#padding.left, this.#padding.top)
-        contentSize.width -= this.#padding.left + this.#padding.right
-        contentSize.height -= this.#padding.top + this.#padding.bottom
+      if (this.padding) {
+        origin = origin.offset(this.padding.left, this.padding.top)
+        contentSize.width -= this.padding.left + this.padding.right
+        contentSize.height -= this.padding.top + this.padding.bottom
       }
 
       this.#renderedContentSize = this.#restrictSize(
@@ -319,18 +345,20 @@ export abstract class View {
   }
 
   moveToScreen(screen: Screen | null) {
-    if (this.#screen !== screen) {
-      const prev = this.#screen
-      this.#screen = screen
+    if (this.#screen === screen) {
+      return
+    }
 
-      if (screen) {
-        if (prev) {
-          this.didUnmount(prev)
-        }
-        this.didMount(screen)
-      } else {
-        this.didUnmount(prev!)
+    const prev = this.#screen
+    this.#screen = screen
+
+    if (screen) {
+      if (prev) {
+        this.didUnmount(prev)
       }
+      this.didMount(screen)
+    } else {
+      this.didUnmount(prev!)
     }
   }
 }

@@ -60,8 +60,8 @@ export class Button extends Container {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({text, border, hotKey, onClick}: Props) {

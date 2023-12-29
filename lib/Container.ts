@@ -39,6 +39,14 @@ export abstract class Container extends View {
   }
 
   add(child: View, at?: number) {
+    // early exit for adding child at its current index
+    if (
+      this.#children.length &&
+      this.#children[at ?? this.#children.length - 1] === child
+    ) {
+      return
+    }
+
     // don't call 'remove' - we don't want to call didUnmount, and only call
     // didMoveFrom if we changed from one parent view to another
     if (child.parent === this) {
@@ -64,7 +72,7 @@ export abstract class Container extends View {
     }
     // in theory we could call 'didReorder' in the else clause
 
-    // takes care of didMount
+    // takes care of didMount, noop if screen == this.screen
     child.moveToScreen(this.screen)
   }
 

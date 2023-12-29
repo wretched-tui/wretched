@@ -22,6 +22,10 @@ export function interceptConsoleLog() {
       appendLog({level, args})
     }
   })
+
+  process.on('exit', code => {
+    flushLogs()
+  })
 }
 
 export function decorateConsoleLog() {

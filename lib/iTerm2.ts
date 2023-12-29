@@ -15,8 +15,8 @@ export class iTerm2 {
    * necessary; you can fire and forget this as part of `Screen.start()`
    *
    * @example
-   * const [screen, program] = Screen.start((program) => {
-   *   iTerm2.setBackground(program, [23, 23, 23])
+   * Screen.start(async (program) => {
+   *   await iTerm2.setBackground(program, [23, 23, 23])
    *   return new Box({ … })
    * })
    */

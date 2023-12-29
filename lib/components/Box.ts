@@ -47,6 +47,7 @@ export class Box extends Container {
   #borderSizes: BorderSizes = BORDER_SIZE_ZERO
   #highlight: boolean = false
   #isHover = false
+
   declare border: Border | BorderChars
 
   constructor({children, ...props}: Props) {
@@ -71,8 +72,8 @@ export class Box extends Container {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({highlight, border}: Props) {

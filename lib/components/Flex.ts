@@ -1,41 +1,57 @@
 import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
-import {View} from '../View'
+import {View, parseFlexShorthand} from '../View'
+import type {FlexShorthand, FlexSize} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
-type FlexSize = 'natural' | {flex: number} | `flex${number}` // {flex: number} shorthand
 
 interface Props extends ViewProps {
-  children: ([FlexSize, View] | View)[]
+  children?: ([FlexShorthand, View] | View)[]
   direction: Direction
 }
 
 export class Flex extends Container {
   direction: Direction
-  sizes: Map<View, FlexSize> = new Map()
+  #sizes: Map<View, FlexSize> = new Map()
+
+  static down(props: Omit<Props, 'direction'>) {
+    return new Flex({...props, direction: 'topToBottom'})
+  }
+  static up(props: Omit<Props, 'direction'>) {
+    return new Flex({...props, direction: 'bottomToTop'})
+  }
+  static right(props: Omit<Props, 'direction'>) {
+    return new Flex({...props, direction: 'leftToRight'})
+  }
+  static left(props: Omit<Props, 'direction'>) {
+    return new Flex({...props, direction: 'rightToLeft'})
+  }
 
   constructor({children, direction, ...viewProps}: Props) {
     super(viewProps)
     this.direction = direction
 
-    for (const info of children) {
-      let flexSize: FlexSize, child: View
-      if (info instanceof View) {
-        flexSize = 'natural'
-        child = info
-      } else {
-        ;[flexSize, child] = info
+    if (children) {
+      for (const info of children) {
+        let flexSize: FlexShorthand, child: View
+        if (info instanceof View) {
+          flexSize = info.flex
+          child = info
+        } else {
+          ;[flexSize, child] = info
+
+          flexSize = parseFlexShorthand(flexSize)
+        }
+        this.addFlex(flexSize, child)
       }
-      this.sizes.set(child, flexSize)
-      this.add(child)
     }
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({direction}: Props) {
@@ -48,7 +64,7 @@ export class Flex extends Container {
       availableSize[isVertical(this.direction) ? 'height' : 'width']
     let hasFlex = false
     for (const child of this.children) {
-      const flexSize = this.sizes.get(child) ?? 'natural'
+      const flexSize = this.#sizes.get(child) ?? 'natural'
       const availableChildSize = isVertical(this.direction)
         ? new Size(availableSize.width, remainingSize)
         : new Size(remainingSize, availableSize.height)
@@ -84,9 +100,14 @@ export class Flex extends Container {
     return size
   }
 
-  addFlex(flexSize: FlexSize, child: View) {
-    this.add(child)
-    this.sizes.set(child, flexSize)
+  add(child: View, at?: number) {
+    super.add(child, at)
+    this.#sizes.set(child, child.flex)
+  }
+
+  addFlex(flexSize: FlexSize, child: View, at?: number) {
+    super.add(child, at)
+    this.#sizes.set(child, flexSize)
   }
 
   render(viewport: Viewport) {
@@ -100,28 +121,22 @@ export class Flex extends Container {
     // as well be memoized along with the flex amounts
     const flexViews: [FlexSize, number, View][] = []
     for (const child of this.children) {
-      const flexSize = this.sizes.get(child) ?? 'natural'
+      const flexSize = this.#sizes.get(child) ?? 'natural'
       if (flexSize === 'natural') {
         const availableChildSize = isVertical(this.direction)
           ? new Size(viewport.contentSize.width, remainingSize)
           : new Size(remainingSize, viewport.contentSize.height)
         const childSize = child.naturalSize(availableChildSize)
         if (isVertical(this.direction)) {
-          flexViews.push([flexSize, childSize.height, child])
+          flexViews.push(['natural', childSize.height, child])
           remainingSize = Math.max(0, remainingSize - childSize.height)
         } else {
-          flexViews.push([flexSize, childSize.width, child])
+          flexViews.push(['natural', childSize.width, child])
           remainingSize = Math.max(0, remainingSize - childSize.width)
         }
       } else {
-        let flex: number
-        if (typeof flexSize === 'string') {
-          flex = +flexSize.slice(4) // 'flexN'
-        } else {
-          flex = flexSize.flex
-        }
-        flexTotal += flex
-        flexViews.push([flexSize, flex, child])
+        flexTotal += flexSize
+        flexViews.push([flexSize, flexSize, child])
         flexCount += 1
       }
     }

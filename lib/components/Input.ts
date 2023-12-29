@@ -42,8 +42,8 @@ export class Input extends View {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({text, onChange, onSubmit}: Props) {

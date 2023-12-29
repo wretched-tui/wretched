@@ -66,8 +66,8 @@ export class ScrollableList<T> extends Container {
   }
 
   update(props: Props<T>) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({}: Props<T>) {}
@@ -94,8 +94,16 @@ export class ScrollableList<T> extends Container {
   }
 
   /**
+   * Tells ScrollableList to re-fetch all rows.
+   */
+  invalidate() {
+    this.invalidateAllRows('view')
+    super.invalidateSize()
+  }
+
+  /**
    * Tells ScrollableList to re-fetch the visible rows.
-   * @param forCache: 'size' | 'view'   representing which cache to invalidate
+   * @param forCache: 'size' | 'view' representing which cache to invalidate
    */
   invalidateAllRows(forCache: 'size' | 'view') {
     if (forCache === 'view') {

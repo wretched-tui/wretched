@@ -36,8 +36,8 @@ export class Slider extends View {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({direction, border, range, position, integer, onChange}: Props) {

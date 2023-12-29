@@ -43,8 +43,8 @@ export class Collapsible extends Container {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({isCollapsed}: Props) {

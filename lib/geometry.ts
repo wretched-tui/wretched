@@ -19,11 +19,8 @@ export class Point {
   }
 
   offset(...args: PointArgs) {
-    if (args.length === 2) {
-      return new Point(this.x + args[0], this.y + args[1])
-    } else {
-      return new Point(this.x + args[0].x, this.y + args[0].y)
-    }
+    const [x, y] = toXY(args)
+    return new Point(this.x + x, this.y + y)
   }
 }
 
@@ -50,25 +47,13 @@ export class Size {
 
   mutableCopy() {
     const copy = this.copy() as MutableSize
-    let width = copy.width
-    let height = copy.height
     Object.defineProperty(copy, 'width', {
       enumerable: true,
-      get() {
-        return width
-      },
-      set(value: number) {
-        width = value
-      },
+      writable: true,
     })
     Object.defineProperty(copy, 'height', {
       enumerable: true,
-      get() {
-        return height
-      },
-      set(value: number) {
-        height = value
-      },
+      writable: true,
     })
     return copy
   }
@@ -100,6 +85,14 @@ export class Size {
     const [w, h] = toWH(args)
     return new Size(Math.max(w, this.width), Math.max(h, this.height))
   }
+
+  abs(): Size {
+    if (this.width >= 0 && this.height >= 0) {
+      return this
+    } else {
+      return new Size(Math.abs(this.width), Math.abs(this.height))
+    }
+  }
 }
 
 interface MutableSize extends Size {
@@ -114,8 +107,8 @@ export class Rect {
   static zero = new Rect(Point.zero, Size.zero)
 
   constructor(origin: PointArg, size: SizeArg) {
-    let [x, y] = toXY(origin)
-    let [width, height] = toWH(size)
+    let [x, y] = toXY([origin])
+    let [width, height] = toWH([size])
     if (width < 0) {
       x = x + width
       width = -width
@@ -146,6 +139,14 @@ export class Rect {
     const width = Math.min(this.maxX(), rect.maxX()) - minX
     const height = Math.min(this.maxY(), rect.maxY()) - minY
     return new Rect(new Point(minX, minY), new Size(width, height))
+  }
+
+  inset(...args: InsetArgs) {
+    const [top, right, bottom, left] = toInset(args)
+    return new Rect(
+      this.min().offset(top, left),
+      this.size.abs().shrink(top + bottom, left + right),
+    )
   }
 
   min(): Point {
@@ -220,26 +221,81 @@ export type Mutable<T extends Point | Size | Rect> = T extends Point
   : never
 
 type PointArg = [number, number] | Pick<Point, 'x' | 'y'>
-type PointArgs = [number, number] | [Pick<Point, 'x' | 'y'>]
-type SizeArg = [number, number] | Pick<Size, 'width' | 'height'>
-type SizeArgs = [number, number] | [Pick<Size, 'width' | 'height'>]
+type PointArgs = [number, number] | [PointArg]
 
-function toXY(args: PointArgs | PointArg): [number, number] {
-  if ('x' in args && 'y' in args) {
-    return [args.x, args.y]
-  } else if (args.length === 2) {
+type SizeArg = [number, number] | Pick<Size, 'width' | 'height'>
+type SizeArgs = [number, number] | [SizeArg]
+
+// all | [all] | [tops, sides] | [top, sides, bottom] | [top, right, bottom, left]
+// or {top?: number, bottom, left, right}
+type InsetArg =
+  | number
+  | [number]
+  | [number, number]
+  | [number, number, number]
+  | [number, number, number, number]
+  | Partial<{left: number; right: number; top: number; bottom: number}>
+type InsetArgs =
+  | [InsetArg]
+  | [number, number]
+  | [number, number, number]
+  | [number, number, number, number]
+
+function toXY(args: PointArgs): [number, number] {
+  if (args.length === 2) {
     return args
   } else {
-    return [args[0].x, args[0].y]
+    const [arg] = args
+    if (arg instanceof Array) {
+      return [arg[0], arg[1]]
+    } else {
+      return [arg.x, arg.y]
+    }
   }
 }
 
-function toWH(args: SizeArgs | SizeArg): [number, number] {
-  if ('width' in args && 'height' in args) {
-    return [args.width, args.height]
-  } else if (args.length === 2) {
+function toWH(args: SizeArgs): [number, number] {
+  if (args.length === 2) {
     return args
   } else {
-    return [args[0].width, args[0].height]
+    const [arg] = args
+    if (arg instanceof Array) {
+      return [arg[0], arg[1]]
+    } else {
+      return [arg.width, arg.height]
+    }
+  }
+}
+
+function toInset(args: InsetArgs): [number, number, number, number] {
+  if (args.length > 1) {
+    return toInset([
+      args as
+        | [number, number]
+        | [number, number, number]
+        | [number, number, number, number],
+    ])
+  } else {
+    const [arg] = args
+    if (typeof arg === 'number') {
+      return [arg, arg, arg, arg]
+    } else if (arg instanceof Array) {
+      const numbers = arg as number[]
+      const [a, b, c, d] = numbers
+      switch (numbers.length) {
+        case 4:
+          return [a, a, b, c]
+        case 3:
+          return [a, b, c, b]
+        case 2:
+          return [a, b, a, b]
+        case 1:
+          return [a, a, a, a]
+        default:
+          return [0, 0, 0, 0]
+      }
+    } else {
+      return [arg.top ?? 0, arg.right ?? 0, arg.bottom ?? 0, arg.left ?? 0]
+    }
   }
 }

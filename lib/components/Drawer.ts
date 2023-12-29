@@ -48,8 +48,8 @@ export class Drawer extends Container {
   }
 
   update(props: Props) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({isOpen, onToggle}: Props) {

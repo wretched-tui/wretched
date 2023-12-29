@@ -80,8 +80,8 @@ export class Dropdown<T, M extends boolean> extends View {
   }
 
   update(props: Props<T, M>) {
-    super.update(props)
     this.#update(props)
+    super.update(props)
   }
 
   #update({title, choices, selected, onSelect}: Props<T, M>) {
@@ -341,8 +341,7 @@ class DropdownSelector<T> extends Container {
   cellForItem(choice: T, row: number) {
     const button = this.#cellButton(choice, row)
 
-    return new Flex({
-      direction: 'leftToRight',
+    return Flex.right({
       children: [
         ['flex1', button],
         new Separator({direction: 'vertical', border: 'single'}),
