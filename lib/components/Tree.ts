@@ -1,14 +1,16 @@
 import type {Viewport} from '../Viewport'
 
 import {type Props as ViewProps, View} from '../View'
+import {Flow} from './Flow'
 import {Container} from '../Container'
-import {Rect, Point, Size} from '../geometry'
+import {Rect, Point, Size, interpolate} from '../geometry'
 import {
   type MouseEvent,
   isMousePressed,
   isMouseReleased,
   isMouseEnter,
   isMouseExit,
+  isMouseMove,
   isMouseClicked,
 } from '../events'
 import {Style} from '../Style'
@@ -41,12 +43,18 @@ export class Tree<T> extends Container {
   #data: T[] = []
   #render?: RenderFn<T>
   #getChildren: GetChildrenFn<T> = () => []
+  #contentView = Flow.down()
+  _animatedView = new AnimatedHeight({
+    content: this.#contentView,
+  })
   declare isExpanded: boolean
 
   constructor(props: Props<T>) {
     super(props)
 
     this.#update(props)
+
+    this.add(this._animatedView)
 
     Object.defineProperties(this, {
       isExpanded: {
@@ -82,7 +90,6 @@ export class Tree<T> extends Container {
   }: Props<T>) {
     if (titleView && titleView !== this.#titleView) {
       this.#titleView?.removeFromParent()
-
       this.add(titleView)
       this.#titleView = titleView
     }
@@ -126,40 +133,29 @@ export class Tree<T> extends Container {
       }
 
       insertIndex += 1
-      this.add(tree, insertIndex)
+      this.#contentView.add(tree, insertIndex)
       nextTrees.push([item, tree])
     }
 
     for (const prevView of removeTrees) {
-      this.removeChild(prevView)
+      this.#contentView.removeChild(prevView)
     }
 
     this.#itemViews = nextTrees
   }
 
   naturalSize(availableSize: Size): Size {
-    const size = Size.zero.mutableCopy()
+    let titleSize = Size.zero
     if (this.#titleView) {
-      const titleSize = this.#titleView.naturalSize(availableSize)
-      size.width = titleSize.width
-      size.height = titleSize.height
+      titleSize = this.#titleView.naturalSize(availableSize)
     }
 
-    if (!this.isExpanded) {
-      return size
-    }
-
-    const remainingSize = availableSize.mutableCopy()
-
-    for (const [item, tree] of this.#itemViews) {
-      remainingSize.height = Math.max(0, availableSize.height - size.height)
-
-      const itemSize = tree.naturalSize(remainingSize)
-      size.width = Math.max(size.width, itemSize.width)
-      size.height += itemSize.height
-    }
-
-    return size
+    const remainingSize = availableSize.shrink(0, titleSize.height)
+    const contentSize = this._animatedView.naturalSize(remainingSize)
+    return new Size(
+      Math.max(titleSize.width, contentSize.width),
+      titleSize.height + contentSize.height,
+    )
   }
 
   render(viewport: Viewport) {
@@ -171,31 +167,10 @@ export class Tree<T> extends Container {
       )
     }
 
-    if (!this.isExpanded || this.#itemViews.length === 0) {
-      return
-    }
-
-    const remainingSize = viewport.contentSize
-      .shrink(0, titleSize.height)
-      .mutableCopy()
-    const offset = new Point(0, titleSize.height)
-
-    viewport.clipped(new Rect(offset, remainingSize), inside => {
-      const origin = Point.zero.mutableCopy()
-      const views = [...this.#itemViews]
-      for (const [, tree] of views) {
-        if (origin.y > inside.contentSize.height) {
-          break
-        }
-
-        const treeSize = tree.naturalSize(remainingSize)
-        const treeRect = new Rect(origin, treeSize)
-        inside.clipped(treeRect, inside => tree.render(inside))
-
-        remainingSize.height -= treeSize.height
-        origin.y += treeSize.height
-      }
-    })
+    viewport.clipped(
+      viewport.contentRect.inset({top: titleSize.height}),
+      inside => this._animatedView.render(inside),
+    )
   }
 }
 
@@ -208,6 +183,13 @@ class TreeChild<T> extends Tree<T> {
 
   constructor(props: ChildProps<T>) {
     super(props)
+
+    Object.defineProperties(this, {
+      titleView: {
+        enumerable: true,
+        get: () => props.titleView,
+      },
+    })
 
     this.#update(props)
   }
@@ -231,6 +213,7 @@ class TreeChild<T> extends Tree<T> {
 
   #update({isExpanded, isLast, data}: ChildProps<T>) {
     this.#isExpanded = data.length === 0 ? true : isExpanded ?? true
+    this._animatedView.isExpanded = this.#isExpanded
     this.isLast = isLast
   }
 
@@ -241,7 +224,10 @@ class TreeChild<T> extends Tree<T> {
       this.#isPressed = false
 
       if (isMouseClicked(event) && !this.isEmpty()) {
-        this.#isExpanded = !this.#isExpanded
+        const isExpanded = !this.#isExpanded
+        this.#isExpanded = isExpanded
+        this._animatedView.isExpanded = isExpanded
+        this._animatedView.invalidateSize()
         this.invalidateSize()
       }
     }
@@ -250,6 +236,8 @@ class TreeChild<T> extends Tree<T> {
       this.#isHover = true
     } else if (isMouseExit(event)) {
       this.#isHover = false
+    } else if (isMouseMove(event)) {
+      this.#isHover = event.name === 'mouse.move.in'
     }
   }
 
@@ -329,5 +317,126 @@ class TreeChild<T> extends Tree<T> {
     }
 
     viewport.clipped(treeRect, inside => super.render(inside))
+  }
+}
+
+const ANIMATION_DURATION = 160
+
+interface AnimatedProps extends ViewProps {
+  content: View
+}
+
+export class AnimatedHeight extends Container {
+  #frameTime = 0
+
+  #startingHeight?: number
+  #currentHeight?: number
+  #targetHeight?: number
+
+  contentView?: View
+  isExpanded = false
+
+  constructor(props: AnimatedProps) {
+    super(props)
+
+    this.#update(props)
+  }
+
+  update(props: AnimatedProps) {
+    this.#update(props)
+    super.update(props)
+  }
+
+  #update({content}: AnimatedProps) {
+    if (this.contentView !== content) {
+      if (this.contentView) {
+        this.removeChild(this.contentView)
+      }
+
+      if (content) {
+        this.add(content)
+      }
+
+      this.contentView = content
+    }
+  }
+
+  naturalSize(availableSize: Size) {
+    if (this.contentView === undefined) {
+      return Size.zero
+    }
+
+    const nextSize = this.contentView.naturalSize(availableSize)
+    const nextHeight = this.isExpanded ? nextSize.height : 0
+
+    if (
+      this.#currentHeight === undefined ||
+      nextHeight === this.#currentHeight
+    ) {
+      // if the currentHeight has never been set, start at the initial height.
+      // or if the currentHeight is the correct height, no animation necessary
+      this.#currentHeight = nextHeight
+      this.#startingHeight = this.#targetHeight = undefined
+
+      return new Size(nextSize.width, nextHeight)
+    } else if (
+      this.#targetHeight !== undefined &&
+      nextHeight !== this.#targetHeight
+    ) {
+      // animation was already in progress, but height changed
+      this.#frameTime = ANIMATION_DURATION - this.#frameTime
+      this.#startingHeight = this.#targetHeight
+      this.#targetHeight = nextHeight
+    } else if (
+      this.#startingHeight === undefined ||
+      this.#targetHeight === undefined
+    ) {
+      // height changed
+      this.#frameTime = 0
+      this.#startingHeight = this.#currentHeight
+      this.#targetHeight = nextHeight
+    }
+
+    const height = interpolate(
+      this.#frameTime,
+      [0, ANIMATION_DURATION],
+      [this.#startingHeight, this.#targetHeight],
+    )
+
+    this.#currentHeight = height
+    return new Size(nextSize.width, height)
+  }
+
+  receiveTick(dt: number) {
+    if (
+      this.#currentHeight === this.#targetHeight ||
+      this.#startingHeight === undefined ||
+      this.#targetHeight === undefined
+    ) {
+      this.#frameTime = 0
+      this.#startingHeight = undefined
+      this.#targetHeight = undefined
+      return
+    }
+
+    this.#frameTime = Math.min(this.#frameTime + dt, ANIMATION_DURATION)
+    this.invalidateSize()
+
+    return true
+  }
+
+  render(viewport: Viewport) {
+    if (!this.contentView) {
+      return
+    }
+
+    if (
+      this.#targetHeight !== undefined &&
+      this.#currentHeight !== this.#targetHeight
+    ) {
+      viewport.registerTick()
+    }
+
+    this.contentView.render(viewport)
   }
 }
