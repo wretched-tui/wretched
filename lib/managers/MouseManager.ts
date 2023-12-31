@@ -81,13 +81,13 @@ export class MouseManager {
     eventNames: MouseEventListenerName[],
   ) {
     const resolved = offset.offset(point)
+    const key = mouseKey(resolved.x, resolved.y)
+    const target = {
+      view,
+      offset,
+    } as const
+    const listener = this.#mouseListeners.get(key) ?? {move: []}
     for (const eventName of eventNames) {
-      const key = mouseKey(resolved.x, resolved.y)
-      const target = {
-        view,
-        offset,
-      } as const
-      const listener = this.#mouseListeners.get(key) ?? {move: []}
       if (eventName === 'mouse.move') {
         // search listener.move - only keep views that are in the current views
         // ancestors
@@ -284,7 +284,7 @@ export class MouseManager {
   #moveMouse(systemEvent: SystemMouseEvent) {
     const listeners = this.#getListeners(systemEvent)
     let prevListeners = this.#mouseMoveViews
-    let index = 0
+    let isFirst = true
     for (const listener of listeners) {
       let didEnter = true
       prevListeners = prevListeners.filter(prev => {
@@ -299,13 +299,13 @@ export class MouseManager {
         this.#sendMouse(systemEvent, 'mouse.move.enter', listener)
       }
 
-      if (index === 0) {
+      if (isFirst) {
         this.#sendMouse(systemEvent, 'mouse.move.in', listener)
       } else {
         this.#sendMouse(systemEvent, 'mouse.move.below', listener)
       }
 
-      index += 1
+      isFirst = false
     }
     this.#mouseMoveViews = listeners
 

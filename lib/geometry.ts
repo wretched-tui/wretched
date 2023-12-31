@@ -144,8 +144,8 @@ export class Rect {
   inset(...args: InsetArgs) {
     const [top, right, bottom, left] = toInset(args)
     return new Rect(
-      this.min().offset(top, left),
-      this.size.abs().shrink(top + bottom, left + right),
+      this.min().offset(left, top),
+      this.size.abs().shrink(left + right, top + bottom),
     )
   }
 
@@ -226,6 +226,8 @@ type PointArgs = [number, number] | [PointArg]
 type SizeArg = [number, number] | Pick<Size, 'width' | 'height'>
 type SizeArgs = [number, number] | [SizeArg]
 
+export type Edge = 'top' | 'right' | 'bottom' | 'left'
+
 // all | [all] | [tops, sides] | [top, sides, bottom] | [top, right, bottom, left]
 // or {top?: number, bottom, left, right}
 type InsetArg =
@@ -234,7 +236,7 @@ type InsetArg =
   | [number, number]
   | [number, number, number]
   | [number, number, number, number]
-  | Partial<{left: number; right: number; top: number; bottom: number}>
+  | {[K in Edge]?: number}
 type InsetArgs =
   | [InsetArg]
   | [number, number]

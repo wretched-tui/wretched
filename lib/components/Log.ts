@@ -15,17 +15,11 @@ import {CollapsibleText} from './CollapsibleText'
 
 export class Log extends Container {
   #logs: LogLine[] = []
-  #viewMemo: WeakMap<LogLine, LogLineView> = new WeakMap()
   #scrollableList = new ScrollableList({
     scrollHeight: 10,
     items: this.#logs,
     cellForItem: log => {
-      let memo = this.#viewMemo.get(log)
-      if (!memo) {
-        memo = new LogLineView(log)
-        this.#viewMemo.set(log, memo)
-      }
-      return memo
+      return new LogLineView(log)
     },
     keepAtBottom: true,
   })
@@ -104,7 +98,7 @@ class LogLineView extends Container {
     const [firstLine, ..._] = lines
     if (lines.length > 1) {
       logView = new Collapsible({
-        isCollapsed: true,
+        isCollapsed: false,
         collapsedView: new Text({
           text: firstLine,
           wrap: false,
@@ -115,8 +109,9 @@ class LogLineView extends Container {
         }),
       })
     } else {
-      logView = new CollapsibleText({
+      logView = new Text({
         text: firstLine,
+        wrap: true,
       })
     }
 
