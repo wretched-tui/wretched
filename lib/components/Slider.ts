@@ -1,33 +1,81 @@
 import {Viewport} from '../Viewport'
 import {type Props as ViewProps, View} from '../View'
-import {Point, Size, interpolate} from '../geometry'
+import {Point, Rect, Size, interpolate} from '../geometry'
 import {
   type MouseEvent,
   isMouseDragging,
   isMouseEnter,
   isMouseExit,
+  isMouseMove,
 } from '../events'
+import type {Style} from '../Style'
 
 type Direction = 'vertical' | 'horizontal'
-type Border = 'line' | 'fill'
 
-interface Props extends ViewProps {
-  direction: Direction
-  border?: Border
-  range?: [number, number]
-  position?: number
-  integer?: boolean
-  onChange?: (value: number) => void
-}
+type ButtonProps =
+  | {
+      /**
+       * Whether to show ◃, ▹ buttons on either side of the slider.
+       * Default: false
+       */
+      buttons?: false
+      /**
+       * If provided, values will be in fit the equation `min(range) + N * step`. Also
+       * applies to the buttons, if they are visible.
+       */
+      step?: number
+    }
+  | {
+      /**
+       * Whether to show ◃, ▹ buttons on either side of the slider.
+       * Default: false
+       */
+      buttons: true
+      /**
+       * If provided, values will be in fit the equation `min(range) + N * step`. Also
+       * applies to the buttons, if they are visible.
+       */
+      step: number
+    }
+
+type Props = ViewProps &
+  ButtonProps & {
+    /**
+     * What direction to draw the slider.
+     * Default: 'horizontal'
+     */
+    direction?: Direction
+    /**
+     * Whether to show a border around the slider.
+     * Default: false
+     */
+    border?: boolean
+    /**
+     * Minimum and maximum values - inclusive.
+     */
+    range?: [number, number]
+    /**
+     * Current position of the slider, should be within the range
+     */
+    position?: number
+    onChange?: (value: number) => void
+  }
 
 export class Slider extends View {
-  #direction: Direction = 'vertical'
-  #border: Border = 'line'
+  // styles
+  #direction: Direction = 'horizontal'
+  #border: boolean = false
+  #buttons: boolean = false
+
+  // position of slider
   #range: [number, number] = [0, 0]
-  #position: number = 0
+  #value: number = 0
+  #step?: number
+
+  // mouse information
   #contentSize?: Size = Size.zero
-  #integer: boolean = false
-  #isHover = false
+  #isHoverSlider = false
+  #isHoverButtons = false
   #onChange?: (value: number) => void
 
   constructor(props: Props) {
@@ -40,208 +88,312 @@ export class Slider extends View {
     super.update(props)
   }
 
-  #update({direction, border, range, position, integer, onChange}: Props) {
-    this.#direction = direction
-    this.#border = border ?? 'fill'
+  #update({
+    direction,
+    border,
+    buttons,
+    range,
+    position,
+    step,
+    onChange,
+  }: Props) {
+    this.#direction = direction ?? 'horizontal'
+    this.#border = border ?? false
+    this.#buttons = buttons ?? false
     this.#range = range ?? [0, 1]
-    this.#position = position ?? Math.min(...this.#range)
-    this.#integer = integer ?? false
+    this.#value = position ?? Math.min(...this.#range)
+    this.#step = step
     this.#onChange = onChange
   }
 
   naturalSize(available: Size) {
-    return new Size(available.width, 1)
+    if (this.#direction === 'horizontal') {
+      if (this.#border) {
+        //╭─┬──
+        //│◃│█╶
+        //╰─┴──
+        // ╭──
+        // │█╶
+        // ╰──
+        return new Size(available.width, 3)
+      } else {
+        // [◃]
+        // █╶─
+        return new Size(available.width, 1)
+      }
+    } else {
+      if (this.#border) {
+        // ╭─╮
+        // │▵│
+        // ├─┤ ╭─╮
+        // │█│ │█│
+        // │╷│ │╷│
+        return new Size(3, available.height)
+      } else {
+        // ▵
+        // █   █
+        // ╷   ╷
+        return new Size(1, available.height)
+      }
+    }
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
+    if (this.#contentSize === undefined) {
+      return
     }
 
-    if (isMouseDragging(event) && this.#contentSize) {
-      const prev = this.#position
+    const prev = this.#value
+    let pos: number,
+      min = 0,
+      smallSize = this.#border ? 3 : 1,
+      bigSize: number,
+      max: number
+    if (this.#direction === 'horizontal') {
+      pos = event.position.x
+      bigSize = this.#contentSize.width
+    } else {
+      pos = event.position.y
+      bigSize = this.#contentSize.height
+    }
+
+    max = bigSize - 1
+
+    if (this.#buttons) {
       if (this.#direction === 'horizontal') {
-        this.#position = interpolate(
-          event.position.x,
-          [0, this.#contentSize.width - 1],
-          this.#range,
-        )
+        //╭─┬
+        //│◃│ or [◃]
+        //╰─┴
+        min += 3
+        max -= 3
+      } else if (this.#border) {
+        // ╭─╮
+        // │▵│
+        // ├─┤
+        min += 3
+        max -= 3
       } else {
-        this.#position = interpolate(
-          event.position.y,
-          [0, this.#contentSize.height - 1],
-          this.#range,
-        )
+        // ▵
+        min += 1
+        max -= 1
+      }
+    } else if (this.#border) {
+      //╭
+      //│ or ╭─╮
+      //╰
+      min += 1
+      max -= 1
+    }
+
+    if (isMouseExit(event)) {
+      this.#isHoverSlider = false
+      this.#isHoverButtons = false
+    } else if (isMouseMove(event)) {
+      if (this.#direction === 'horizontal') {
+        this.#isHoverSlider =
+          event.position.y <= smallSize &&
+          event.position.x >= min &&
+          event.position.x <= max
+        this.#isHoverButtons =
+          event.position.y <= smallSize &&
+          ((event.position.x >= 0 && event.position.x < min) ||
+            (event.position.x > max && event.position.x < bigSize))
+      } else {
+        this.#isHoverSlider =
+          event.position.x <= smallSize &&
+          event.position.y >= min &&
+          event.position.y <= max
+        this.#isHoverButtons =
+          event.position.x <= smallSize &&
+          ((event.position.y >= 0 && event.position.y < min) ||
+            (event.position.y > max && event.position.y < bigSize))
+      }
+    }
+
+    if (isMouseDragging(event)) {
+      this.#value = interpolate(pos, [min, max], this.#range)
+
+      if (this.#step !== undefined && this.#step !== 0) {
+        this.#value =
+          Math.round((this.#value - this.#range[0]) / this.#step) * this.#step
       }
 
-      if (this.#integer) {
-        this.#position = Math.round(this.#position)
-      }
-      this.#position = Math.min(
+      this.#value = Math.min(
         this.#range[1],
-        Math.max(this.#range[0], this.#position),
+        Math.max(this.#range[0], this.#value),
       )
 
-      if (this.#position !== prev) {
-        this.#onChange?.(this.#position)
+      if (this.#value !== prev) {
+        this.#onChange?.(this.#value)
       }
     }
+  }
+
+  #renderHorizontal(
+    viewport: Viewport,
+    sliderStyle: Style,
+    buttonStyle: Style,
+  ) {
+    const height = this.#border ? 3 : 1
+    const marginX = this.#buttons ? 3 : this.#border ? 1 : 0
+    const outerRect = new Rect(
+      [0, 0],
+      [viewport.visibleRect.size.width, height],
+    )
+    const innerRect = new Rect(
+      [marginX, 0],
+      [viewport.visibleRect.size.width - 2 * marginX, height],
+    )
+
+    if (this.#buttons) {
+      const left = this.#isHoverButtons ? '◂' : '◃'
+      const right = this.#isHoverButtons ? '▸' : '▹'
+      ;(this.#border ? ['╭─┬', `│${left}│`, '╰─┴'] : [`[${left}]`]).forEach(
+        (line, offsetY) => {
+          viewport.write(line, Point.zero.offset(0, offsetY), buttonStyle)
+        },
+      )
+      ;(this.#border ? ['┬─╮', `│${right}│`, '┴─╯'] : [`[${right}]`]).forEach(
+        (line, offsetY) => {
+          viewport.write(
+            line,
+            Point.zero.offset(
+              viewport.contentSize.width - line.length,
+              offsetY,
+            ),
+            buttonStyle,
+          )
+        },
+      )
+    } else if (this.#border) {
+      ;['╭', '│', '╰'].forEach((char, offsetY) => {
+        viewport.write(char, Point.zero.offset(0, offsetY), sliderStyle)
+      })
+      ;['╮', '│', '╯'].forEach((char, offsetY) => {
+        viewport.write(
+          char,
+          Point.zero.offset(viewport.contentSize.width - 1, offsetY),
+          sliderStyle,
+        )
+      })
+    }
+
+    const min = innerRect.minX(),
+      max = innerRect.maxX()
+    const position = Math.round(
+      interpolate(this.#value, this.#range, [min, max - 1]),
+    )
+
+    viewport.registerMouse(['mouse.move'], outerRect)
+    viewport.registerMouse(['mouse.button.left'], innerRect)
+    innerRect.forEachPoint(pt => {
+      let char: string
+      if (height === 1 || pt.y === 1) {
+        if (pt.x === position) {
+          char = '█'
+        } else if (
+          (pt.x === min && position === min + 1) ||
+          (pt.x === max && position === max - 1)
+        ) {
+          char = '∙'
+        } else if (pt.x === min || pt.x === position + 1) {
+          char = '╶'
+        } else if (pt.x === max || pt.x === position - 1) {
+          char = '╴'
+        } else {
+          char = '─'
+        }
+      } else {
+        char = '─'
+      }
+
+      viewport.write(char, pt, sliderStyle)
+    })
+  }
+
+  #renderVertical(viewport: Viewport, sliderStyle: Style, buttonStyle: Style) {
+    const width = this.#border ? 3 : 1
+    const marginY =
+      this.#buttons && this.#border ? 3 : this.#buttons || this.#border ? 1 : 0
+    const outerRect = new Rect(
+      [0, 0],
+      [width, viewport.visibleRect.size.height],
+    )
+    const innerRect = new Rect(
+      [0, marginY],
+      [width, viewport.visibleRect.size.height - 2 * marginY],
+    )
+
+    if (this.#buttons) {
+      const up = this.#isHoverButtons ? '▴' : '▵'
+      const down = this.#isHoverButtons ? '▾' : '▿'
+      ;(this.#border ? ['╭─╮', `│${up}│`, '├─┤'] : [up]).forEach(
+        (line, offsetY) => {
+          viewport.write(line, Point.zero.offset(0, offsetY), buttonStyle)
+        },
+      )
+      ;(this.#border ? ['╰─╯', `│${down}│`, '├─┤'] : [down]).forEach(
+        (line, offsetY) => {
+          viewport.write(
+            line,
+            Point.zero.offset(0, viewport.contentSize.height - offsetY - 1),
+            buttonStyle,
+          )
+        },
+      )
+    } else if (this.#border) {
+      viewport.write('╭─╮', Point.zero.offset(0, 0), sliderStyle)
+      viewport.write(
+        '╰─╯',
+        Point.zero.offset(0, viewport.contentSize.height - 1),
+        sliderStyle,
+      )
+    }
+
+    const min = innerRect.minY(),
+      max = innerRect.maxY()
+    const position = Math.round(
+      interpolate(this.#value, this.#range, [min, max - 1]),
+    )
+
+    viewport.registerMouse(['mouse.move'], outerRect)
+    viewport.registerMouse(['mouse.button.left'], innerRect)
+    innerRect.forEachPoint(pt => {
+      let char: string
+      if (width === 1 || pt.x === 1) {
+        if (pt.y === position) {
+          char = '█'
+          // } else if (
+          //   (pt.y === min && position === min + 1) ||
+          //   (pt.y === max && position === max - 1)
+          // ) {
+          //   char = '∙'
+        } else if (pt.y === position + 1) {
+          char = '╷'
+        } else if (pt.y === position - 1) {
+          char = '╵'
+        } else {
+          char = '│'
+        }
+      } else {
+        char = '│'
+      }
+
+      viewport.write(char, pt, sliderStyle)
+    })
   }
 
   render(viewport: Viewport) {
     this.#contentSize = viewport.contentSize
-    viewport.registerMouse(['mouse.move', 'mouse.button.left'])
 
-    if (this.#border === 'fill') {
-      this.renderFill(viewport)
-    } else {
-      this.renderLine(viewport)
-    }
-  }
-
-  renderFill(viewport: Viewport) {
     const pt = Point.zero.mutableCopy()
+    const sliderStyle = this.theme.ui({isHover: this.#isHoverSlider})
+    const buttonStyle = this.theme.ui({isHover: this.#isHoverButtons})
+
     if (this.#direction === 'horizontal') {
-      const position = Math.round(
-        interpolate(this.#position, this.#range, [
-          0,
-          viewport.contentSize.width - 1,
-        ]),
-      )
-      for (; pt.x < viewport.contentSize.width; pt.x++) {
-        const char = pt.x === position ? '█' : '░'
-        for (pt.y = 0; pt.y < viewport.contentSize.height; pt.y++) {
-          viewport.write(char, pt, this.theme.ui())
-        }
-      }
+      this.#renderHorizontal(viewport, sliderStyle, buttonStyle)
     } else {
-      const position = Math.round(
-        interpolate(this.#position, this.#range, [
-          0,
-          viewport.contentSize.height - 1,
-        ]),
-      )
-      for (; pt.y < viewport.contentSize.height; pt.y++) {
-        const char = pt.y === position ? '█' : '░'
-        viewport.write(char.repeat(viewport.contentSize.width), pt)
-      }
-    }
-  }
-
-  renderLine(viewport: Viewport) {
-    const pt = Point.zero.mutableCopy()
-    const textStyle = this.theme.ui({isHover: this.#isHover})
-    const controlStyle = this.theme.ui({isHover: this.#isHover})
-    if (this.#direction === 'horizontal') {
-      const position = Math.round(
-        interpolate(this.#position, this.#range, [
-          0,
-          viewport.contentSize.width - 1,
-        ]),
-      )
-      viewport.visibleRect.forEachPoint(pt => {
-        let char: string,
-          style = textStyle
-        if (pt.x === position) {
-          if (pt.y === 0 && viewport.contentSize.height > 1) {
-            char = '▄'
-          } else if (
-            pt.y === viewport.contentSize.height - 1 &&
-            viewport.contentSize.height > 1
-          ) {
-            char = '▀'
-          } else {
-            char = '█'
-          }
-          style = controlStyle
-        } else if (viewport.contentSize.height === 1) {
-          if (pt.x === 0) {
-            char = '╶'
-          } else if (pt.x === viewport.contentSize.width - 1) {
-            char = '╴'
-          } else {
-            char = '─'
-          }
-        } else if (pt.y === 0) {
-          if (pt.x === 0) {
-            char = '┌'
-          } else if (pt.x === viewport.contentSize.width - 1) {
-            char = '┐'
-          } else {
-            char = '─'
-          }
-        } else if (pt.y === viewport.contentSize.height - 1) {
-          if (pt.x === 0) {
-            char = '└'
-          } else if (pt.x === viewport.contentSize.width - 1) {
-            char = '┘'
-          } else {
-            char = '─'
-          }
-        } else if (pt.x === 0 || pt.x === viewport.contentSize.width - 1) {
-          char = '│'
-        } else {
-          char = ' '
-        }
-
-        viewport.write(char, pt, style)
-      })
-    } else {
-      const position = Math.round(
-        interpolate(this.#position, this.#range, [
-          0,
-          viewport.contentSize.height - 1,
-        ]),
-      )
-      viewport.visibleRect.forEachPoint(pt => {
-        let char: string,
-          style = textStyle
-        if (pt.y === position) {
-          if (pt.x === 0 && viewport.contentSize.width > 1) {
-            char = '▐'
-          } else if (
-            pt.x === viewport.contentSize.width - 1 &&
-            viewport.contentSize.width > 1
-          ) {
-            char = '▌'
-          } else {
-            char = '█'
-          }
-          style = controlStyle
-        } else if (viewport.contentSize.width === 1) {
-          if (pt.y === 0) {
-            char = '╷'
-          } else if (pt.y === viewport.contentSize.height - 1) {
-            char = '╵'
-          } else {
-            char = '│'
-          }
-        } else if (pt.x === 0) {
-          if (pt.y === 0) {
-            char = '┌'
-          } else if (pt.y === viewport.contentSize.height - 1) {
-            char = '└'
-          } else {
-            char = '│'
-          }
-        } else if (pt.x === viewport.contentSize.width - 1) {
-          if (pt.y === 0) {
-            char = '┐'
-          } else if (pt.y === viewport.contentSize.height - 1) {
-            char = '┘'
-          } else {
-            char = '│'
-          }
-        } else if (pt.y === 0 || pt.y === viewport.contentSize.height - 1) {
-          char = '─'
-        } else {
-          char = ' '
-        }
-
-        viewport.write(char, pt, style)
-      })
+      this.#renderVertical(viewport, sliderStyle, buttonStyle)
     }
   }
 }
