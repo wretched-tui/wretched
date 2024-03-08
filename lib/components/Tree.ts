@@ -20,7 +20,7 @@ type GetChildrenFn<T> = (item: T) => T[]
 
 interface StyleProps<T> {
   isSelectable?: boolean
-  // isSelected?: boolean
+  isSelected?: boolean
   data: T[]
   render: RenderFn<T>
   getChildren: GetChildrenFn<T>
@@ -37,7 +37,7 @@ const TREE_BULLET_WIDTH = 4
 
 export class Tree<T> extends Container {
   #isSelectable = false
-  // #isSelected = false
+  #isSelected = false
   #titleView?: View
   #itemViews: [T, TreeChild<T>][] = []
   #data: T[] = []
@@ -82,8 +82,8 @@ export class Tree<T> extends Container {
 
   #update({
     titleView,
-    // isSelected,
     isSelectable,
+    isSelected,
     data,
     render,
     getChildren,
@@ -95,7 +95,7 @@ export class Tree<T> extends Container {
     }
 
     this.#isSelectable = isSelectable ?? false
-    // this.#isSelected = isSelectable === true ? isSelected ?? false : false
+    this.#isSelected = isSelectable === true ? isSelected ?? false : false
     this.#data = data
     this.#render = render
     this.#getChildren = getChildren
@@ -104,6 +104,7 @@ export class Tree<T> extends Container {
     const removeTrees: TreeChild<T>[] = []
     const nextTrees: [T, TreeChild<T>][] = []
     let insertIndex = this.#titleView ? 1 : 0
+    // does not support -but should- reordered data
     for (let index = 0; index < data.length; index++) {
       const item = data[index]
       const itemView = render(item)
@@ -122,8 +123,8 @@ export class Tree<T> extends Container {
         }
         tree = new TreeChild({
           titleView: itemView,
-          // isSelected: false,
           isSelectable,
+          isSelected: false,
           isExpanded: false,
           isLast,
           data: childData,
