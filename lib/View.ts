@@ -271,19 +271,10 @@ export abstract class View {
     return this.#renderedContentSize
   }
 
-  #didWarnParent = false
-
   #renderWrap(
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
     return viewport => {
-      if (!this.parent && this.screen?.rootView !== this) {
-        if (!this.#didWarnParent) {
-          console.warn('Rendering this:', this, 'but this has no parent view')
-          this.#didWarnParent = true
-        }
-      }
-
       if (
         this.#viewportContentSize.width !== viewport.contentSize.width ||
         this.#viewportContentSize.height !== viewport.contentSize.height
