@@ -43,17 +43,19 @@ export class Button extends Container {
   constructor({contentView, ...props}: ConstructorProps) {
     super(props)
 
-    this.add(
-      (this.#textView = new Text({
-        alignment: 'center',
-      })),
-    )
-
     if (contentView) {
-      if (contentView instanceof Text) {
-        this.#textView = contentView
-      }
       this.add(contentView)
+    }
+
+    if (contentView instanceof Text) {
+      this.#textView = contentView
+      props.text = contentView.text
+    } else {
+      this.add(
+        (this.#textView = new Text({
+          alignment: 'center',
+        })),
+      )
     }
 
     this.#update(props)
