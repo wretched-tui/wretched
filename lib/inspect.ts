@@ -21,7 +21,7 @@ export function inspect(
   wrap: boolean = true,
   recursionDepth = 0,
 ): string {
-  if (recursionDepth >= 4) {
+  if (recursionDepth >= 10) {
     return red('...')
   }
 

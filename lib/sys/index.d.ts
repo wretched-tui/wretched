@@ -659,4 +659,8 @@ export const unicode: {
    * @returns [graphemes, offset][] Array of tuples. Each tuple is an array of graphemes and the offset
    */
   words(input: string | string[]): [string[], number][]
+  /**
+   * The current locale. Uses `process.env.LANG`, defaults to 'en'.
+   */
+  locale: string
 }
