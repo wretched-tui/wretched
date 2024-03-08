@@ -1,5 +1,5 @@
 import {colors} from '../sys'
-import {Text, Flex, Input, Slider, Space} from '../components'
+import {Digits, Flex, Input, Slider, Space, Text} from '../components'
 
 import {demo} from './demo'
 
@@ -11,7 +11,7 @@ function pad(num: number) {
   }
 }
 
-const space = new Space({background: '#000', height: 'fill'})
+const swatch = new Space({background: '#000', height: 'fill'})
 const rgb = [
   Math.floor(Math.random() * 255),
   Math.floor(Math.random() * 255),
@@ -51,7 +51,14 @@ const redInput = new Input({
       }
     },
   })
-const rgbText = new Text()
+
+const rgbText1 = new Digits({text: '', bold: true})
+const rgbText2 = new Digits({text: '', bold: false})
+function updateText(text: string) {
+  rgbText1.text = text
+  rgbText2.text = text
+}
+const ansiText = new Text()
 
 const update = () => {
   rgb[0] = Math.max(0, Math.min(255, rgb[0]))
@@ -59,9 +66,11 @@ const update = () => {
   rgb[2] = Math.max(0, Math.min(255, rgb[2]))
   // const rgb = colors.HSBtoRGB(rgb[0] / 360, rgb[1] / 100, rgb[2] / 100)
   const sgr = colors.match(rgb)
-  const ansi = `\x1b[38;5;${sgr};48;5;${sgr}m      \x1b[39;49m (${sgr})`
-  rgbText.text = colors.RGBtoHex(rgb) + ' – ' + ansi
-  space.background = colors.RGBtoHex(rgb)
+  let ansi = `\x1b[38;5;${sgr};48;5;${sgr}m      \x1b[39;49m`
+  ansi = [ansi, ansi, ansi].join('\n') + ` (6bit: ${sgr})`
+  updateText(colors.RGBtoHex(rgb))
+  ansiText.text = ansi
+  swatch.background = colors.RGBtoHex(rgb)
 
   redInput.text = `${rgb[0]}`
   greenInput.text = `${rgb[1]}`
@@ -75,20 +84,24 @@ demo(
       [
         'flex1',
         Flex.down({
-          children: [['flex1', space], rgbText],
+          children: [
+            ['flex1', swatch],
+            Flex.right([rgbText1, ansiText]),
+            rgbText2,
+          ],
         }),
       ],
       [
         'flex1',
-        Flex.down({
+        Flex.right({
           children: [
             new Slider({
-              theme: 'red',
-              direction: 'horizontal',
-              border: 'line',
+              direction: 'vertical',
               range: [0, 255],
               position: rgb[0],
-              height: 4,
+              buttons: true,
+              step: 5,
+              border: true,
               onChange(value) {
                 rgb[0] = Math.round(value)
                 update()
@@ -96,10 +109,11 @@ demo(
             }),
             new Slider({
               theme: 'green',
-              direction: 'horizontal',
+              direction: 'vertical',
               range: [0, 255],
               position: rgb[1],
-              height: 4,
+              buttons: true,
+              step: 1,
               onChange(value) {
                 rgb[1] = Math.round(value)
                 update()
@@ -107,11 +121,10 @@ demo(
             }),
             new Slider({
               theme: 'blue',
-              direction: 'horizontal',
-              border: 'line',
+              direction: 'vertical',
               range: [0, 255],
               position: rgb[2],
-              height: 4,
+              border: true,
               onChange(value) {
                 rgb[2] = Math.round(value)
                 update()

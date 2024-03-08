@@ -13,7 +13,7 @@ export async function demo(demoContent: View) {
   process.title = 'Wretched'
 
   const consoleLog = new ConsoleLog({
-    height: 8,
+    height: 10,
   })
   const [screen, program] = await Screen.start(
     async (program: BlessedProgram) => {

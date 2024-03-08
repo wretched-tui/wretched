@@ -138,7 +138,6 @@ demo(
         choices: choices.slice(0, 4),
         selected: 1,
       }),
-      // consoleLog,
     ],
   }),
 )
