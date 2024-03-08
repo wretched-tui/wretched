@@ -12,21 +12,35 @@ interface Props extends ViewProps {
   direction: Direction
 }
 
+type ShorthandProps = NonNullable<Props['children']> | Omit<Props, 'direction'>
+
+function fromShorthand(props: ShorthandProps, direction: Direction): Props {
+  if (props instanceof Array) {
+    return {children: props, direction}
+  } else {
+    return {...props, direction}
+  }
+}
+
 export class Flex extends Container {
   direction: Direction
   #sizes: Map<View, FlexSize> = new Map()
 
-  static down(props: Omit<Props, 'direction'>) {
-    return new Flex({...props, direction: 'topToBottom'})
+  static down(props: ShorthandProps) {
+    const direction: Direction = 'topToBottom'
+    return new Flex(fromShorthand(props, direction))
   }
-  static up(props: Omit<Props, 'direction'>) {
-    return new Flex({...props, direction: 'bottomToTop'})
+  static up(props: ShorthandProps) {
+    const direction: Direction = 'bottomToTop'
+    return new Flex(fromShorthand(props, direction))
   }
-  static right(props: Omit<Props, 'direction'>) {
-    return new Flex({...props, direction: 'leftToRight'})
+  static right(props: ShorthandProps) {
+    const direction: Direction = 'leftToRight'
+    return new Flex(fromShorthand(props, direction))
   }
-  static left(props: Omit<Props, 'direction'>) {
-    return new Flex({...props, direction: 'rightToLeft'})
+  static left(props: ShorthandProps) {
+    const direction: Direction = 'rightToLeft'
+    return new Flex(fromShorthand(props, direction))
   }
 
   constructor({children, direction, ...viewProps}: Props) {
