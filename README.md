@@ -1,7 +1,7 @@
 # Wretched
 
 ```tsx
-import {Screen, Box, Flow, Text, interceptConsoleLog} from 'wretched'
+import {Screen, Box, Flow, Text, Button, interceptConsoleLog} from 'wretched'
 
 Screen.start(
   new Box({
