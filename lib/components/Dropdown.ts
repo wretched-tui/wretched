@@ -332,6 +332,7 @@ class DropdownSelector<T> extends Container {
         if (index === -1) {
           return []
         }
+
         return [index]
       }),
     )

@@ -14,10 +14,10 @@ levels.forEach(level => {
   builtin[level] = console[level]
 })
 
-export function interceptConsoleLog() {
+export function interceptConsoleLog(logListener: Listener = appendLog) {
   levels.forEach(level => {
     console[level] = function (...args) {
-      appendLog({level, args: args.map(arg => inspect(arg, true))})
+      logListener(level, args)
     }
   })
 
@@ -40,8 +40,8 @@ export function decorateConsoleLog() {
   })
 }
 
-function appendLog(log: LogLine) {
-  logs.push(log)
+function appendLog(level: Level, args: any[]) {
+  logs.push({level, args: args.map(arg => inspect(arg, true))})
 }
 
 export function fetchLogs() {

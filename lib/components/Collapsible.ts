@@ -2,6 +2,7 @@ import type {Viewport} from '../Viewport'
 
 import {type Props as ViewProps, View} from '../View'
 import {Container} from '../Container'
+import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
 import {
   type MouseEvent,
@@ -14,30 +15,28 @@ import {
 
 interface StyleProps {
   isCollapsed?: boolean
+  collapsedView?: View
+  expandedView?: View
 }
 
 type Props = StyleProps & ViewProps
 
-interface ConstructorProps extends Props {
-  collapsedView: View
-  expandedView: View
-}
-
 export class Collapsible extends Container {
-  #collapsedView: View
-  #expandedView: View
+  /**
+   * Also assignable as child-view 0 (this is a React support hack)
+   */
+  #collapsedView?: View
+  /**
+   * Also assignable as child-view 1 (this is a React support hack)
+   */
+  #expandedView?: View
+
   #isCollapsed = true
   #isPressed = false
   #isHover = false
 
-  constructor({collapsedView, expandedView, ...props}: ConstructorProps) {
+  constructor(props: Props) {
     super(props)
-
-    this.#collapsedView = collapsedView
-    this.#expandedView = expandedView
-
-    this.add(collapsedView)
-    this.add(expandedView)
 
     this.#update(props)
   }
@@ -47,16 +46,48 @@ export class Collapsible extends Container {
     super.update(props)
   }
 
-  #update({isCollapsed}: Props) {
-    this.#isCollapsed = isCollapsed ?? false
+  add(child: View, at?: number) {
+    if (this.children.length === 0) {
+      this.#collapsedView = child
+    } else if (this.children.length === 1) {
+      this.#expandedView = child
+    }
+
+    super.add(child, at)
+  }
+
+  #update({isCollapsed, collapsedView, expandedView}: Props) {
+    this.#isCollapsed = isCollapsed ?? this.#isCollapsed
+
+    // edge case: expandedView is being assigned, but not collapsedView
+    if (expandedView && !this.#collapsedView && !collapsedView) {
+      collapsedView = new Text()
+    }
+
+    if (collapsedView && collapsedView !== this.#collapsedView) {
+      this.#collapsedView?.removeFromParent()
+
+      this.#collapsedView = collapsedView
+      this.add(collapsedView, 0)
+    }
+
+    if (expandedView && expandedView !== this.#expandedView) {
+      this.#expandedView?.removeFromParent()
+
+      this.#expandedView = expandedView
+      this.add(expandedView, 1)
+    }
   }
 
   naturalSize(availableSize: Size): Size {
+    let size: Size | undefined
     if (this.#isCollapsed) {
-      return this.#collapsedView.naturalSize(availableSize).grow(2, 0)
+      size = this.#collapsedView?.naturalSize(availableSize)
     } else {
-      return this.#expandedView.naturalSize(availableSize).grow(2, 0)
+      size = this.#expandedView?.naturalSize(availableSize)
     }
+
+    return (size ?? Size.zero).grow(2, 0)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -89,9 +120,10 @@ export class Collapsible extends Container {
     viewport.paint(textStyle)
 
     const contentSize = viewport.contentSize.shrink(2, 0)
-    const naturalSize = this.#isCollapsed
-      ? this.#collapsedView.naturalSize(contentSize)
-      : this.#expandedView.naturalSize(contentSize)
+    const naturalSize =
+      (this.#isCollapsed
+        ? this.#collapsedView?.naturalSize(contentSize)
+        : this.#expandedView?.naturalSize(contentSize)) ?? Size.zero
     const offset = new Point(2, 0)
 
     viewport.write(
@@ -101,9 +133,9 @@ export class Collapsible extends Container {
     )
     viewport.clipped(new Rect(offset, naturalSize), inside => {
       if (this.#isCollapsed) {
-        this.#collapsedView.render(inside)
+        this.#collapsedView?.render(inside)
       } else {
-        this.#expandedView.render(inside)
+        this.#expandedView?.render(inside)
       }
     })
   }
