@@ -1,7 +1,7 @@
 import type {Viewport} from '../Viewport'
 
-import {type Props as ViewProps, View} from '../View'
-import {Container} from '../Container'
+import {View} from '../View'
+import {type Props as ContainerProps, Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
 import {
@@ -19,7 +19,7 @@ interface StyleProps {
   expandedView?: View
 }
 
-type Props = StyleProps & ViewProps
+type Props = StyleProps & ContainerProps
 
 export class Collapsible extends Container {
   /**
