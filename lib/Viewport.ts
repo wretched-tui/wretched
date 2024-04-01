@@ -9,9 +9,9 @@ import {View} from './View'
 import type {HotKey, MouseEventListenerName} from './events'
 
 /**
- * Defines a region (size) in which to draw, and a subset (visibleRect) that is
- * on-screen. Anything not in the rect is considered invisible (and any drawing
- * outside the rect will be clipped)
+ * Defines a region (contentSize) in which to draw, and a subset (visibleRect) that
+ * is on-screen. Anything not in the visibleRect is considered invisible (and any
+ * drawing outside the rect will be clipped)
  */
 export class Viewport {
   #terminal: Terminal
@@ -63,7 +63,10 @@ export class Viewport {
     })
   }
 
-  requestModal(modal: View, onClose: () => void) {
+  /**
+   * @return boolean Whether the modal creation was successful
+   */
+  requestModal(modal: View, onClose: () => void): boolean {
     if (!this.#currentRender) {
       return false
     }
@@ -88,7 +91,10 @@ export class Viewport {
     this.#screen.registerHotKey(this.#currentRender, key)
   }
 
-  registerFocus() {
+  /**
+   * @return boolean Whether the current render target is the focus view
+   */
+  registerFocus(): boolean {
     if (!this.#currentRender) {
       return false
     }
@@ -129,7 +135,7 @@ export class Viewport {
       return
     }
 
-    return this.#screen.registerTick(this.#currentRender)
+    this.#screen.registerTick(this.#currentRender)
   }
 
   /**

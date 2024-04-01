@@ -87,6 +87,6 @@ class Modal extends Container {
 
   render(viewport: Viewport) {
     viewport.registerMouse('mouse.button.left')
-    this.renderChildren(viewport)
+    super.render(viewport)
   }
 }

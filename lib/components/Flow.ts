@@ -1,13 +1,10 @@
 import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
-import {View} from '../View'
-import {Container} from '../Container'
+import {type Props as ContainerProps, Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 
 type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 
-interface Props extends ViewProps {
-  children?: View[]
+interface Props extends ContainerProps {
   direction: Direction
   spaceBetween?: number
 }
@@ -16,25 +13,21 @@ export class Flow extends Container {
   #direction: Direction = 'leftToRight'
   #spaceBetween: number = 0
 
-  static down(props: Omit<Props, 'direction'> = {}) {
+  static down(props: Omit<Props, 'direction'> = {}): Flow {
     return new Flow({...props, direction: 'topToBottom'})
   }
-  static up(props: Omit<Props, 'direction'> = {}) {
+  static up(props: Omit<Props, 'direction'> = {}): Flow {
     return new Flow({...props, direction: 'bottomToTop'})
   }
-  static right(props: Omit<Props, 'direction'> = {}) {
+  static right(props: Omit<Props, 'direction'> = {}): Flow {
     return new Flow({...props, direction: 'leftToRight'})
   }
-  static left(props: Omit<Props, 'direction'> = {}) {
+  static left(props: Omit<Props, 'direction'> = {}): Flow {
     return new Flow({...props, direction: 'rightToLeft'})
   }
 
-  constructor({children, ...props}: Props) {
+  constructor(props: Props) {
     super(props)
-
-    if (children) {
-      this.addAll(children)
-    }
 
     this.#update(props)
   }

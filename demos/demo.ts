@@ -20,16 +20,14 @@ export async function demo(demoContent: View) {
       await iTerm2.setBackground(program, [23, 23, 23])
 
       return new Window({
-        children: [
-          new TrackMouse({
-            content: Flex.down({
-              children: [
-                ['flex1', demoContent],
-                ['natural', consoleLog],
-              ],
-            }),
+        child: new TrackMouse({
+          content: Flex.down({
+            children: [
+              ['flex1', demoContent],
+              ['natural', consoleLog],
+            ],
           }),
-        ],
+        }),
       })
     },
   )

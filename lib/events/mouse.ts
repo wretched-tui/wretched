@@ -1,6 +1,6 @@
 import type {MouseButton} from '../sys'
 import {View} from '../View'
-import {Point} from '../geometry'
+import {Point, Rect} from '../geometry'
 
 export type MouseMove =
   | 'enter' // mouse move enters area
@@ -64,21 +64,36 @@ export type MouseEventListener = {
   wheel?: MouseEventTarget
 }
 
-export function isMouseClicked(event: MouseEvent) {
-  return event.name === 'mouse.button.up'
+export function isMouseClicked(event: MouseEvent, inside?: Rect) {
+  if (event.name !== 'mouse.button.up') {
+    return false
+  }
+
+  if (inside === undefined) {
+    return true
+  }
+
+  return inside.includes(new Point(event.position))
 }
 
-export function isMousePressed(event: SystemMouseEvent | MouseEvent) {
+export function isMousePressInside(event: SystemMouseEvent | MouseEvent) {
   return (
     event.name.startsWith('mouse.button.') &&
     ['down', 'enter', 'drag'].some(suffix => event.name.endsWith(suffix))
   )
 }
 
-export function isMouseReleased(event: SystemMouseEvent | MouseEvent) {
+export function isMousePressOutside(event: SystemMouseEvent | MouseEvent) {
   return (
     event.name.startsWith('mouse.button.') &&
     ['up', 'exit', 'cancel'].some(suffix => event.name.endsWith(suffix))
+  )
+}
+
+export function isMousePressEnd(event: SystemMouseEvent | MouseEvent) {
+  return (
+    event.name.startsWith('mouse.button.') &&
+    ['up', 'cancel'].some(suffix => event.name.endsWith(suffix))
   )
 }
 

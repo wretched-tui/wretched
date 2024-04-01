@@ -55,8 +55,8 @@ export class FocusManager {
     if (!this.#currentFocus && (!this.#prevFocus || this.#prevFocus === view)) {
       this.#currentFocus = view
       return true
-      } else if (this.#currentFocus === view) {
-        return true
+    } else if (this.#currentFocus === view) {
+      return true
     } else {
       return false
     }
@@ -70,7 +70,10 @@ export class FocusManager {
     this.#hotKeys.push([view, key])
   }
 
-  commit() {
+  /**
+   * @return boolean Whether the focus changed
+   */
+  commit(): boolean {
     this.#didCommit = true
 
     if (this.#focusRing.length > 0 && this.#prevFocus && !this.#currentFocus) {

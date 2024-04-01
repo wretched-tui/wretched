@@ -45,8 +45,8 @@ function appendLog(level: Level, args: any[]) {
 }
 
 export function fetchLogs() {
-  const copy = logs
-  logs = []
+  const copy = logs.filter(({level}) => level !== 'debug')
+  logs = logs.filter(({level}) => level === 'debug')
   return copy
 }
 

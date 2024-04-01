@@ -89,13 +89,15 @@ export class Input extends View {
 
   #showCursor = true
   #dt = 0
-  receiveTick(dt: number) {
+  receiveTick(dt: number): boolean {
     this.#dt += dt
     if (this.#dt > 500) {
       this.#showCursor = !this.#showCursor
       this.#dt = this.#dt % 500
       return true
     }
+
+    return false
   }
 
   receiveKey(event: KeyEvent) {

@@ -5,8 +5,8 @@ import {Rect, Point, Size, type Edge} from '../geometry'
 import {
   type MouseEvent,
   isMouseClicked,
-  isMousePressed,
-  isMouseReleased,
+  isMousePressInside,
+  isMousePressOutside,
   isMouseEnter,
   isMouseExit,
 } from '../events'
@@ -68,6 +68,7 @@ export class Drawer extends Container {
     if (isOpen !== undefined) {
       this.#setIsOpen(isOpen, false)
     }
+
     this.#onToggle = onToggle
     this.#location = location ?? 'left'
   }
@@ -122,7 +123,7 @@ export class Drawer extends Container {
     }
   }
 
-  #targetDx() {
+  #targetDx(): number {
     switch (this.#isOpen ? this.#location : '') {
       case 'top':
       case 'bottom':
@@ -135,7 +136,7 @@ export class Drawer extends Container {
     }
   }
 
-  receiveTick(dt: number) {
+  receiveTick(dt: number): boolean {
     const targetDx = this.#targetDx()
     let delta: number
     switch (this.#location) {
@@ -170,9 +171,9 @@ export class Drawer extends Container {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressed(event)) {
+    if (isMousePressInside(event)) {
       this.#isPressed = true
-    } else if (isMouseReleased(event)) {
+    } else if (isMousePressOutside(event)) {
       this.#isPressed = false
     }
 
@@ -219,13 +220,13 @@ export class Drawer extends Container {
 
     switch (this.#location) {
       case 'top':
-        return this.#renderTop(viewport, drawerSize)
+        this.#renderTop(viewport, drawerSize)
       case 'right':
-        return this.#renderRight(viewport, drawerSize)
+        this.#renderRight(viewport, drawerSize)
       case 'bottom':
-        return this.#renderBottom(viewport, drawerSize)
+        this.#renderBottom(viewport, drawerSize)
       case 'left':
-        return this.#renderLeft(viewport, drawerSize)
+        this.#renderLeft(viewport, drawerSize)
     }
   }
 

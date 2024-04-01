@@ -36,26 +36,28 @@ export class TrackMouse extends Container {
     viewport.clipped(
       new Rect(new Point(1, 1), viewport.contentSize.shrink(1, 1)),
       inside => {
-        this.renderChildren(inside)
+        super.render(inside)
       },
     )
 
     const highlight = new Style({inverse: true})
     viewport.usingPen(borderStyle, pen => {
       for (let x = 1; x < maxX; ++x) {
+        const cx = x - 1
         pen.replacePen(x === this.#position.x ? highlight : Style.NONE)
         const char =
-          x % 10 === 0
-            ? ['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][x / 10] ?? 'X'
-            : `${x % 10}`
+          cx % 10 === 0
+            ? ['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][cx / 10] ?? 'X'
+            : `${cx % 10}`
         viewport.write(char, new Point(x, 0))
       }
-      for (let y = 0; y < maxY; ++y) {
+      for (let y = 1; y < maxY; ++y) {
+        const cy = y - 1
         pen.replacePen(y === this.#position.y ? highlight : Style.NONE)
         const char =
-          y % 10 === 0
-            ? ['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][y / 10] ?? 'X'
-            : `${y % 10}`
+          cy % 10 === 0
+            ? ['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][cy / 10] ?? 'X'
+            : `${cy % 10}`
         viewport.write(char, new Point(0, y))
       }
       pen.replacePen(Style.NONE)

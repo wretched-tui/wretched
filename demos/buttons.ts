@@ -27,7 +27,7 @@ demo(
       ['flex1', new Space()],
       new Button({
         height: 3,
-        border: 'large',
+        border: 'none',
         theme: 'proceed',
         text: 'Proceed',
       }),
@@ -35,7 +35,7 @@ demo(
       ['flex1', new Space()],
       new Button({
         height: 3,
-        border: 'large',
+        border: 'none',
         theme: 'cancel',
         text: 'Cancel',
       }),
@@ -43,7 +43,7 @@ demo(
       ['flex1', new Space()],
       new Button({
         height: 3,
-        border: 'large',
+        border: 'none',
         theme: 'secondary',
         text: 'Do it!',
       }),

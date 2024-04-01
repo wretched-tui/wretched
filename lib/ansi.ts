@@ -9,59 +9,72 @@ export const RESET = '\x1b[0m'
 // "paint" color.
 export const BG_DRAW = '\x14'
 
-export function styled(input: string, attr: string) {
+export function styled(input: string, attr: string): string {
   return program.global?.text(input, attr) ?? input
 }
 
-export function style(attr: string) {
+export function style(attr: string): string {
   if (attr.startsWith('\x1b[')) {
     return attr
   }
   return program.global?.style(attr) ?? ''
 }
 
-export function ansi(code: number, input: string) {
+export function ansi(code: number, input: string): string {
   const opener = '\x1b['.concat(String(code), 'm')
   return opener.concat(input.replace(RESET, opener), RESET)
 }
 
-export function bold(input: string) {
+export function bold(input: string): string {
   return ansi(1, input)
 }
 
-export function underline(input: string) {
+export function underline(input: string): string {
   return ansi(4, input)
 }
 
-export function red(input: string) {
+export function red(input: string): string {
   return ansi(31, input)
 }
 
-export function green(input: string) {
+export function green(input: string): string {
   return ansi(32, input)
 }
 
-export function yellow(input: string) {
+export function yellow(input: string): string {
   return ansi(33, input)
 }
 
-export function blue(input: string) {
+export function blue(input: string): string {
   return ansi(34, input)
 }
 
-export function cyan(input: string) {
+export function cyan(input: string): string {
   return ansi(36, input)
 }
 
-export function gray(input: string) {
+export function gray(input: string): string {
   return ansi(90, input)
 }
 
-export const colorize = {
+interface Colorize {
+  format(input: any): string
+  number(input: number): string
+  symbol(input: symbol): string
+  string(input: string, doQuote?: boolean): string
+  key(input: string | symbol | number): string
+  boolean(input: boolean): string
+  undefined(): string
+  null(): string
+}
+
+export const colorize: Colorize = {
   format: function (input: any): string {
     switch (typeof input) {
       case 'string':
         return colorize.string(input)
+      case 'symbol':
+        return colorize.symbol(input)
       case 'number':
         return colorize.number(input)
       case 'undefined':
@@ -69,13 +82,16 @@ export const colorize = {
       case 'object':
         return colorize['null']()
       default:
-        return `${input}`
+        return String(input)
     }
   },
-  number: function (input: any) {
-    return yellow(''.concat(input))
+  number: function (input: number) {
+    return yellow(''.concat(String(input)))
   },
-  string: function (input: any, doQuote: boolean = true) {
+  symbol: function (input: symbol) {
+    return red(''.concat(String(input)))
+  },
+  string: function (input: string, doQuote: boolean = true) {
     let quote: string
     if (doQuote) {
       if (input.includes("'")) {
@@ -92,11 +108,11 @@ export const colorize = {
 
     return green(quote.concat(input, quote))
   },
-  key: function (input: any) {
-    return cyan(input)
+  key: function (input: string | symbol | number) {
+    return cyan(String(input))
   },
-  boolean: function (input: any) {
-    return yellow(''.concat(input))
+  boolean: function (input: boolean) {
+    return yellow(''.concat(String(input)))
   },
   undefined: function () {
     return gray('undefined')

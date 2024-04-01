@@ -20,7 +20,7 @@ export class iTerm2 {
    *   return new Box({ … })
    * })
    */
-  static setBackground(program: BlessedProgram, bg: Color) {
+  static setBackground(program: BlessedProgram, bg: Color): Promise<void> {
     process.on('exit', () => {
       iTerm2.restoreBg(program)
     })

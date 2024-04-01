@@ -37,6 +37,7 @@ export class Screen {
   static reset() {
     const program = blessedProgram({
       useBuffer: true,
+      tput: true,
     })
 
     program.alternateBuffer()
@@ -61,6 +62,7 @@ export class Screen {
   ): Promise<[Screen, BlessedProgram, View]> {
     const program = blessedProgram({
       useBuffer: true,
+      tput: true,
     })
 
     program.alternateBuffer()
@@ -100,6 +102,7 @@ export class Screen {
         program.showCursor()
         program.normalBuffer()
         screen.exit()
+
         flushLogs()
         process.exit(0)
       } else {
@@ -178,7 +181,10 @@ export class Screen {
     return this.#modalManager.dismissModal(view)
   }
 
-  registerFocus(view: View) {
+  /**
+   * @return boolean Whether the current view has focus
+   */
+  registerFocus(view: View): boolean {
     return this.#focusManager.registerFocus(view)
   }
 
@@ -224,6 +230,9 @@ export class Screen {
     this.#focusManager.reset(view === this.rootView)
   }
 
+  /**
+   * @return boolean Whether or not to rerender the view due to focus or mouse change
+   */
   commit() {
     const focusNeedsRender = this.#focusManager.commit()
     const mouseNeedsRender = this.#mouseManager.commit()

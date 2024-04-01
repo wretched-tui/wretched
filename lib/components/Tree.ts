@@ -2,12 +2,12 @@ import type {Viewport} from '../Viewport'
 
 import {type Props as ViewProps, View} from '../View'
 import {Flow} from './Flow'
-import {Container} from '../Container'
+import {type Props as ContainerProps, Container} from '../Container'
 import {Rect, Point, Size, interpolate} from '../geometry'
 import {
   type MouseEvent,
-  isMousePressed,
-  isMouseReleased,
+  isMousePressInside,
+  isMousePressOutside,
   isMouseEnter,
   isMouseExit,
   isMouseMove,
@@ -45,7 +45,7 @@ export class Tree<T> extends Container {
   #getChildren: GetChildrenFn<T> = () => []
   #contentView = Flow.down()
   _animatedView = new AnimatedHeight({
-    content: this.#contentView,
+    child: this.#contentView,
   })
   declare isExpanded: boolean
 
@@ -219,9 +219,9 @@ class TreeChild<T> extends Tree<T> {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressed(event)) {
+    if (isMousePressInside(event)) {
       this.#isPressed = true
-    } else if (isMouseReleased(event)) {
+    } else if (isMousePressOutside(event)) {
       this.#isPressed = false
 
       if (isMouseClicked(event) && !this.isEmpty()) {
@@ -323,10 +323,6 @@ class TreeChild<T> extends Tree<T> {
 
 const ANIMATION_DURATION = 160
 
-interface AnimatedProps extends ViewProps {
-  content: View
-}
-
 export class AnimatedHeight extends Container {
   #frameTime = 0
 
@@ -334,32 +330,10 @@ export class AnimatedHeight extends Container {
   #currentHeight?: number
   #targetHeight?: number
 
-  contentView?: View
   isExpanded = false
 
-  constructor(props: AnimatedProps) {
-    super(props)
-
-    this.#update(props)
-  }
-
-  update(props: AnimatedProps) {
-    this.#update(props)
-    super.update(props)
-  }
-
-  #update({content}: AnimatedProps) {
-    if (this.contentView !== content) {
-      if (this.contentView) {
-        this.removeChild(this.contentView)
-      }
-
-      if (content) {
-        this.add(content)
-      }
-
-      this.contentView = content
-    }
+  get contentView(): View | undefined {
+    return this.children[0]
   }
 
   naturalSize(availableSize: Size) {
@@ -408,7 +382,7 @@ export class AnimatedHeight extends Container {
     return new Size(nextSize.width, height)
   }
 
-  receiveTick(dt: number) {
+  receiveTick(dt: number): boolean {
     if (
       this.#currentHeight === this.#targetHeight ||
       this.#startingHeight === undefined ||
@@ -417,7 +391,7 @@ export class AnimatedHeight extends Container {
       this.#frameTime = 0
       this.#startingHeight = undefined
       this.#targetHeight = undefined
-      return
+      return false
     }
 
     this.#frameTime = Math.min(this.#frameTime + dt, ANIMATION_DURATION)

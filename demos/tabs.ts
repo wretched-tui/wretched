@@ -27,13 +27,15 @@ class AnimatedText extends View {
     return new Size(14, 2)
   }
 
-  receiveTick(dt: number) {
+  receiveTick(dt: number): boolean {
     this.#frameTime += dt
     if (this.#frameTime > AnimatedText.FRAME) {
       this.#frameTime %= AnimatedText.FRAME
       this.#frame = (this.#frame + 1) % this.#frames.length
       return true
     }
+
+    return false
   }
 
   render(viewport: Viewport) {

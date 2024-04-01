@@ -1,14 +1,14 @@
 import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
-import {type Props as ViewProps, View} from '../View'
-import {Container} from '../Container'
+import {type View} from '../View'
+import {type Props as ContainerProps, Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
 import {
   type MouseEvent,
-  isMousePressed,
-  isMouseReleased,
+  isMousePressInside,
+  isMousePressOutside,
   isMouseEnter,
   isMouseExit,
   isMouseClicked,
@@ -17,48 +17,40 @@ import {
   styleTextForHotKey,
 } from '../events'
 
-type Border = 'default' | 'arrows' | 'large' | 'none'
-type ButtonSize = 'compact' | 'large'
-type BorderChars = [string, string, ButtonSize]
+type Border = 'default' | 'arrows' | 'none'
+type BorderChars = [string, string]
 
-export interface Props extends ViewProps {
+export interface Props extends ContainerProps {
   text?: string
   border?: Border
   onClick?: () => void
   hotKey?: HotKey
 }
 
-interface ConstructorProps extends Props {
-  contentView?: View
-}
-
 export class Button extends Container {
   #hotKey?: HotKey
   #onClick?: Props['onClick']
-  #textView: Text
+  #textView?: Text
   #border: Border = 'default'
   #isPressed = false
   #isHover = false
 
-  constructor({contentView, ...props}: ConstructorProps) {
+  constructor(props: Props) {
     super(props)
 
-    if (contentView) {
-      this.add(contentView)
-    }
-
-    if (contentView instanceof Text) {
-      this.#textView = contentView
-      props.text = contentView.text
-    } else {
-      this.add(
-        (this.#textView = new Text({
-          alignment: 'center',
-        })),
-      )
+    if (this.#textView === undefined) {
+      this.add(new Text({alignment: 'center'}))
     }
 
     this.#update(props)
+  }
+
+  add(child: View, at?: number) {
+    if (this.#textView === undefined && child instanceof Text) {
+      this.#textView = child
+    }
+
+    super.add(child, at)
   }
 
   update(props: Props) {
@@ -67,9 +59,10 @@ export class Button extends Container {
   }
 
   #update({text, border, hotKey, onClick}: Props) {
-    text = text ?? ''
-    const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
-    this.#textView.text = styledText
+    if (this.#textView && text !== undefined) {
+      const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
+      this.#textView.text = styledText
+    }
 
     this.#border = border ?? 'default'
     this.#hotKey = hotKey
@@ -77,8 +70,8 @@ export class Button extends Container {
   }
 
   naturalSize(availableSize: Size): Size {
-    const [left, right, height] = this.#borderSize()
-    return super.naturalSize(availableSize).grow(left + right, height)
+    const [left, right] = this.#borderSize()
+    return super.naturalSize(availableSize).grow(left + right, 0)
   }
 
   get isHover() {
@@ -99,19 +92,15 @@ export class Button extends Container {
     }
   }
 
-  #borderSize(): [number, number, number] {
-    const [left, right, size] = BORDERS[this.#border]
-    return [
-      unicode.lineWidth(left),
-      unicode.lineWidth(right),
-      size === 'compact' ? 0 : 2,
-    ]
+  #borderSize(): [number, number] {
+    const [left, right] = BORDERS[this.#border]
+    return [unicode.lineWidth(left), unicode.lineWidth(right)]
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressed(event)) {
+    if (isMousePressInside(event)) {
       this.#isPressed = true
-    } else if (isMouseReleased(event)) {
+    } else if (isMousePressOutside(event)) {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {
@@ -157,27 +146,24 @@ export class Button extends Container {
         Math.round((viewport.contentSize.height - naturalSize.height) / 2),
       )
 
-    const [left, right, size] = BORDERS[this.#border],
-      leftX = size === 'compact' ? offset.x - leftWidth : 0,
-      rightX =
-        size === 'compact'
-          ? offset.x + naturalSize.width
-          : viewport.contentSize.width - rightWidth
+    const [left, right] = BORDERS[this.#border],
+      leftX = offset.x - leftWidth,
+      rightX = offset.x + naturalSize.width
+
     for (let y = 0; y < naturalSize.height; y++) {
       viewport.write(left, new Point(leftX, offset.y + y), textStyle)
       viewport.write(right, new Point(rightX, offset.y + y), textStyle)
     }
     viewport.clipped(new Rect(offset, naturalSize), textStyle, inside => {
-      this.renderChildren(inside)
+      super.render(inside)
     })
   }
 }
 
 const BORDERS: Record<Border, BorderChars> = {
-  default: ['[ ', ' ]', 'compact'],
-  large: ['▌', '▐', 'large'],
-  arrows: [' ', ' ', 'compact'],
-  none: [' ', ' ', 'compact'],
+  default: ['[ ', ' ]'],
+  arrows: [' ', ' '],
+  none: [' ', ' '],
 }
 
 // E0A0 

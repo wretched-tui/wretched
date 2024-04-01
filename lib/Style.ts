@@ -107,7 +107,10 @@ export class Style {
     )
   }
 
-  toDebug() {
+  /**
+   * @return a more easily debuggable object
+   */
+  toDebug(): any {
     return (
       [
         ['bold', this.bold],

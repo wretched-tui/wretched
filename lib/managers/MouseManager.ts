@@ -33,7 +33,10 @@ export class MouseManager {
     this.#mouseListeners = new Map()
   }
 
-  commit() {
+  /**
+   * @return boolean Whether the mouse target changed
+   */
+  commit(): boolean {
     if (this.#mouseDownEvent || !this.#mousePosition) {
       return false
     }

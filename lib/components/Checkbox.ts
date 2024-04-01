@@ -1,46 +1,55 @@
 import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
-import {type Props as ViewProps, View} from '../View'
-import {Container} from '../Container'
+import {type View} from '../View'
+import {type Props as ContainerProps, Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
 import {
+  type HotKey,
   type MouseEvent,
-  isMousePressed,
-  isMouseReleased,
+  isMousePressInside,
+  isMousePressOutside,
   isMouseEnter,
   isMouseExit,
   isMouseClicked,
+  styleTextForHotKey,
 } from '../events'
 
-interface TextProps {
-  text: string
-  content?: undefined
-}
-
-interface LinesProps {
-  text?: undefined
-  content: View
-}
-
 interface StyleProps {
+  text?: string
   isChecked: boolean
   onCheck?: (isChecked: boolean) => void
+  hotKey?: HotKey
 }
 
-type Props = StyleProps & (TextProps | LinesProps) & ViewProps
+type Props = StyleProps & ContainerProps
 
 export class Checkbox extends Container {
   isChecked: boolean = false
+  #hotKey?: HotKey
   #onCheck: StyleProps['onCheck']
   #textView?: Text
+  #contentView?: View
   #isPressed = false
   #isHover = false
 
   constructor(props: Props) {
     super(props)
+
+    if (this.#textView === undefined) {
+      this.add(new Text({alignment: 'center'}))
+    }
+
     this.#update(props)
+  }
+
+  add(child: View, at?: number) {
+    if (this.#textView === undefined && child instanceof Text) {
+      this.#textView = child
+    }
+
+    super.add(child, at)
   }
 
   update(props: Props) {
@@ -48,28 +57,21 @@ export class Checkbox extends Container {
     super.update(props)
   }
 
-  #update({text, isChecked, content, onCheck}: Props) {
-    if (text !== undefined) {
-      this.add(
-        (this.#textView = new Text({
-          text,
-          alignment: 'center',
-        })),
-      )
-    } else {
-      if (content instanceof Text) {
-        this.#textView = content
-      }
-      this.add(content)
+  #update({text, hotKey, isChecked, onCheck}: Props) {
+    if (this.#textView && text !== undefined) {
+      const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
+      this.#textView.text = styledText
     }
 
     this.isChecked = isChecked
+    this.#hotKey = hotKey
     this.#onCheck = onCheck
   }
 
   get text() {
     return this.#textView?.text
   }
+
   set text(value: string | undefined) {
     if (this.#textView) {
       this.#textView.text = value ?? ''
@@ -87,9 +89,9 @@ export class Checkbox extends Container {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressed(event)) {
+    if (isMousePressInside(event)) {
       this.#isPressed = true
-    } else if (isMouseReleased(event)) {
+    } else if (isMousePressOutside(event)) {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {
@@ -127,17 +129,17 @@ export class Checkbox extends Container {
     const box = this.boxChars()[this.isChecked ? 'checked' : 'unchecked']
     viewport.write(box, Point.zero, uiStyle)
     viewport.clipped(new Rect(offset, naturalSize), uiStyle, inside => {
-      this.renderChildren(inside)
+      super.render(inside)
     })
   }
 
-  boxChars() {
+  boxChars(): Record<'unchecked' | 'checked', string> {
     return BOX.checkbox
   }
 }
 
 export class Radio extends Checkbox {
-  boxChars() {
+  boxChars(): Record<'unchecked' | 'checked', string> {
     return BOX.radio
   }
 }

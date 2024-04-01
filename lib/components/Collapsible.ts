@@ -6,8 +6,8 @@ import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
 import {
   type MouseEvent,
-  isMousePressed,
-  isMouseReleased,
+  isMousePressInside,
+  isMousePressOutside,
   isMouseEnter,
   isMouseExit,
   isMouseClicked,
@@ -57,7 +57,7 @@ export class Collapsible extends Container {
   }
 
   #update({isCollapsed, collapsedView, expandedView}: Props) {
-    this.#isCollapsed = isCollapsed ?? this.#isCollapsed
+    this.#isCollapsed = isCollapsed ?? true
 
     // edge case: expandedView is being assigned, but not collapsedView
     if (expandedView && !this.#collapsedView && !collapsedView) {
@@ -91,9 +91,9 @@ export class Collapsible extends Container {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressed(event)) {
+    if (isMousePressInside(event)) {
       this.#isPressed = true
-    } else if (isMouseReleased(event)) {
+    } else if (isMousePressOutside(event)) {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {

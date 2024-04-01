@@ -61,6 +61,9 @@ export class Buffer implements Terminal {
 
         // actually writes the character, and records the hidden character
         line.set(x, {char, width, style, hiding: leftChar})
+        if (width === 2) {
+          line.delete(x + 1)
+        }
 
         const hiding = leftChar.hiding
         if (hiding) {
@@ -69,6 +72,9 @@ export class Buffer implements Terminal {
       } else {
         // actually writes the character
         line.set(x, {char, width, style})
+        if (width === 2) {
+          line.delete(x + 1)
+        }
 
         const next = line.get(x + 1)
         if (next && next.hiding) {
@@ -123,12 +129,15 @@ export class Buffer implements Terminal {
           char = ' '
         }
 
-        if (prevStyle !== style) {
+        if (!prevStyle.isEqual(style)) {
           terminal.write(style.toSGR(prevStyle))
           prevStyle = style
         }
         terminal.write(char)
         prevLine.set(x, chrInfo)
+        if (chrInfo.width === 2) {
+          prevLine.delete(x + 1)
+        }
       }
     }
 

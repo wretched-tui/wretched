@@ -266,7 +266,7 @@ export class ScrollableList<T> extends Container {
     return super.contentSize.shrink(this.#showScrollbars ? 1 : 0, 0)
   }
 
-  lastOffset() {
+  lastOffset(): ContentOffset {
     const cellCount = this.#items.length
     const cellWidth = this.contentSize.width
     let row = cellCount - 1

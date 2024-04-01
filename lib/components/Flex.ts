@@ -9,13 +9,13 @@ type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 
 interface Props extends ViewProps {
   children?: ([FlexShorthand, View] | View)[]
-  direction: Direction
+  direction?: Direction
 }
 
 type ShorthandProps = NonNullable<Props['children']> | Omit<Props, 'direction'>
 
 function fromShorthand(props: ShorthandProps, direction: Direction): Props {
-  if (props instanceof Array) {
+  if (Array.isArray(props)) {
     return {children: props, direction}
   } else {
     return {...props, direction}
@@ -23,30 +23,39 @@ function fromShorthand(props: ShorthandProps, direction: Direction): Props {
 }
 
 export class Flex extends Container {
-  direction: Direction
+  direction: Direction = 'topToBottom'
   #sizes: Map<View, FlexSize> = new Map()
 
-  static down(props: ShorthandProps) {
+  static down(props: ShorthandProps): Flex {
     const direction: Direction = 'topToBottom'
     return new Flex(fromShorthand(props, direction))
   }
-  static up(props: ShorthandProps) {
+  static up(props: ShorthandProps): Flex {
     const direction: Direction = 'bottomToTop'
     return new Flex(fromShorthand(props, direction))
   }
-  static right(props: ShorthandProps) {
+  static right(props: ShorthandProps): Flex {
     const direction: Direction = 'leftToRight'
     return new Flex(fromShorthand(props, direction))
   }
-  static left(props: ShorthandProps) {
+  static left(props: ShorthandProps): Flex {
     const direction: Direction = 'rightToLeft'
     return new Flex(fromShorthand(props, direction))
   }
 
   constructor({children, direction, ...viewProps}: Props) {
     super(viewProps)
-    this.direction = direction
+    this.#update({direction})
+    this.#updateChildren(children)
+  }
 
+  update({children, ...props}: Props) {
+    this.#update(props)
+    this.#updateChildren(children)
+    super.update(props)
+  }
+
+  #updateChildren(children: Props['children']) {
     if (children) {
       for (const info of children) {
         let flexSize: FlexShorthand, child: View
@@ -58,18 +67,16 @@ export class Flex extends Container {
 
           flexSize = parseFlexShorthand(flexSize)
         }
+
         this.addFlex(flexSize, child)
       }
+    } else {
+      this.removeAllChildren()
     }
   }
 
-  update(props: Props) {
-    this.#update(props)
-    super.update(props)
-  }
-
   #update({direction}: Props) {
-    this.direction = direction
+    this.direction = direction ?? 'topToBottom'
   }
 
   naturalSize(availableSize: Size): Size {

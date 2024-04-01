@@ -93,10 +93,10 @@ export class Dropdown<T, M extends boolean> extends View {
     this.dropdownSelector.theme = this.theme
   }
 
-  get choices() {
+  get choices(): Choices<T> {
     return this.dropdownSelector.choices
   }
-  set choices(choices: SharedProps<T>['choices']) {
+  set choices(choices: Choices<T>) {
     this.dropdownSelector.choices = choices
   }
 
@@ -300,7 +300,7 @@ class DropdownSelector<T> extends Container {
     return this.#choices[row][0]
   }
 
-  get selectedValue() {
+  get selectedValue(): T | undefined {
     if (this.#selected.size === 0) {
       return undefined
     }
@@ -308,11 +308,11 @@ class DropdownSelector<T> extends Container {
     return this.#choices[row][1]
   }
 
-  get selectedValues() {
+  get selectedValues(): T[] {
     return [...this.#selected].map(index => this.#choices[index][1])
   }
 
-  get choices() {
+  get choices(): [string, T][] {
     return this.#choices.map(([_, choice, text]) => [text, choice])
   }
 
@@ -339,7 +339,7 @@ class DropdownSelector<T> extends Container {
     this.#scrollView.updateItems(choices.map(([, choice]) => choice))
   }
 
-  cellForItem(choice: T, row: number) {
+  cellForItem(choice: T, row: number): View {
     const button = this.#cellButton(choice, row)
 
     return Flex.right({
@@ -357,7 +357,7 @@ class DropdownSelector<T> extends Container {
     return new Button({
       theme: isSelected ? 'selected' : undefined,
       border: 'none',
-      contentView: new Text({
+      child: new Text({
         width: 'fill',
         lines: lines.map((line, index) => {
           return dropdownPrefix(this.#multiple, index, isSelected) + line
@@ -436,7 +436,7 @@ class DropdownSelector<T> extends Container {
     this.#box.border = BORDERS[placement]
 
     const rect = new Rect(new Point(x, y), new Size(width, height))
-    viewport.clipped(rect, inside => this.renderChildren(inside))
+    viewport.clipped(rect, inside => super.render(inside))
   }
 }
 

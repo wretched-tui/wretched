@@ -325,19 +325,41 @@ export abstract class View {
     }
   }
 
+  /**
+   * To register for this event, call `viewport.registerFocus()`, which returns `true`
+   * if the current view has the keyboard focus.
+   */
   receiveKey(event: KeyEvent) {}
+  /**
+   * To register for this event, call `viewport.registerMouse()`
+   */
   receiveMouse(event: MouseEvent) {}
   /**
    * Receives the time-delta between previous and current render. Return 'true' if
    * this function causes the view to need a rerender.
+   *
+   * To register for this event, call `viewport.registerTick()`
    */
-  receiveTick(dt: number): boolean | undefined {
-    return
+  receiveTick(dt: number): boolean {
+    return false
   }
 
+  /**
+   * Called before being added to the parent View
+   */
   willMoveTo(parent: View) {}
+  /**
+   * Called after being removed from the parent View
+   */
   didMoveFrom(parent: View) {}
+  /**
+   * Called after being added to a Screen
+   */
   didMount(screen: Screen) {}
+  /**
+   * Called after being removed from a Screen (even when about to be moved to a new
+   * screen).
+   */
   didUnmount(screen: Screen) {}
 
   removeFromParent() {

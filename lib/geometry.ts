@@ -68,19 +68,45 @@ export class Size {
     return new Size(Math.max(0, this.width + w), Math.max(0, this.height + h))
   }
 
-  maxWidth(width: number): Size {
-    return new Size(Math.min(width, this.width), this.height)
+  /**
+   * Restricts width to a maximum size (width must be <= maxWidth)
+   */
+  maxWidth(maxWidth: number): Size {
+    return new Size(Math.min(maxWidth, this.width), this.height)
   }
 
-  maxHeight(height: number): Size {
-    return new Size(this.width, Math.min(height, this.height))
+  /**
+   * Restricts height to a maximum size (height must be <= maxHeight)
+   */
+  maxHeight(maxHeight: number): Size {
+    return new Size(this.width, Math.min(maxHeight, this.height))
   }
 
+  /**
+   * Restricts width to a minimum size (width must be >= minWidth)
+   */
+  minWidth(minWidth: number): Size {
+    return new Size(Math.max(minWidth, this.width), this.height)
+  }
+
+  /**
+   * Restricts height to a minimum size (height must be >= minHeight)
+   */
+  minHeight(minHeight: number): Size {
+    return new Size(this.width, Math.max(minHeight, this.height))
+  }
+
+  /**
+   * Restricts size to a maximum size (size must be <= maxSize)
+   */
   max(...args: SizeArgs): Size {
     const [w, h] = toWH(args)
     return new Size(Math.min(w, this.width), Math.min(h, this.height))
   }
 
+  /**
+   * Restricts size to a minimum size (size must be >= minSize)
+   */
   min(...args: SizeArgs): Size {
     const [w, h] = toWH(args)
     return new Size(Math.max(w, this.width), Math.max(h, this.height))
@@ -131,6 +157,15 @@ export class Rect {
 
   isEmpty() {
     return this.size.width === 0 || this.size.height === 0
+  }
+
+  includes(point: Point) {
+    return (
+      point.x >= this.minX() &&
+      point.x < this.maxX() &&
+      point.y >= this.minY() &&
+      point.y < this.maxY()
+    )
   }
 
   intersection(rect: Rect): Rect {
@@ -248,7 +283,7 @@ function toXY(args: PointArgs): [number, number] {
     return args
   } else {
     const [arg] = args
-    if (arg instanceof Array) {
+    if (Array.isArray(arg)) {
       return [arg[0], arg[1]]
     } else {
       return [arg.x, arg.y]
@@ -261,7 +296,7 @@ function toWH(args: SizeArgs): [number, number] {
     return args
   } else {
     const [arg] = args
-    if (arg instanceof Array) {
+    if (Array.isArray(arg)) {
       return [arg[0], arg[1]]
     } else {
       return [arg.width, arg.height]
@@ -281,7 +316,7 @@ function toInset(args: InsetArgs): [number, number, number, number] {
     const [arg] = args
     if (typeof arg === 'number') {
       return [arg, arg, arg, arg]
-    } else if (arg instanceof Array) {
+    } else if (Array.isArray(arg)) {
       const numbers = arg as number[]
       const [a, b, c, d] = numbers
       switch (numbers.length) {

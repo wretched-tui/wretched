@@ -1,8 +1,7 @@
 import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
-import {type Props as ViewProps, View} from '../View'
-import {Container} from '../Container'
+import {type Props as ContainerProps, Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {Style} from '../Style'
 import {type MouseEvent, isMouseEnter, isMouseExit} from '../events'
@@ -35,10 +34,9 @@ export interface BorderSizes {
   bottomRight: number
 }
 
-interface Props extends ViewProps {
+interface Props extends ContainerProps {
   border?: Border | BorderChars
   highlight?: boolean
-  children?: View[]
 }
 
 export class Box extends Container {
@@ -50,12 +48,8 @@ export class Box extends Container {
 
   declare border: Border | BorderChars
 
-  constructor({children, ...props}: Props) {
+  constructor(props: Props) {
     super(props)
-
-    if (children) {
-      this.addAll(children)
-    }
 
     this.#update(props)
 
@@ -90,6 +84,7 @@ export class Box extends Container {
         this.#borderSizes.maxTop + this.#borderSizes.maxBottom,
       ),
     )
+
     return naturalSize.grow(
       this.#borderSizes.maxLeft + this.#borderSizes.maxRight,
       this.#borderSizes.maxTop + this.#borderSizes.maxBottom,
@@ -135,7 +130,7 @@ export class Box extends Container {
         ),
       ),
       inside => {
-        this.renderChildren(inside)
+        super.render(inside)
       },
     )
 
