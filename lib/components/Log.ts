@@ -1,5 +1,3 @@
-import {unicode} from '../sys'
-
 import {fetchLogs, type Level, LogLine} from '../log'
 import {centerPad} from '../util'
 import {styled} from '../ansi'
@@ -11,7 +9,6 @@ import {Text} from './Text'
 import {ScrollableList} from './ScrollableList'
 import {Collapsible} from './Collapsible'
 import {Flow} from './Flow'
-import {CollapsibleText} from './CollapsibleText'
 
 export class Log extends Container {
   #logs: LogLine[] = []

@@ -1,6 +1,5 @@
 import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
-import {View, parseFlexShorthand} from '../View'
+import {type Props as ViewProps, View, parseFlexShorthand} from '../View'
 import type {FlexShorthand, FlexSize} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
