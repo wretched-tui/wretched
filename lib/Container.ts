@@ -31,19 +31,21 @@ export abstract class Container extends View {
       children = [child]
     }
 
-    if (children) {
-      const childrenSet = new Set(children)
-      for (const child of this.#children) {
-        if (!childrenSet.has(child)) {
-          this.#removeChild(child)
+    if (children !== undefined) {
+      if (children.length) {
+        const childrenSet = new Set(children)
+        for (const child of this.#children) {
+          if (!childrenSet.has(child)) {
+            this.#removeChild(child)
+          }
         }
-      }
 
-      for (const child of children) {
-        this.add(child)
+        for (const child of children) {
+          this.add(child)
+        }
+      } else {
+        this.removeAllChildren()
       }
-    } else {
-      this.removeAllChildren()
     }
   }
 
