@@ -1,4 +1,4 @@
-import {Tree, Text} from '../components'
+import {Tree, Text} from 'wretched'
 import {demo} from './demo'
 
 interface Data {

@@ -1,5 +1,5 @@
-import {inspect} from '../inspect'
-import {Collapsible, Text} from '../components'
+import {inspect} from 'wretched'
+import {Collapsible, Text} from 'wretched'
 
 import {demo} from './demo'
 

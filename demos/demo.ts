@@ -1,12 +1,10 @@
-import type {BlessedProgram} from '../sys'
+import {iTerm2} from 'wretched'
+import {interceptConsoleLog} from 'wretched'
 
-import {iTerm2} from '../iTerm2'
-import {interceptConsoleLog} from '../log'
-
-import type {View} from '../View'
-import {Screen} from '../Screen'
-import {TrackMouse} from '../components/utility'
-import {ConsoleLog, Flex, Window} from '../components'
+import type {View} from 'wretched'
+import {Screen} from 'wretched'
+import {TrackMouse} from 'wretched/components/utility'
+import {ConsoleLog, Flex, Window} from 'wretched'
 
 export async function demo(demoContent: View) {
   interceptConsoleLog()
@@ -16,7 +14,7 @@ export async function demo(demoContent: View) {
     height: 10,
   })
   const [screen, program] = await Screen.start(
-    async (program: BlessedProgram) => {
+    async (program) => {
       await iTerm2.setBackground(program, [23, 23, 23])
 
       return new Window({

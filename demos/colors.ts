@@ -1,5 +1,6 @@
-import {colors} from '../sys'
-import {Digits, Flex, Input, Slider, Space, Text} from '../components'
+import {colors} from 'wretched'
+import {Digits, Flex, Input, Slider, Space, Text} from 'wretched'
+import type { Color } from 'wretched'
 
 import {demo} from './demo'
 
@@ -65,12 +66,12 @@ const update = () => {
   rgb[1] = Math.max(0, Math.min(255, rgb[1]))
   rgb[2] = Math.max(0, Math.min(255, rgb[2]))
   // const rgb = colors.HSBtoRGB(rgb[0] / 360, rgb[1] / 100, rgb[2] / 100)
-  const sgr = colors.match(rgb)
+  const sgr = colors.match(...rgb, undefined)
   let ansi = `\x1b[38;5;${sgr};48;5;${sgr}m      \x1b[39;49m`
   ansi = [ansi, ansi, ansi].join('\n') + ` (6bit: ${sgr})`
-  updateText(colors.RGBtoHex(rgb))
+  updateText(colors.RGBtoHex(...rgb))
   ansiText.text = ansi
-  swatch.background = colors.RGBtoHex(rgb)
+  swatch.background = colors.RGBtoHex(...rgb) as Color
 
   redInput.text = `${rgb[0]}`
   greenInput.text = `${rgb[1]}`

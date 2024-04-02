@@ -1,4 +1,4 @@
-import {Scrollable, Flow, Text} from '../components'
+import {Scrollable, Flow, Text} from 'wretched'
 
 import {demo} from './demo'
 

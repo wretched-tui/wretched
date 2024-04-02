@@ -1,7 +1,7 @@
-import {Text} from '../components'
-import {Size} from '../geometry'
-import {View} from '../View'
-import {Viewport} from '../Viewport'
+import {Text} from 'wretched'
+import {Size} from 'wretched'
+import {View} from 'wretched'
+import {Viewport} from 'wretched'
 
 import {demo} from './demo'
 

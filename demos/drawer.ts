@@ -7,7 +7,7 @@ import {
   Input,
   Space,
   Text,
-} from '../components'
+} from 'wretched'
 
 import {demo} from './demo'
 

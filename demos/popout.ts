@@ -1,4 +1,4 @@
-import {Box, Text} from '../components'
+import {Box, Text} from 'wretched'
 
 import {demo} from './demo'
 

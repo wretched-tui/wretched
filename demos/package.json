@@ -1,0 +1,16 @@
+{
+  "name": "demos",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf dist/",
+    "build": "yarn clean && yarn tsc",
+    "demo": "yarn build && cd dist/ && node --enable-source-maps --"
+  },
+  "dependencies": {
+    "wretched": "file:../dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.3"
+  }
+}

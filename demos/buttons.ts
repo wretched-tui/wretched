@@ -1,4 +1,4 @@
-import {Button, Flex, Separator, Space} from '../components'
+import {Button, Flex, Separator, Space} from 'wretched'
 
 import {demo} from './demo'
 

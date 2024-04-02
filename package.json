@@ -28,7 +28,7 @@
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
     "build": "yarn clean && yarn tsc && yarn cp-usr",
-    "demo": "yarn build && cd dist/demos/ && node --enable-source-maps --"
+    "demo": "yarn build && cd demos/ && yarn demo --"
   },
   "keywords": [
     "curses",

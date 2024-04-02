@@ -1,4 +1,4 @@
 node_modules/
 dist/
 /lib/test.ts
-/demos/
+/demos/node_modules/

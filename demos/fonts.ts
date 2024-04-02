@@ -6,7 +6,7 @@ import {
   Flex,
   Separator,
   Space,
-} from '../components'
+} from 'wretched'
 
 import {demo} from './demo'
 
