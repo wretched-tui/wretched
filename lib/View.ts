@@ -4,6 +4,7 @@ import type {Screen} from './Screen'
 import type {Purpose} from './Theme'
 import {Theme} from './Theme'
 import {Container} from './Container'
+import {System} from './System'
 import type {KeyEvent, MouseEvent} from './events'
 import {Point, Size, Rect} from './geometry'
 
@@ -326,25 +327,6 @@ export abstract class View {
   }
 
   /**
-   * To register for this event, call `viewport.registerFocus()`, which returns `true`
-   * if the current view has the keyboard focus.
-   */
-  receiveKey(event: KeyEvent) {}
-  /**
-   * To register for this event, call `viewport.registerMouse()`
-   */
-  receiveMouse(event: MouseEvent) {}
-  /**
-   * Receives the time-delta between previous and current render. Return 'true' if
-   * this function causes the view to need a rerender.
-   *
-   * To register for this event, call `viewport.registerTick()`
-   */
-  receiveTick(dt: number): boolean {
-    return false
-  }
-
-  /**
    * Called before being added to the parent View
    */
   willMoveTo(parent: View) {}
@@ -386,6 +368,25 @@ export abstract class View {
     } else {
       this.didUnmount(prev!)
     }
+  }
+
+  /**
+   * To register for this event, call `viewport.registerFocus()`, which returns `true`
+   * if the current view has the keyboard focus.
+   */
+  receiveKey(event: KeyEvent) {}
+  /**
+   * To register for this event, call `viewport.registerMouse()`
+   */
+  receiveMouse(event: MouseEvent, system: System) {}
+  /**
+   * Receives the time-delta between previous and current render. Return 'true' if
+   * this function causes the view to need a rerender.
+   *
+   * To register for this event, call `viewport.registerTick()`
+   */
+  receiveTick(dt: number): boolean {
+    return false
   }
 }
 

@@ -79,10 +79,6 @@ export class Viewport {
     )
   }
 
-  dismissModal(view: View) {
-    this.#screen.dismissModal(view)
-  }
-
   registerHotKey(key: HotKey) {
     if (!this.#currentRender) {
       return

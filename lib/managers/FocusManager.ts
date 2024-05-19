@@ -70,6 +70,11 @@ export class FocusManager {
     this.#hotKeys.push([view, key])
   }
 
+  requestFocus(view: View) {
+    this.#currentFocus = view
+    return true
+  }
+
   /**
    * @return boolean Whether the focus changed
    */

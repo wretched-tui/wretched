@@ -21,6 +21,7 @@ import {ModalManager} from './managers/ModalManager'
 import {MouseManager} from './managers/MouseManager'
 import {TickManager} from './managers/TickManager'
 import {Window} from './components/Window'
+import {System, UnboundSystem} from './System'
 
 type ViewConstructor = (program: BlessedProgram) => View | Promise<View>
 
@@ -160,9 +161,11 @@ export class Screen {
       case 'key':
         this.triggerKeyboard(event)
         break
-      case 'mouse':
-        this.triggerMouse(event)
+      case 'mouse': {
+        const system = new UnboundSystem(this.#focusManager)
+        this.triggerMouse(event, system)
         break
+      }
     }
     this.render()
   }
@@ -177,10 +180,6 @@ export class Screen {
     return this.#modalManager.requestModal(parent, modal, onClose, rect)
   }
 
-  dismissModal(view: View) {
-    return this.#modalManager.dismissModal(view)
-  }
-
   /**
    * @return boolean Whether the current view has focus
    */
@@ -190,6 +189,10 @@ export class Screen {
 
   registerHotKey(view: View, key: HotKey) {
     return this.#focusManager.registerHotKey(view, key)
+  }
+
+  requestFocus(view: View) {
+    return this.#focusManager.requestFocus(view)
   }
 
   triggerKeyboard(event: KeyEvent) {
@@ -213,8 +216,8 @@ export class Screen {
     this.#mouseManager.checkMouse(view, x, y)
   }
 
-  triggerMouse(systemEvent: SystemMouseEvent): void {
-    this.#mouseManager.trigger(systemEvent)
+  triggerMouse(systemEvent: SystemMouseEvent, system: UnboundSystem): void {
+    this.#mouseManager.trigger(systemEvent, system)
   }
 
   registerTick(view: View) {
@@ -234,8 +237,9 @@ export class Screen {
    * @return boolean Whether or not to rerender the view due to focus or mouse change
    */
   commit() {
+    const system = new UnboundSystem(this.#focusManager)
     const focusNeedsRender = this.#focusManager.commit()
-    const mouseNeedsRender = this.#mouseManager.commit()
+    const mouseNeedsRender = this.#mouseManager.commit(system)
     return focusNeedsRender || mouseNeedsRender
   }
 

@@ -1,19 +1,11 @@
-import {
-  Box,
-  Button,
-  Drawer,
-  Flex,
-  Flow,
-  Input,
-  Space,
-  Text,
-} from 'wretched'
+import {Box, Button, Drawer, Flex, Flow, Input, Space, Text} from 'wretched'
 
 import {demo} from './demo'
 
 const firstInput = new Input({
   text: "family: 👨‍👩‍👧‍👦 smiley: 😀 some other text that isn't very interesting.",
 })
+
 const dontClickMe = new Button({
   text: 'Not me!',
   onClick() {
@@ -43,7 +35,7 @@ const changeLocation = new Button({
   },
 })
 
-;(drawer = new Drawer({
+drawer = new Drawer({
   // theme: 'primary',
   drawerView: new Text({
     maxWidth: 40,
@@ -117,5 +109,5 @@ const changeLocation = new Button({
       changeLocation,
     ],
   }),
-})),
-  demo(drawer)
+})
+demo(drawer)

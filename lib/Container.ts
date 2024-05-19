@@ -118,6 +118,8 @@ export abstract class Container extends View {
 
     // takes care of didMount, noop if screen == this.screen
     child.moveToScreen(this.screen)
+
+    this.invalidateSize()
   }
 
   #removeChild(child: View) {

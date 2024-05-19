@@ -1,5 +1,6 @@
 import {View} from '../View'
 import {Point} from '../geometry'
+import {System, UnboundSystem} from '../System'
 import type {
   MouseDownEvent,
   MouseEventListener,
@@ -36,7 +37,7 @@ export class MouseManager {
   /**
    * @return boolean Whether the mouse target changed
    */
-  commit(): boolean {
+  commit(system: UnboundSystem): boolean {
     if (this.#mouseDownEvent || !this.#mousePosition) {
       return false
     }
@@ -60,15 +61,18 @@ export class MouseManager {
     }
 
     if (!same) {
-      this.trigger({
-        type: 'mouse',
-        name: 'mouse.move.in',
-        button: 'unknown',
-        ctrl: false,
-        meta: false,
-        shift: false,
-        ...this.#mousePosition,
-      })
+      this.trigger(
+        {
+          type: 'mouse',
+          name: 'mouse.move.in',
+          button: 'unknown',
+          ctrl: false,
+          meta: false,
+          shift: false,
+          ...this.#mousePosition,
+        },
+        system,
+      )
     }
     return !same
   }
@@ -152,15 +156,18 @@ export class MouseManager {
     return this.#mouseListeners.get(mouseKey(x, y))
   }
 
-  trigger(systemEvent: SystemMouseEvent): void {
+  trigger(systemEvent: SystemMouseEvent, system: UnboundSystem): void {
     this.#mousePosition = new Point(systemEvent.x, systemEvent.y)
 
     if (systemEvent.name === 'mouse.move.in' && this.#mouseDownEvent) {
-      return this.trigger({
-        ...systemEvent,
-        name: 'mouse.button.up',
-        button: this.#mouseDownEvent.button,
-      })
+      return this.trigger(
+        {
+          ...systemEvent,
+          name: 'mouse.button.up',
+          button: this.#mouseDownEvent.button,
+        },
+        system,
+      )
     }
 
     if (this.#mouseDownEvent) {
@@ -168,17 +175,17 @@ export class MouseManager {
       if (!isMouseButton(systemEvent)) {
         return
       }
-      this.#dragMouse(systemEvent, this.#mouseDownEvent)
+      this.#dragMouse(systemEvent, this.#mouseDownEvent, system)
 
       if (systemEvent.name === 'mouse.button.up') {
-        this.#moveMouse({...systemEvent, name: 'mouse.move.in'})
+        this.#moveMouse({...systemEvent, name: 'mouse.move.in'}, system)
       }
     } else if (isMouseButton(systemEvent)) {
-      this.#pressMouse(systemEvent)
+      this.#pressMouse(systemEvent, system)
     } else if (isMouseWheel(systemEvent)) {
-      this.#scrollMouse(systemEvent)
+      this.#scrollMouse(systemEvent, system)
     } else {
-      this.#moveMouse(systemEvent)
+      this.#moveMouse(systemEvent, system)
     }
   }
 
@@ -220,6 +227,7 @@ export class MouseManager {
     systemEvent: Omit<SystemMouseEvent, 'name'>,
     eventName: MouseEventName,
     target: MouseEventTarget,
+    system: System,
   ) {
     const position = new Point(
       systemEvent.x - target.offset.x,
@@ -230,10 +238,14 @@ export class MouseManager {
       name: eventName,
       position,
     }
-    target.view.receiveMouse(event)
+    target.view.receiveMouse(event, system)
   }
 
-  #dragMouse(systemEvent: SystemMouseEvent, mouseDown: MouseDownEvent) {
+  #dragMouse(
+    systemEvent: SystemMouseEvent,
+    mouseDown: MouseDownEvent,
+    unboundSystem: UnboundSystem,
+  ) {
     if (systemEvent.name === 'mouse.button.up') {
       this.#mouseDownEvent = undefined
     }
@@ -244,21 +256,22 @@ export class MouseManager {
     }
 
     const isInside = this.#getListener(systemEvent)?.view === target.view
+    const system = unboundSystem.bind(target.view)
     if (systemEvent.name === 'mouse.button.up') {
       if (isInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.up', target)
+        this.#sendMouse(systemEvent, 'mouse.button.up', target, system)
       } else {
-        this.#sendMouse(systemEvent, 'mouse.button.cancel', target)
+        this.#sendMouse(systemEvent, 'mouse.button.cancel', target, system)
       }
     } else {
       if (isInside && target.wasInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.drag', target)
+        this.#sendMouse(systemEvent, 'mouse.button.drag', target, system)
       } else if (isInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.enter', target)
+        this.#sendMouse(systemEvent, 'mouse.button.enter', target, system)
       } else if (target.wasInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.exit', target)
+        this.#sendMouse(systemEvent, 'mouse.button.exit', target, system)
       } else {
-        this.#sendMouse(systemEvent, 'mouse.button.dragOutside', target)
+        this.#sendMouse(systemEvent, 'mouse.button.dragOutside', target, system)
       }
 
       target.wasInside = isInside
@@ -266,10 +279,15 @@ export class MouseManager {
     }
   }
 
-  #pressMouse(systemEvent: SystemMouseEvent) {
+  #pressMouse(systemEvent: SystemMouseEvent, system: UnboundSystem) {
     const listener = this.#getListener(systemEvent)
     if (listener) {
-      this.#sendMouse(systemEvent, 'mouse.button.down', listener)
+      this.#sendMouse(
+        systemEvent,
+        'mouse.button.down',
+        listener,
+        system.bind(listener.view),
+      )
       this.#mouseDownEvent = {
         target: {view: listener.view, offset: listener.offset, wasInside: true},
         button: systemEvent.button,
@@ -277,14 +295,19 @@ export class MouseManager {
     }
   }
 
-  #scrollMouse(systemEvent: SystemMouseEvent) {
+  #scrollMouse(systemEvent: SystemMouseEvent, system: UnboundSystem) {
     const listener = this.#getListener(systemEvent)
     if (listener) {
-      this.#sendMouse(systemEvent, systemEvent.name, listener)
+      this.#sendMouse(
+        systemEvent,
+        systemEvent.name,
+        listener,
+        system.bind(listener.view),
+      )
     }
   }
 
-  #moveMouse(systemEvent: SystemMouseEvent) {
+  #moveMouse(systemEvent: SystemMouseEvent, unboundSystem: UnboundSystem) {
     const listeners = this.#getListeners(systemEvent)
     let prevListeners = this.#mouseMoveViews
     let isFirst = true
@@ -298,14 +321,15 @@ export class MouseManager {
         return true
       })
 
+      const system = unboundSystem.bind(listener.view)
       if (didEnter) {
-        this.#sendMouse(systemEvent, 'mouse.move.enter', listener)
+        this.#sendMouse(systemEvent, 'mouse.move.enter', listener, system)
       }
 
       if (isFirst) {
-        this.#sendMouse(systemEvent, 'mouse.move.in', listener)
+        this.#sendMouse(systemEvent, 'mouse.move.in', listener, system)
       } else {
-        this.#sendMouse(systemEvent, 'mouse.move.below', listener)
+        this.#sendMouse(systemEvent, 'mouse.move.below', listener, system)
       }
 
       isFirst = false
@@ -313,7 +337,8 @@ export class MouseManager {
     this.#mouseMoveViews = listeners
 
     for (const listener of prevListeners) {
-      this.#sendMouse(systemEvent, 'mouse.move.exit', listener)
+      const system = unboundSystem.bind(listener.view)
+      this.#sendMouse(systemEvent, 'mouse.move.exit', listener, system)
     }
   }
 }

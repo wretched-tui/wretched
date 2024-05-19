@@ -1,15 +1,17 @@
 import {unicode} from '../sys'
 
-import type {KeyEvent} from '../events'
+import type {KeyEvent, MouseEvent} from '../events'
 import {isKeyPrintable} from '../events'
 import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Style} from '../Style'
 import {Point, Size} from '../geometry'
+import {System} from '../System'
 
 interface Props extends ViewProps {
   text?: string
+  placeholder?: string
   onChange?: (text: string) => void
   onSubmit?: (text: string) => void
 }
@@ -36,7 +38,7 @@ export class Input extends View {
   #offset: number = 0
   #cursor: Cursor = {start: 0, end: 0}
 
-  constructor(props: Props) {
+  constructor(props: Props = {}) {
     super(props)
     this.#update(props)
   }
@@ -154,6 +156,12 @@ export class Input extends View {
       p += unicode.charWidth(this.#chars[index])
     }
     return this.#chars.length - 1
+  }
+
+  receiveMouse(event: MouseEvent, system: System) {
+    if (event.name === 'mouse.button.down') {
+      system.requestFocus()
+    }
   }
 
   render(viewport: Viewport) {
