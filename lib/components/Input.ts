@@ -329,35 +329,15 @@ export class Input extends View {
     }
 
     let currentStyle = Style.NONE
-    const plainStyle = isPlaceholder
-      ? new Style({
-          foreground: this.theme.dimText,
-          bold: hasFocus,
-        })
-      : hasFocus
-      ? new Style({
-          foreground: this.theme.textColor,
-          bold: hasFocus,
-        })
-      : new Style({
-          foreground: this.theme.textColor,
-        })
-    const selectedStyle = hasFocus
-      ? new Style({
-          foreground: this.theme.textColor,
-          inverse: true,
-          bold: hasFocus,
-        })
-      : new Style({
-          foreground: this.theme.dimText,
-          background: this.theme.dimBackground,
-          bold: hasFocus,
-        })
-    const cursorStyle = new Style({
-      foreground: isPlaceholder ? this.theme.dimText : this.theme.textColor,
-      underline: true,
-      bold: hasFocus,
+    const plainStyle = this.theme.text({
+      isPlaceholder,
+      hasFocus,
     })
+    const selectedStyle = this.theme.text({
+      isSelected: true,
+      hasFocus,
+    })
+    const cursorStyle = plainStyle.merge({underline: true})
 
     viewport.usingPen(pen => {
       let style: Style = plainStyle

@@ -178,9 +178,11 @@ export class Dropdown<T, M extends boolean> extends View {
     viewport.paint(textStyle)
 
     const pt = new Point(0, 0).mutableCopy()
+    const lineIndexOffset = ~~((viewport.contentSize.height - lines.length) / 2)
     for (; pt.y < viewport.contentSize.height; pt.y++) {
-      if (pt.y < lines.length) {
-        viewport.write(lines[pt.y], pt.offset(1, 0), textStyle)
+      const lineIndex = pt.y - lineIndexOffset
+      if (lineIndex >= 0 && lineIndex < lines.length) {
+        viewport.write(lines[lineIndex], pt.offset(1, 0), textStyle)
       }
 
       viewport.write(

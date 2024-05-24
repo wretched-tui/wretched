@@ -4,8 +4,8 @@ import {
   Text,
   Dropdown,
   Flex,
-  Separator,
   Space,
+  Button,
 } from 'wretched'
 
 import {demo} from './demo'
@@ -16,23 +16,42 @@ const text = new Text({
   text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n0123456789\nNunc consectetur molestie faucibus.\nPhasellus iaculis pellentesque felis eu fringilla.\nUt in sollicitudin nisi.\nPraesent in mauris tortor.\nNam interdum, magna eu pellentesque scelerisque, dui ipsum adipiscing ante, vel ullamcorper nisl sapien id arcu.\nNullam egestas diam eu felis mollis sit amet cursus enim vehicula.\nQuisque eu tellus id erat pellentesque consequat.\nMaecenas fermentum faucibus magna, eget dictum nisi congue sed.\nQuisque a justo a nisi eleifend facilisis sit amet at augue.\nSed a sapien vitae augue hendrerit porta vel eu ligula.\nProin enim urna, faucibus in vestibulum tincidunt, commodo sit amet orci.\nVestibulum ac sem urna, quis mattis urna.\nNam eget ullamcorper ligula.\nNam volutpat, arcu vel auctor dignissim, tortor nisi sodales enim, et vestibulum nulla dui id ligula.\nNam ullamcorper, augue ut interdum vulputate, eros mauris lobortis sapien, ac sodales dui eros ac elit.',
   wrap: true,
   font: 'serif',
-  padding: 2,
+  padding: {left: 1, right: 1},
 })
 
 const dropdown = new Dropdown({
   theme: 'proceed',
   onSelect(value: FontFamily) {
     text.font = value
-    console.log(`Selected: ${value}`)
   },
   padding: {left: 2, right: 2},
-  height: 1,
+  height: 3,
   choices,
   selected: 'serif',
 })
 
+const buttons = Flex.right({
+  children: FontFamilies.map(
+    f =>
+      new Button({
+        text: f,
+        border: 'none',
+        onClick() {
+          text.font = f
+          dropdown.selected = f
+        },
+      }),
+  ),
+})
+
 demo(
   Flex.down({
-    children: [new Space({height: 1}), dropdown, new Space({height: 1}), text],
+    children: [
+      new Space({height: 1}),
+      dropdown,
+      buttons,
+      new Space({height: 1}),
+      text,
+    ],
   }),
 )

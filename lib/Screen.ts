@@ -166,6 +166,7 @@ export class Screen {
         break
       }
     }
+
     this.render()
   }
 
@@ -240,6 +241,10 @@ export class Screen {
     const focusNeedsRender = this.#focusManager.commit()
     const mouseNeedsRender = this.#mouseManager.commit(system)
     return focusNeedsRender || mouseNeedsRender
+  }
+
+  needsRender() {
+    this.#tickManager.needsRender()
   }
 
   render() {

@@ -72,14 +72,14 @@ demo(
   Flex.down({
     children: [
       //
-      // singleLine,
-      // emptySingleLine,
+      singleLine,
+      emptySingleLine,
       Flex.right({
         children: [new Box({border: 'single', child: wrapLine}), new Space()],
       }),
-      // emptyMultiLine,
-      // restrictedLine,
-      // restrictedMultiLine,
+      emptyMultiLine,
+      restrictedLine,
+      restrictedMultiLine,
     ],
   }),
   false,

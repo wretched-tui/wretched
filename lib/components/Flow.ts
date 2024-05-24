@@ -9,21 +9,35 @@ interface Props extends ContainerProps {
   spaceBetween?: number
 }
 
+type ShorthandProps = NonNullable<Props['children']> | Omit<Props, 'direction'>
+
+function fromShorthand(props: ShorthandProps, direction: Direction): Props {
+  if (Array.isArray(props)) {
+    return {children: props, direction}
+  } else {
+    return {...props, direction}
+  }
+}
+
 export class Flow extends Container {
   #direction: Direction = 'leftToRight'
   #spaceBetween: number = 0
 
-  static down(props: Omit<Props, 'direction'> = {}): Flow {
-    return new Flow({...props, direction: 'topToBottom'})
+  static down(props: ShorthandProps = {}): Flow {
+    const direction = 'topToBottom'
+    return new Flow(fromShorthand(props, direction))
   }
-  static up(props: Omit<Props, 'direction'> = {}): Flow {
-    return new Flow({...props, direction: 'bottomToTop'})
+  static up(props: ShorthandProps = {}): Flow {
+    const direction = 'bottomToTop'
+    return new Flow(fromShorthand(props, direction))
   }
-  static right(props: Omit<Props, 'direction'> = {}): Flow {
-    return new Flow({...props, direction: 'leftToRight'})
+  static right(props: ShorthandProps = {}): Flow {
+    const direction = 'leftToRight'
+    return new Flow(fromShorthand(props, direction))
   }
-  static left(props: Omit<Props, 'direction'> = {}): Flow {
-    return new Flow({...props, direction: 'rightToLeft'})
+  static left(props: ShorthandProps = {}): Flow {
+    const direction = 'rightToLeft'
+    return new Flow(fromShorthand(props, direction))
   }
 
   constructor(props: Props) {

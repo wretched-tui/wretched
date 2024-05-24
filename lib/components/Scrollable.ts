@@ -173,12 +173,12 @@ export class Scrollable extends Container {
             new Style(
               inRange
                 ? {
-                    foreground: this.theme.highlight,
-                    background: this.theme.highlight,
+                    foreground: this.theme.highlightColor,
+                    background: this.theme.highlightColor,
                   }
                 : {
-                    foreground: this.theme.darken,
-                    background: this.theme.darken,
+                    foreground: this.theme.darkenColor,
+                    background: this.theme.darkenColor,
                   },
             ),
           )
@@ -202,12 +202,12 @@ export class Scrollable extends Container {
             new Style(
               inRange
                 ? {
-                    foreground: this.theme.highlight,
-                    background: this.theme.highlight,
+                    foreground: this.theme.highlightColor,
+                    background: this.theme.highlightColor,
                   }
                 : {
-                    foreground: this.theme.darken,
-                    background: this.theme.darken,
+                    foreground: this.theme.darkenColor,
+                    background: this.theme.darkenColor,
                   },
             ),
           )

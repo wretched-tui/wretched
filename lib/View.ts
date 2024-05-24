@@ -357,6 +357,7 @@ export abstract class View {
 
   abstract naturalSize(availableSize: Size): Size
   abstract render(viewport: Viewport): void
+
   /**
    * Called from a view when a property change could affect naturalSize
    */
@@ -365,6 +366,14 @@ export abstract class View {
     if (this.#invalidateParent) {
       this.parent?.invalidateSize()
     }
+    this.invalidateRender()
+  }
+
+  /**
+   * Indicates that a rerender is needed (but size is not affected)
+   */
+  invalidateRender() {
+    this.#screen?.needsRender()
   }
 
   /**

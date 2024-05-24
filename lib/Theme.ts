@@ -2,12 +2,13 @@ import type {Color} from './Color'
 import {Style} from './Style'
 
 export type Purpose =
-  | 'primary'
+  | 'primary' // aka blue
   | 'blue'
-  | 'secondary'
-  | 'proceed'
+  | 'secondary' // aka orange
+  | 'orange'
+  | 'proceed' // aka green
   | 'green'
-  | 'cancel'
+  | 'cancel' // aka red
   | 'red'
   | 'selected'
   | 'plain'
@@ -30,13 +31,13 @@ interface Props {
 
 export class Theme {
   textColor: Color
-  brightText: Color
-  dimText: Color
-  dimBackground: Color
-  background: Color
-  textBackground: Color
-  highlight: Color
-  darken: Color
+  brightTextColor: Color
+  dimTextColor: Color
+  dimBackgroundColor: Color
+  backgroundColor: Color
+  textBackgroundColor: Color
+  highlightColor: Color
+  darkenColor: Color
 
   static primary = new Theme({
     background: '#0032FA',
@@ -73,6 +74,7 @@ export class Theme {
   static red = Theme.cancel
   static green = Theme.proceed
   static blue = Theme.primary
+  static orange = Theme.secondary
 
   constructor({
     text,
@@ -85,15 +87,18 @@ export class Theme {
     darken,
   }: Props) {
     this.textColor = text ?? defaultText
-    this.brightText = brightText ?? defaultBrightText
-    this.dimText = dimText ?? defaultDimText
-    this.dimBackground = dimBackground ?? defaultDimBackground
-    this.background = background
-    this.textBackground = textBackground ?? background
-    this.highlight = highlight
-    this.darken = darken
+    this.brightTextColor = brightText ?? defaultBrightText
+    this.dimTextColor = dimText ?? defaultDimText
+    this.dimBackgroundColor = dimBackground ?? defaultDimBackground
+    this.backgroundColor = background
+    this.textBackgroundColor = textBackground ?? background
+    this.highlightColor = highlight
+    this.darkenColor = darken
   }
 
+  /**
+   * "Ornament" is meant to draw decorative characters that disappear on hover/press
+   */
   ui({
     isPressed,
     isHover,
@@ -103,75 +108,88 @@ export class Theme {
     isHover?: boolean
     isOrnament?: boolean
   } = {}): Style {
-    return new Style({
-      foreground: isOrnament
-        ? isPressed
-          ? this.darken
-          : this.highlight
-        : this.textColor,
-      background: isPressed
-        ? this.darken
-        : isHover
-        ? this.highlight
-        : this.background,
-    })
+    if (isPressed) {
+      return new Style({
+        foreground: isOrnament ? this.darkenColor : this.textColor,
+        background: this.darkenColor,
+      })
+    } else if (isHover) {
+      return new Style({
+        foreground: isOrnament ? this.highlightColor : this.textColor,
+        background: this.highlightColor,
+      })
+    } else if (isOrnament) {
+      return new Style({
+        foreground: this.darkenColor,
+        background: this.backgroundColor,
+      })
+    } else {
+      return new Style({
+        foreground: this.textColor,
+        background: this.backgroundColor,
+      })
+    }
   }
 
+  /**
+   * Creates a text style using the current theme.
+   *
+   * Not all combinations are supported:
+   * - isSelected and isPlaceholder revert to just isPlaceholder
+   */
   text({
     isPressed,
     isHover,
-    isDim,
+    isSelected,
+    isPlaceholder,
+    hasFocus,
   }: {
     isPressed?: boolean
     isHover?: boolean
-    isDim?: boolean
+    isSelected?: boolean
+    isPlaceholder?: boolean
+    hasFocus?: boolean
   } = {}): Style {
-    if (isDim) {
+    if (isPlaceholder) {
       return new Style({
-        foreground: isPressed ? this.textColor : this.dimText,
-        background: isHover ? this.dimBackground : this.textBackground,
+        foreground: isPressed ? this.textColor : this.dimTextColor,
+        background: isHover
+          ? this.dimBackgroundColor
+          : this.textBackgroundColor,
+        bold: hasFocus,
       })
     }
 
     if (isPressed) {
       return new Style({
-        foreground: this.highlight,
-        background: this.textBackground,
+        foreground: this.highlightColor,
+        background: this.textBackgroundColor,
+        inverse: hasFocus && isSelected,
+        bold: hasFocus,
       })
     }
 
     if (isHover) {
       return new Style({
-        foreground: this.brightText,
-        background: this.textBackground,
+        foreground: this.brightTextColor,
+        background: this.textBackgroundColor,
+        inverse: hasFocus && isSelected,
+        bold: hasFocus,
+      })
+    }
+
+    if (isSelected && !hasFocus) {
+      return new Style({
+        foreground: this.dimTextColor,
+        background: this.dimBackgroundColor,
       })
     }
 
     return new Style({
       foreground: this.textColor,
-      background: this.textBackground,
-    })
-  }
-
-  merge(
-    overrides: Partial<
-      Pick<
-        Theme,
-        | 'textColor'
-        | 'brightText'
-        | 'dimText'
-        | 'background'
-        | 'textBackground'
-        | 'highlight'
-        | 'darken'
-      >
-    >,
-  ): Theme {
-    const {textColor: text} = this
-    return new Theme({
-      ...this,
-      text,
-      ...overrides,
+      background: this.textBackgroundColor,
+      inverse: hasFocus && isSelected,
+      bold: hasFocus,
     })
   }
 }

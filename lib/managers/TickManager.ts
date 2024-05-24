@@ -4,6 +4,7 @@ export class TickManager {
   #render: () => void
   #tickTimer: ReturnType<typeof setInterval> | undefined
   #tickViews: Set<View> = new Set()
+  #needsRender = false
 
   constructor(render: () => void) {
     this.#render = render
@@ -14,9 +15,9 @@ export class TickManager {
   }
 
   endRender() {
-    if (!this.#tickViews.size && this.#tickTimer) {
+    if (!this.#tickViews.size) {
       this.#stop()
-    } else if (this.#tickViews.size && !this.#tickTimer) {
+    } else if (this.#tickViews.size) {
       this.#start()
     }
   }
@@ -51,14 +52,21 @@ export class TickManager {
     this.#tickViews.add(view)
   }
 
+  needsRender() {
+    this.#needsRender = true
+    this.#start()
+  }
+
   triggerTick(dt: number) {
-    let needsRender = false
+    let needsRender = this.#needsRender
     for (const view of this.#tickViews) {
       needsRender = view.receiveTick(dt) || needsRender
     }
 
     if (needsRender) {
       this.#render()
+
+      this.#needsRender = false
     }
   }
 }

@@ -16,6 +16,7 @@ import {
   KeyEvent,
   styleTextForHotKey,
 } from '../events'
+import {Style} from '../Style'
 
 type Border = 'default' | 'arrows' | 'none'
 type BorderChars = [string, string]
@@ -30,7 +31,7 @@ export interface Props extends ContainerProps {
 export class Button extends Container {
   #hotKey?: HotKey
   #onClick?: Props['onClick']
-  #textView?: Text
+  #textView?: Text = undefined
   #border: Border = 'default'
   #isPressed = false
   #isHover = false
@@ -39,18 +40,11 @@ export class Button extends Container {
     super(props)
 
     if (this.#textView === undefined) {
-      this.add(new Text({alignment: 'center'}))
+      this.#textView = new Text({alignment: 'center'})
+      this.add(this.#textView)
     }
 
     this.#update(props)
-  }
-
-  add(child: View, at?: number) {
-    if (this.#textView === undefined && child instanceof Text) {
-      this.#textView = child
-    }
-
-    super.add(child, at)
   }
 
   update(props: Props) {
@@ -129,9 +123,23 @@ export class Button extends Container {
       isPressed: this.#isPressed,
       isHover: this.#isHover,
     })
+    const topsStyle = this.theme.ui({
+      isPressed: this.#isPressed,
+      isHover: this.#isHover,
+      isOrnament: true,
+    })
 
     viewport.visibleRect.forEachPoint(pt => {
-      viewport.write(' ', pt, textStyle)
+      if (pt.y === 0 && viewport.contentSize.height > 2) {
+        viewport.write('▔', pt, topsStyle)
+      } else if (
+        pt.y === viewport.contentSize.height - 1 &&
+        viewport.contentSize.height > 2
+      ) {
+        viewport.write('▁', pt, topsStyle)
+      } else {
+        viewport.write(' ', pt, textStyle)
+      }
     })
 
     const [leftWidth, rightWidth] = this.#borderSize()
