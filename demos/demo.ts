@@ -13,8 +13,10 @@ export async function demo(demoContent: View, showConsoleLog = true) {
   const consoleLog = new ConsoleLog({
     height: 10,
   })
-  const [screen, program] = await Screen.start(
-    new Window({
+  const [screen, program] = await Screen.start(async program => {
+    await iTerm2.setBackground(program, [23, 23, 23])
+
+    return new Window({
       child: new TrackMouse({
         content: Flex.down({
           children: showConsoleLog
@@ -25,8 +27,8 @@ export async function demo(demoContent: View, showConsoleLog = true) {
             : [['flex1', demoContent]],
         }),
       }),
-    }),
-  )
+    })
+  })
 
   program.key('escape', function () {
     consoleLog.clear()

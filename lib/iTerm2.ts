@@ -34,7 +34,7 @@ export class iTerm2 {
         _restoreBg = parseBackgroundResponse(response)
 
         program.write(setBackgroundCommand(hex))
-        resolve(void 0)
+        setTimeout(resolve, 4)
       })
 
       program.write(getBackgroundColorCommand())
