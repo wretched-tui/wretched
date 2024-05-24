@@ -221,12 +221,16 @@ export class Drawer extends Container {
     switch (this.#location) {
       case 'top':
         this.#renderTop(viewport, drawerSize)
+        break
       case 'right':
         this.#renderRight(viewport, drawerSize)
+        break
       case 'bottom':
         this.#renderBottom(viewport, drawerSize)
+        break
       case 'left':
         this.#renderLeft(viewport, drawerSize)
+        break
     }
   }
 
@@ -341,7 +345,12 @@ export class Drawer extends Container {
       this.contentView.render(inside)
     })
 
-    if (!this.#isHover) {
+    if (this.#isHover) {
+      viewport.registerMouse(
+        ['mouse.move', 'mouse.button.left'],
+        drawerButtonRect,
+      )
+    } else {
       let inset: Edge
       switch (this.#location) {
         case 'top':
@@ -360,11 +369,6 @@ export class Drawer extends Container {
       viewport.registerMouse(
         ['mouse.move', 'mouse.button.left'],
         drawerButtonRect.inset({[inset]: 1}),
-      )
-    } else {
-      viewport.registerMouse(
-        ['mouse.move', 'mouse.button.left'],
-        drawerButtonRect,
       )
     }
 
