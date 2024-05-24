@@ -261,12 +261,6 @@ export class Input extends View {
     }
   }
 
-  receiveMouse(event: MouseEvent, system: System) {
-    if (event.name === 'mouse.button.down') {
-      system.requestFocus()
-    }
-  }
-
   render(viewport: Viewport) {
     const hasFocus = viewport.registerFocus()
     if (hasFocus) {
