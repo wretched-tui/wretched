@@ -94,6 +94,7 @@ export class Viewport {
     if (!this.#currentRender) {
       return false
     }
+
     return this.#screen.registerFocus(this.#currentRender)
   }
 

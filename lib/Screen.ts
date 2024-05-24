@@ -43,7 +43,6 @@ export class Screen {
 
     program.alternateBuffer()
     program.enableMouse()
-    program.hideCursor()
     program.setMouse({sendFocus: true}, true)
     program.clear()
     program.disableMouse()

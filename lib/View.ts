@@ -205,6 +205,7 @@ export abstract class View {
       if (this.#minWidth !== undefined) {
         size.width = Math.max(this.#minWidth, size.width)
       }
+
       if (this.#maxWidth !== undefined) {
         size.width = Math.min(this.#maxWidth, size.width)
       }
@@ -228,18 +229,58 @@ export abstract class View {
     return size
   }
 
+  #calculateAvailableSize(parentAvailableSize: Size): Size {
+    const availableSize = parentAvailableSize.mutableCopy()
+    if (this.#x || this.#y) {
+      availableSize.width -= this.#x ?? 0
+      availableSize.height -= this.#y ?? 0
+    }
+
+    if (typeof this.#width === 'number') {
+      availableSize.width = this.#width
+    } else {
+      if (this.#maxWidth !== undefined) {
+        availableSize.width = Math.min(this.#maxWidth, availableSize.width)
+      }
+
+      if (this.#minWidth !== undefined) {
+        availableSize.width = Math.max(this.#minWidth, availableSize.width)
+      }
+    }
+
+    if (typeof this.#height === 'number') {
+      availableSize.height = this.#height
+    } else {
+      if (this.#maxHeight !== undefined) {
+        availableSize.height = Math.min(this.#maxHeight, availableSize.height)
+      }
+
+      if (this.#minHeight !== undefined) {
+        availableSize.height = Math.max(this.#minHeight, availableSize.height)
+      }
+    }
+
+    if (this.padding) {
+      availableSize.width -= this.padding.left + this.padding.right
+      availableSize.height -= this.padding.top + this.padding.bottom
+    }
+
+    availableSize.width = Math.max(0, availableSize.width)
+    availableSize.height = Math.max(0, availableSize.height)
+
+    return availableSize
+  }
+
   #naturalSizeWrap(
     naturalSize: (availableSize: Size) => Size,
   ): (availableSize: Size) => Size {
-    return availableSize => {
-      const cached = this.#prevSizeCache.get(cacheKey(availableSize))
+    return parentAvailableSize => {
+      const cached = this.#prevSizeCache.get(cacheKey(parentAvailableSize))
       if (cached) {
         return cached
       }
 
-      if (this.#x || this.#y) {
-        availableSize = availableSize.shrink(this.#x ?? 0, this.#y ?? 0)
-      }
+      const availableSize = this.#calculateAvailableSize(parentAvailableSize)
 
       const size = this.#restrictSize(
         () => {

@@ -1,6 +1,6 @@
 import {colors} from 'wretched'
 import {Digits, Flex, Input, Slider, Space, Text} from 'wretched'
-import type { Color } from 'wretched'
+import type {Color} from 'wretched'
 
 import {demo} from './demo'
 
@@ -101,7 +101,7 @@ demo(
               range: [0, 255],
               position: rgb[0],
               buttons: true,
-              step: 5,
+              step: 1,
               border: true,
               onChange(value) {
                 rgb[0] = Math.round(value)
@@ -114,6 +114,7 @@ demo(
               range: [0, 255],
               position: rgb[1],
               buttons: true,
+              border: true,
               step: 1,
               onChange(value) {
                 rgb[1] = Math.round(value)
@@ -125,7 +126,9 @@ demo(
               direction: 'vertical',
               range: [0, 255],
               position: rgb[2],
+              buttons: true,
               border: true,
+              step: 1,
               onChange(value) {
                 rgb[2] = Math.round(value)
                 update()

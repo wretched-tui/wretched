@@ -35,7 +35,7 @@ export class MouseManager {
   }
 
   /**
-   * @return boolean Whether the mouse target changed
+   * @return boolean Whether the mouse.move targets changed
    */
   commit(system: UnboundSystem): boolean {
     if (this.#mouseDownEvent || !this.#mousePosition) {
@@ -74,6 +74,7 @@ export class MouseManager {
         system,
       )
     }
+
     return !same
   }
 

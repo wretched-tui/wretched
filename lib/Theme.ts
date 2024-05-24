@@ -14,9 +14,13 @@ export type Purpose =
 
 const defaultText = '#E2E2E2(253)'
 const defaultBrightText = '#FFF(16)'
+const defaultDimText = '#808080(239)'
+const defaultDimBackground = '#434343(238)'
 
 interface Props {
   text?: Color
+  dimText?: Color
+  dimBackground?: Color
   brightText?: Color
   background: Color
   textBackground?: Color
@@ -27,6 +31,8 @@ interface Props {
 export class Theme {
   textColor: Color
   brightText: Color
+  dimText: Color
+  dimBackground: Color
   background: Color
   textBackground: Color
   highlight: Color
@@ -71,6 +77,8 @@ export class Theme {
   constructor({
     text,
     brightText,
+    dimText,
+    dimBackground,
     background,
     textBackground,
     highlight,
@@ -78,6 +86,8 @@ export class Theme {
   }: Props) {
     this.textColor = text ?? defaultText
     this.brightText = brightText ?? defaultBrightText
+    this.dimText = dimText ?? defaultDimText
+    this.dimBackground = dimBackground ?? defaultDimBackground
     this.background = background
     this.textBackground = textBackground ?? background
     this.highlight = highlight
@@ -110,22 +120,33 @@ export class Theme {
   text({
     isPressed,
     isHover,
+    isDim,
   }: {
     isPressed?: boolean
     isHover?: boolean
+    isDim?: boolean
   } = {}): Style {
+    if (isDim) {
+      return new Style({
+        foreground: isPressed ? this.textColor : this.dimText,
+        background: isHover ? this.dimBackground : this.textBackground,
+      })
+    }
+
     if (isPressed) {
       return new Style({
         foreground: this.highlight,
         background: this.textBackground,
       })
     }
+
     if (isHover) {
       return new Style({
         foreground: this.brightText,
         background: this.textBackground,
       })
     }
+
     return new Style({
       foreground: this.textColor,
       background: this.textBackground,
@@ -138,6 +159,7 @@ export class Theme {
         Theme,
         | 'textColor'
         | 'brightText'
+        | 'dimText'
         | 'background'
         | 'textBackground'
         | 'highlight'
