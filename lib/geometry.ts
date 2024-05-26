@@ -4,6 +4,11 @@ export class Point {
 
   static zero = new Point(0, 0)
 
+  constructor(point: Point)
+  constructor(_: {x: number; y: number})
+  constructor(_: [number, number])
+  constructor(x: number, y: number)
+  constructor(...args: PointArgs)
   constructor(...args: PointArgs) {
     const [x, y] = toXY(args)
     this.x = x
@@ -18,9 +23,22 @@ export class Point {
     return this.copy() as MutablePoint
   }
 
+  offset(point: Point): Point
+  offset(_: {x: number; y: number}): Point
+  offset(_: [number, number]): Point
+  offset(x: number, y: number): Point
   offset(...args: PointArgs) {
     const [x, y] = toXY(args)
     return new Point(this.x + x, this.y + y)
+  }
+
+  isEqual(point: Point): boolean
+  isEqual(_: {x: number; y: number}): boolean
+  isEqual(_: [number, number]): boolean
+  isEqual(x: number, y: number): boolean
+  isEqual(...args: PointArgs) {
+    const [x, y] = toXY(args)
+    return this.x === x && this.y === y
   }
 }
 
@@ -35,6 +53,10 @@ export class Size {
 
   static zero = new Size(0, 0)
 
+  constructor(size: Size)
+  constructor(_: {width: number; height: number})
+  constructor(_: [number, number])
+  constructor(width: number, height: number)
   constructor(...args: SizeArgs) {
     const [width, height] = toWH(args)
     this.width = Math.max(0, width)
@@ -58,11 +80,28 @@ export class Size {
     return copy
   }
 
+  isEqual(size: Size): boolean
+  isEqual(_: {width: number; height: number}): boolean
+  isEqual(_: [number, number]): boolean
+  isEqual(width: number, height: number): boolean
+  isEqual(...args: SizeArgs) {
+    const [w, h] = toWH(args)
+    return this.width === w && this.height === h
+  }
+
+  shrink(size: Size): Size
+  shrink(_: {width: number; height: number}): Size
+  shrink(_: [number, number]): Size
+  shrink(width: number, height: number): Size
   shrink(...args: SizeArgs): Size {
     const [w, h] = toWH(args)
     return this.grow(-w, -h)
   }
 
+  grow(size: Size): Size
+  grow(_: {width: number; height: number}): Size
+  grow(_: [number, number]): Size
+  grow(width: number, height: number): Size
   grow(...args: SizeArgs): Size {
     const [w, h] = toWH(args)
     return new Size(Math.max(0, this.width + w), Math.max(0, this.height + h))
@@ -99,6 +138,7 @@ export class Size {
   /**
    * Restricts size to a maximum size (size must be <= maxSize)
    */
+
   max(...args: SizeArgs): Size {
     const [w, h] = toWH(args)
     return new Size(Math.min(w, this.width), Math.min(h, this.height))
@@ -107,6 +147,7 @@ export class Size {
   /**
    * Restricts size to a minimum size (size must be >= minSize)
    */
+
   min(...args: SizeArgs): Size {
     const [w, h] = toWH(args)
     return new Size(Math.max(w, this.width), Math.max(h, this.height))
@@ -118,6 +159,10 @@ export class Size {
     } else {
       return new Size(Math.abs(this.width), Math.abs(this.height))
     }
+  }
+
+  isEmpty() {
+    return this.width === 0 || this.height === 0
   }
 }
 
@@ -155,8 +200,12 @@ export class Rect {
     return this.copy() as MutableRect
   }
 
+  isEqual(rect: Rect) {
+    return this.origin.isEqual(rect.origin) && this.size.isEqual(rect.size)
+  }
+
   isEmpty() {
-    return this.size.width === 0 || this.size.height === 0
+    return this.size.isEmpty()
   }
 
   includes(point: Point) {
@@ -221,18 +270,6 @@ export class Rect {
 export interface MutableRect extends Rect {
   origin: MutablePoint
   size: MutableSize
-}
-
-export function point(x: number, y: number) {
-  return new Point(x, y)
-}
-
-export function size(w: number, h: number) {
-  return new Size(w, h)
-}
-
-export function rect(x: number, y: number, w: number, h: number) {
-  return new Rect(new Point(x, y), new Size(w, h))
 }
 
 export function interpolate(

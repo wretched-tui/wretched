@@ -54,11 +54,20 @@ export class Screen {
 
   static async start(
     viewConstructor: View | ViewConstructor,
+    opts: {
+      quitChar?: 'c' | 'q' | '' | undefined | false
+    },
   ): Promise<[Screen, BlessedProgram, View]>
-  static async start(): Promise<[Screen, BlessedProgram, Window]>
+
+  static async start(
+    viewConstructor: View | ViewConstructor,
+  ): Promise<[Screen, BlessedProgram, View]>
 
   static async start(
     viewConstructor: View | ViewConstructor = new Window(),
+    opts: {
+      quitChar?: 'c' | 'q' | '' | undefined | false
+    } = {quitChar: 'c'},
   ): Promise<[Screen, BlessedProgram, View]> {
     const program = blessedProgram({
       useBuffer: true,
@@ -95,8 +104,8 @@ export class Screen {
       screen.trigger({type: 'resize'})
     })
 
-    program.on('keypress', (char, key) => {
-      if (key.name === 'c' && key.ctrl) {
+    if (opts?.quitChar) {
+      program.key(`C-${opts.quitChar}`, () => {
         program.clear()
         program.disableMouse()
         program.showCursor()
@@ -105,9 +114,11 @@ export class Screen {
 
         flushLogs()
         process.exit(0)
-      } else {
-        screen.trigger({type: 'key', ...key})
-      }
+      })
+    }
+
+    program.on('keypress', (char, key) => {
+      screen.trigger({type: 'key', ...key})
     })
 
     program.on('mouse', function (data) {

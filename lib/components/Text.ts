@@ -33,7 +33,7 @@ export class Text extends View {
   #lines: [string, number][] = []
   #alignment: StyleProps['alignment'] = 'left'
   #wrap: StyleProps['wrap'] = false
-  #font: FontFamily = 'serif'
+  #font: FontFamily = 'default'
 
   declare text: string
   declare font: FontFamily
@@ -85,7 +85,7 @@ export class Text extends View {
     lines: string[] | undefined,
     font: FontFamily | undefined,
   ) {
-    this.#font = font ?? 'serif'
+    this.#font = font ?? 'default'
     const fontMap = font && FONTS[font]
 
     if (text !== undefined) {

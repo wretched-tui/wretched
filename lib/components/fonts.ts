@@ -24,7 +24,7 @@ function createFont(capitals: string, lowercase: string, digits = ''): Font {
 }
 
 export const FONTS: Record<FontFamily, Font> = {
-  serif: new Map(), // this is just the default font
+  default: new Map(),
   'serif-bold': createFont(
     '𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙',
     '𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳',

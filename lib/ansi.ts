@@ -104,7 +104,8 @@ export const colorize: Colorize = {
     } else {
       quote = ''
     }
-    input.replace(/\n/g, '\\n')
+
+    input = input.replaceAll(/\n/g, '⤦')
 
     return green(quote.concat(input, quote))
   },

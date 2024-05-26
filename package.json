@@ -6,7 +6,7 @@
     "Shawn Chen <meishangchen@gmail.com>",
     "Christopher Jeffrey (via Blessed)"
   ],
-  "version": "1.0.11-alpha",
+  "version": "1.0.12-alpha",
   "license": "MIT",
   "preferGlobal": false,
   "repository": {
@@ -24,6 +24,7 @@
   },
   "scripts": {
     "prepublishOnly": "bun run clean && bun run tsc && bun run cp-usr && rm -rf dist/demos/",
+    "postpublishOnly": "bun run gittag",
     "gittag": "git tag $(node -e 'console.log(require(\"./package\").version)')",
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",

@@ -1,6 +1,6 @@
 export type Alignment = 'left' | 'right' | 'center'
 export const FontFamilies = [
-  'serif',
+  'default',
   'serif-bold',
   'serif-italic',
   'serif-italic-bold',

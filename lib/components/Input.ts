@@ -43,10 +43,11 @@ export class Input extends View {
   #text: string = ''
   #chars: string[] = []
   #lines: [string[], number][] = []
+  #wrappedLines: [string[], number][] = []
   #alignment: StyleProps['alignment'] = 'left'
   #wrap: boolean = false
   #multiline: boolean = false
-  #font: FontFamily = 'serif'
+  #font: FontFamily = 'default'
   #onChange?: (text: string) => void
   #onSubmit?: (text: string) => void
 
@@ -56,6 +57,7 @@ export class Input extends View {
   // Text drawing starts at this offset (if it can't fit on screen)
   #offset: number = 0
   #cursor: Cursor = {start: 0, end: 0}
+  #visibleWidth = 0
 
   constructor(props: Props = {}) {
     super(props)
@@ -95,40 +97,38 @@ export class Input extends View {
   }
 
   #updateLines(text: string | undefined, font: FontFamily | undefined) {
-    this.#font = font ?? 'serif'
-    const fontMap = font && FONTS[font]
+    this.#font = font ?? 'default'
 
     const startIsAtEnd = this.#cursor.start === this.#chars.length
     const endIsAtEnd = this.#cursor.end === this.#chars.length
-    this.#chars = []
     let lines: [string[], number][]
     if (text !== undefined && text !== '') {
       if (!this.#multiline) {
         text = text.replaceAll('\n', ' ')
       }
 
+      this.#chars = []
       this.#text = text
-      lines =
-        text === ''
-          ? []
-          : text.split('\n').map((line, index) => {
-              if (fontMap) {
-                line = [...line].map(c => fontMap.get(c) ?? c).join('')
-              }
-
-              const printableLine = unicode.printableChars(line)
-              if (index > 0) {
-                this.#chars.push('\n')
-              }
-              this.#chars.push(...printableLine)
-              return [printableLine, unicode.lineWidth(line)]
-            })
-      this.#lines = lines
+      lines = text.split('\n').map((line, index, all) => {
+        const printableLine = unicode.printableChars(line)
+        if (index > 0) {
+          this.#chars.push('\n')
+        }
+        this.#chars.push(...printableLine)
+        // every line needs a ' ' at the end, for the EOL cursor
+        return [
+          printableLine.concat(index === all.length - 1 ? ' ' : '⤦'),
+          unicode.lineWidth(line) + 1,
+        ]
+      })
     } else {
       this.#text = ''
-      lines = this.#placeholder
-      this.#lines = []
+      lines = this.#placeholder.map(([line, width]) => {
+        return [line.concat(' '), width]
+      })
     }
+    this.#lines = lines
+    this.#visibleWidth = 0
 
     this.#cursor.start = Math.min(this.#cursor.start, this.#chars.length)
     this.#cursor.end = Math.min(this.#cursor.end, this.#chars.length)
@@ -165,12 +165,7 @@ export class Input extends View {
   }
 
   naturalSize(available: Size): Size {
-    let lines: [string[], number][]
-    if (this.#lines.length === 0) {
-      lines = this.#placeholder
-    } else {
-      lines = this.#lines
-    }
+    let lines: [string[], number][] = this.#lines
 
     if (!lines.length) {
       return Size.zero
@@ -223,11 +218,13 @@ export class Input extends View {
         this.#receiveChar('\n')
       } else {
         this.#onSubmit?.(this.#chars.join(''))
+        return
       }
-      return
-    }
-
-    if (event.name === 'up' || event.name === 'home' || event.full === 'C-a') {
+    } else if (
+      event.name === 'up' ||
+      event.name === 'home' ||
+      event.full === 'C-a'
+    ) {
       this.#receiveKeyUpArrow(event)
     } else if (
       event.name === 'down' ||
@@ -251,7 +248,7 @@ export class Input extends View {
 
     if (prevChars !== this.#chars) {
       this.#updateLines(this.#chars.join(''), this.#font)
-      this.#onChange?.(this.#chars.join(''))
+      this.#onChange?.(this.#text)
     }
   }
 
@@ -262,6 +259,62 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
+    const visibleSize = viewport.contentSize
+    if (visibleSize.isEmpty()) {
+      return
+    }
+
+    // cursorEnd: the location of the cursor relative to the text
+    // (ie if the text had been drawn at 0,0, cursorEnd is the screen location of
+    // the cursor)
+    // cursorPosition: the location of the cursor relative to the viewport
+    const [cursorEnd, cursorPosition] = this.#cursorPosition(visibleSize)
+    const cursorMin = this.#toPosition(this.minSelected(), visibleSize.width)
+    const cursorMax = this.#toPosition(this.maxSelected(), visibleSize.width)
+
+    // cursorVisible: the text location of the first line & char to draw
+    const cursorVisible = new Point(
+      cursorEnd.x - cursorPosition.x,
+      cursorEnd.y - cursorPosition.y,
+    )
+
+    let lines: [string[], number][] = this.#lines
+
+    if (
+      visibleSize.width !== this.#visibleWidth ||
+      this.#wrappedLines.length === 0
+    ) {
+      if (this.#wrap) {
+        lines = lines.flatMap(line => {
+          const wrappedLines: [string[], number][] = []
+          let currentLine: string[] = []
+          let currentWidth = 0
+          for (const char of line[0]) {
+            const charWidth = unicode.charWidth(char)
+            currentLine.push(char)
+            currentWidth += charWidth
+
+            if (currentWidth >= visibleSize.width) {
+              wrappedLines.push([currentLine, currentWidth])
+              currentLine = []
+              currentWidth = 0
+            }
+          }
+
+          if (currentLine.length) {
+            wrappedLines.push([currentLine, currentWidth])
+          }
+
+          return wrappedLines
+        })
+      }
+
+      this.#wrappedLines = lines
+      this.#visibleWidth = visibleSize.width
+    } else {
+      lines = this.#wrappedLines
+    }
+
     const hasFocus = viewport.registerFocus()
     if (hasFocus) {
       viewport.registerTick()
@@ -271,63 +324,7 @@ export class Input extends View {
     }
     viewport.registerMouse('mouse.button.left')
 
-    // shrink by 1 to accommodate the final ' ' for the cursor
-    const visibleSize = viewport.contentSize.shrink(1, 0)
-
-    // cursorEnd: the location of the cursor relative to the text
-    // (ie if the text had been drawn at 0,0, cursorEnd is the screen location of
-    // the cursor)
-    // cursorPosition: the location of the cursor relative to the viewport
-    const [cursorEnd, cursorPosition] = this.#cursorPosition(visibleSize)
-    const cursorMin = this.toPosition(this.minSelected(), visibleSize.width)
-    const cursorMax = this.toPosition(this.maxSelected(), visibleSize.width)
-
-    // cursorVisible: the text location of the first line & char to draw
-    const cursorVisible = new Point(
-      cursorEnd.x - cursorPosition.x,
-      cursorEnd.y - cursorPosition.y,
-    )
-
-    let lines: [string[], number][]
     let isPlaceholder = !Boolean(this.#chars.length)
-    // everything above and below uses this.#cursor and assumes that we're printing
-    // this.#lines... but here suddenly we're maybe printing the placeholder?
-    // We only print the placeholder when lines/chars are empty, in which case the
-    // cursor will be fixed to 0,0, which works great for the placeholder text.
-    if (this.#chars.length) {
-      lines = this.#lines
-    } else {
-      lines = this.#placeholder
-    }
-
-    if (this.#wrap) {
-      lines = lines.reduce(
-        (memo, line) => {
-          let [lastLine, lastWidth] = memo.pop() ?? [[], 0]
-          const [currentLine, currentWidth] = line
-          if (lastWidth + currentWidth > visibleSize.width) {
-            for (const char of currentLine) {
-              const charWidth = unicode.charWidth(char)
-              if (lastWidth + charWidth > visibleSize.width) {
-                memo.push([lastLine, lastWidth])
-                lastLine = [char]
-                lastWidth = charWidth
-              } else {
-                lastWidth += charWidth
-                lastLine.push(char)
-              }
-            }
-
-            memo.push([lastLine, lastWidth])
-          } else {
-            memo.push([[...lastLine, ...currentLine], lastWidth + currentWidth])
-          }
-          return memo
-        },
-        [] as [string[], number][],
-      )
-    }
-
     let currentStyle = Style.NONE
     const plainStyle = this.theme.text({
       isPlaceholder,
@@ -338,12 +335,30 @@ export class Input extends View {
       hasFocus,
     })
     const cursorStyle = plainStyle.merge({underline: true})
+    const nlStyle = this.theme.text({isPlaceholder: true})
+
+    const fontMap = this.#font && FONTS[this.#font]
 
     viewport.usingPen(pen => {
       let style: Style = plainStyle
 
-      let scanTextPosition = new Point(0, cursorVisible.y).mutableCopy()
-      for (const [line, width] of lines.slice(cursorVisible.y)) {
+      const visibleLines = lines.slice(cursorVisible.y)
+      // is the viewport tall/wide enough to show ellipses …
+      const isTallEnough = viewport.contentSize.height > 4
+      const isWideEnough = viewport.contentSize.width > 9
+      // do we need to show vertical ellipses
+      const isTooTall = visibleLines.length > visibleSize.height
+
+      // firstPoint is top-left corner of the viewport
+      const firstPoint = new Point(0, cursorVisible.y)
+      // lastPoint is bottom-right corner of the viewport
+      const lastPoint = new Point(
+        visibleSize.width + cursorVisible.x - 1,
+        cursorVisible.y + visibleSize.height - 1,
+      )
+
+      let scanTextPosition = firstPoint.mutableCopy()
+      for (const [line, width] of visibleLines) {
         // used to determine whether to draw a final …
         const isTooWide = this.#wrap
           ? false
@@ -352,7 +367,9 @@ export class Input extends View {
         // set to true if any character is skipped
         let drawInitialEllipses = false
         scanTextPosition.x = 0
-        for (const char of line.concat(' ')) {
+        for (let char of line) {
+          char = fontMap?.get(char) ?? char
+
           const charWidth = unicode.charWidth(char)
           if (scanTextPosition.x >= cursorVisible.x) {
             const inSelection = isInSelection(
@@ -360,26 +377,33 @@ export class Input extends View {
               cursorMax,
               scanTextPosition,
             )
+            const inCursor =
+              scanTextPosition.x === cursorEnd.x &&
+              scanTextPosition.y === cursorEnd.y
+            const inNewline =
+              char === '⤦' && scanTextPosition.x + charWidth === width
+
             if (isEmptySelection(this.#cursor)) {
-              if (
-                hasFocus &&
-                this.#showCursor &&
-                scanTextPosition.x === cursorEnd.x &&
-                scanTextPosition.y === cursorEnd.y
-              ) {
-                style = cursorStyle
+              if (hasFocus && this.#showCursor && inCursor) {
+                style = inNewline
+                  ? nlStyle.merge({underline: true})
+                  : cursorStyle
+              } else if (inNewline) {
+                style = nlStyle
               } else {
                 style = plainStyle
               }
             } else {
-              if (
-                !this.#showCursor &&
-                scanTextPosition.x === cursorEnd.x &&
-                scanTextPosition.y === cursorEnd.y
-              ) {
-                style = cursorStyle
+              if (!this.#showCursor && inCursor) {
+                style = inNewline
+                  ? nlStyle.merge({underline: true})
+                  : cursorStyle
               } else if (inSelection) {
-                style = selectedStyle
+                style = inNewline
+                  ? nlStyle.merge({background: selectedStyle.foreground})
+                  : selectedStyle
+              } else if (inNewline) {
+                style = nlStyle
               } else {
                 style = plainStyle
               }
@@ -390,11 +414,24 @@ export class Input extends View {
               currentStyle = style
             }
 
-            const drawEllipses =
-              drawInitialEllipses ||
-              (isTooWide &&
+            let drawEllipses: boolean = false
+
+            if (cursorVisible.y > 0 && scanTextPosition.isEqual(firstPoint)) {
+              drawEllipses = isTallEnough
+            } else if (isTooTall && scanTextPosition.isEqual(lastPoint)) {
+              drawEllipses = isTallEnough
+            } else if (isWideEnough) {
+              if (drawInitialEllipses) {
+                drawEllipses = true
+              } else if (
+                isTooWide &&
                 scanTextPosition.x - cursorVisible.x + charWidth >=
-                  viewport.contentSize.width)
+                  viewport.contentSize.width
+              ) {
+                drawEllipses = true
+              }
+            }
+
             viewport.write(
               drawEllipses ? '…' : char,
               scanTextPosition.offset(-cursorVisible.x, -cursorVisible.y),
@@ -429,31 +466,31 @@ export class Input extends View {
    * character widths into account, relative to the text (as if the text were drawn
    * at 0,0), and 'wrap' setting.
    */
-  toPosition(offset: number, visibleWidth: number): Point {
+  #toPosition(offset: number, visibleWidth: number): Point {
     if (this.#wrap) {
       let y = 0,
-        numChars = 0
+        index = 0
       let x = 0
+      let isFirst = true
       for (const [chars] of this.#lines) {
-        if (y) {
+        if (!isFirst) {
           y += 1
         }
+        isFirst = false
         x = 0
-        // .concat(' ') serves two purposes: handles the newline, and the case where the
-        // cursor is at the EOL
-        for (const char of chars.concat(' ')) {
-          if (numChars === offset) {
+        for (const char of chars) {
+          if (index === offset) {
             return new Point(x, y)
           }
 
           const charWidth = unicode.charWidth(char)
-          if (x + charWidth > visibleWidth) {
+          if (x + charWidth >= visibleWidth) {
             x = 0
             y += 1
-            numChars += 1
+            index += 1
           } else {
             x += charWidth
-            numChars += 1
+            index += 1
           }
         }
       }
@@ -461,17 +498,16 @@ export class Input extends View {
       return new Point(x, y)
     } else {
       let y = 0,
-        numChars = 0
+        index = 0
       for (const [chars] of this.#lines) {
-        if (numChars + chars.length >= offset) {
+        if (index + chars.length > offset) {
           let x = 0
-          for (const char of chars.slice(0, offset - numChars)) {
+          for (const char of chars.slice(0, offset - index)) {
             x += unicode.charWidth(char)
           }
           return new Point({x, y})
         }
-        // accommodate the newline
-        numChars += chars.length + 1
+        index += chars.length
         y += 1
       }
 
@@ -483,14 +519,39 @@ export class Input extends View {
    * Returns the cursor offset that points to the character at the desired screen
    * position, taking into account character widths.
    */
-  toOffset(position: Point, visibleWidth: number): number {
-    if (position.y >= this.#lines.length) {
-      return this.#chars.length
-    }
-
+  #toOffset(position: Point, visibleWidth: number): number {
     if (this.#wrap) {
-      return Math.min(this.#chars.length, visibleWidth)
+      let y = 0,
+        index = 0
+      let x = 0
+      for (const [chars] of this.#lines) {
+        if (y) {
+          y += 1
+        }
+        x = 0
+        for (const char of chars) {
+          if (position.isEqual(x, y)) {
+            return index
+          }
+
+          const charWidth = unicode.charWidth(char)
+          if (x + charWidth >= visibleWidth) {
+            x = 0
+            y += 1
+            index += 1
+          } else {
+            x += charWidth
+            index += 1
+          }
+        }
+      }
+
+      return index
     } else {
+      if (position.y >= this.#lines.length) {
+        return this.#chars.length
+      }
+
       let y = 0,
         index = 0
       for (const [chars, width] of this.#lines) {
@@ -526,45 +587,41 @@ export class Input extends View {
 
     // the cursor, relative to the start of text (as if all text was visible),
     // ie in the "coordinate system" of the text.
-    let cursorEnd = this.toPosition(this.#cursor.end, visibleSize.width)
+    let cursorEnd = this.#toPosition(this.#cursor.end, visibleSize.width)
 
     let currentLineWidth: number, totalHeight: number
     if (this.#wrap) {
       // run through the lines until we get to our desired cursorEnd.y
       // but also add all the heights to calculate currentHeight
       let h = 0
-      currentLineWidth = -1
+      currentLineWidth = 0
       totalHeight = 0
-      for (const [line, width] of this.#lines) {
+      for (const [, width] of this.#lines) {
         const dh = Math.ceil(width / visibleSize.width)
         totalHeight += dh
 
-        if (currentLineWidth === -1 && +dh >= cursorEnd.y) {
+        if (currentLineWidth === 0 && dh >= cursorEnd.y) {
           if (cursorEnd.y - h === dh) {
             // the cursor is on the last wrapped line, use modulo divide to calculate the
-            // last line width.
-            currentLineWidth = visibleSize.width % width
+            // last line width, add 1 for the EOL cursor
+            currentLineWidth = (visibleSize.width % width) + 1
           } else {
             currentLineWidth = visibleSize.width
           }
           break
         }
       }
-
-      if (currentLineWidth === -1) {
-        currentLineWidth = 0
-      }
     } else if (!this.#lines.length) {
       return [cursorEnd, new Point(0, 0)]
     } else {
-      currentLineWidth = this.#lines[cursorEnd.y][1]
+      currentLineWidth = this.#lines[cursorEnd.y]?.[1] ?? 0
       totalHeight = this.#lines.length
     }
 
     // Calculate the viewport location where the cursor will be drawn
     // x location:
     let cursorX: number
-    if (currentLineWidth + 1 <= visibleSize.width) {
+    if (currentLineWidth <= visibleSize.width) {
       // If the viewport can accommodate the entire line
       // draw the cursor at its natural location.
       cursorX = cursorEnd.x
@@ -572,10 +629,10 @@ export class Input extends View {
       // If the cursor is at the start of the line
       // place the cursor at the start of the viewport
       cursorX = cursorEnd.x
-    } else if (cursorEnd.x >= currentLineWidth - halfWidth) {
+    } else if (cursorEnd.x > currentLineWidth - halfWidth) {
       // or if the cursor is at the end of the line
       // draw it at the end of the viewport
-      cursorX = visibleSize.width - currentLineWidth + cursorEnd.x
+      cursorX = visibleSize.width - currentLineWidth + cursorEnd.x - 1
     } else {
       // otherwise place it in the middle.
       cursorX = halfWidth
@@ -604,39 +661,103 @@ export class Input extends View {
     return [cursorEnd, new Point(cursorX, cursorY)]
   }
 
+  #receiveKeyPrintable({char}: KeyEvent) {
+    this.#receiveChar(char)
+  }
+
   #receiveChar(char: string) {
     if (isEmptySelection(this.#cursor)) {
       this.#chars = this.#chars
         .slice(0, this.#cursor.start)
         .concat(char, this.#chars.slice(this.#cursor.start))
       this.#cursor.start = this.#cursor.end = this.#cursor.start + 1
-      this.#maxLineWidth += unicode.charWidth(char)
     } else {
       this.#chars = this.#chars
         .slice(0, this.minSelected())
         .concat(char, this.#chars.slice(this.maxSelected()))
       this.#cursor.start = this.#cursor.end = this.minSelected() + 1
-      this.#updateWidth()
     }
   }
 
-  #receiveKeyPrintable({char}: KeyEvent) {
-    this.#receiveChar(char)
-  }
-
   #receiveKeyUpArrow({shift}: KeyEvent) {
-    if (shift) {
-      this.#cursor.end = 0
+    let dest = 0
+    // move the cursor to the previous line, moving the cursor until it is at the
+    // same X position.
+    let cursorPosition = this.#toPosition(
+      this.#cursor.end,
+      this.#visibleWidth,
+    ).mutableCopy()
+    if (cursorPosition.y === 0) {
+      dest = 0
     } else {
-      this.#cursor = {start: 0, end: 0}
+      const [targetChars, targetWidth] =
+        this.#wrappedLines[cursorPosition.y - 1]
+      dest = this.#wrappedLines
+        .slice(0, cursorPosition.y - 1)
+        .reduce((dest, [, width]) => {
+          return dest + width
+        }, 0)
+
+      if (targetWidth <= cursorPosition.x) {
+        dest += targetWidth - 1
+      } else {
+        let destOffset = 0
+        for (const char of targetChars) {
+          const charWidth = unicode.charWidth(char)
+          if (destOffset + charWidth > cursorPosition.x) {
+            break
+          }
+          destOffset += 1
+        }
+        dest += destOffset
+      }
+    }
+
+    if (shift) {
+      this.#cursor.end = dest
+    } else {
+      this.#cursor = {start: dest, end: dest}
     }
   }
 
   #receiveKeyDownArrow({shift}: KeyEvent) {
-    if (shift) {
-      this.#cursor.end = this.#chars.length
+    let dest = 0
+    // move the cursor to the next line, moving the cursor until it is at the
+    // same X position.
+    let cursorPosition = this.#toPosition(
+      this.#cursor.end,
+      this.#visibleWidth,
+    ).mutableCopy()
+    if (cursorPosition.y === this.#wrappedLines.length - 1) {
+      dest = this.#chars.length
     } else {
-      this.#cursor = {start: this.#chars.length, end: this.#chars.length}
+      const [targetChars, targetWidth] =
+        this.#wrappedLines[cursorPosition.y + 1]
+      dest = this.#wrappedLines
+        .slice(0, cursorPosition.y + 1)
+        .reduce((dest, [, width]) => {
+          return dest + width
+        }, 0)
+
+      if (targetWidth <= cursorPosition.x) {
+        dest += targetWidth - 1
+      } else {
+        let destOffset = 0
+        for (const char of targetChars) {
+          const charWidth = unicode.charWidth(char)
+          if (destOffset + charWidth > cursorPosition.x) {
+            break
+          }
+          destOffset += 1
+        }
+        dest += destOffset
+      }
+    }
+
+    if (shift) {
+      this.#cursor.end = dest
+    } else {
+      this.#cursor = {start: dest, end: dest}
     }
   }
 
