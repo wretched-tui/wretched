@@ -32,8 +32,11 @@ interface Cursor {
 
 export type Props = Partial<StyleProps> & TextProps & ViewProps
 
+const NL_SIGIL = '⤦'
+
 /**
- * Single line text input
+ * Text input. Supports selection, word movement via alt+←→, single and multiline
+ * input, and wrapped lines.
  */
 export class Input extends View {
   /**
@@ -117,7 +120,7 @@ export class Input extends View {
         this.#chars.push(...printableLine)
         // every line needs a ' ' at the end, for the EOL cursor
         return [
-          printableLine.concat(index === all.length - 1 ? ' ' : '⤦'),
+          printableLine.concat(index === all.length - 1 ? ' ' : NL_SIGIL),
           unicode.lineWidth(line) + 1,
         ]
       })
@@ -182,7 +185,7 @@ export class Input extends View {
       height = lines.length
     }
 
-    return new Size(this.#maxLineWidth + 1, height)
+    return new Size(this.#maxLineWidth, height)
   }
 
   minSelected() {
@@ -195,23 +198,8 @@ export class Input extends View {
       : Math.max(this.#cursor.start, this.#cursor.end)
   }
 
-  #showCursor = true
-  #dt = 0
-  receiveTick(dt: number): boolean {
-    this.#dt += dt
-    if (this.#dt > 500) {
-      this.#showCursor = !this.#showCursor
-      this.#dt = this.#dt % 500
-      return true
-    }
-
-    return false
-  }
-
   receiveKey(event: KeyEvent) {
     const prevChars = this.#chars
-    this.#showCursor = true
-    this.#dt = 0
 
     if (event.name === 'enter' || event.name === 'return') {
       if (this.#multiline) {
@@ -318,9 +306,6 @@ export class Input extends View {
     const hasFocus = viewport.registerFocus()
     if (hasFocus) {
       viewport.registerTick()
-    } else if (this.#dt !== 0) {
-      this.#showCursor = true
-      this.#dt = 0
     }
     viewport.registerMouse('mouse.button.left')
 
@@ -381,10 +366,10 @@ export class Input extends View {
               scanTextPosition.x === cursorEnd.x &&
               scanTextPosition.y === cursorEnd.y
             const inNewline =
-              char === '⤦' && scanTextPosition.x + charWidth === width
+              char === NL_SIGIL && scanTextPosition.x + charWidth === width
 
             if (isEmptySelection(this.#cursor)) {
-              if (hasFocus && this.#showCursor && inCursor) {
+              if (hasFocus && inCursor) {
                 style = inNewline
                   ? nlStyle.merge({underline: true})
                   : cursorStyle
@@ -394,14 +379,10 @@ export class Input extends View {
                 style = plainStyle
               }
             } else {
-              if (!this.#showCursor && inCursor) {
-                style = inNewline
-                  ? nlStyle.merge({underline: true})
-                  : cursorStyle
-              } else if (inSelection) {
+              if (inSelection) {
                 style = inNewline
                   ? nlStyle.merge({background: selectedStyle.foreground})
-                  : selectedStyle
+                  : selectedStyle.merge({underline: inCursor})
               } else if (inNewline) {
                 style = nlStyle
               } else {
@@ -462,7 +443,7 @@ export class Input extends View {
   }
 
   /**
-   * The position of the character that is at the desired cursor offset, taking into
+   * The position of the character that is at the desired cursor offset, taking
    * character widths into account, relative to the text (as if the text were drawn
    * at 0,0), and 'wrap' setting.
    */
@@ -477,6 +458,7 @@ export class Input extends View {
           y += 1
         }
         isFirst = false
+
         x = 0
         for (const char of chars) {
           if (index === offset) {
@@ -488,6 +470,7 @@ export class Input extends View {
             x = 0
             y += 1
             index += 1
+            isFirst = true
           } else {
             x += charWidth
             index += 1
@@ -594,13 +577,13 @@ export class Input extends View {
       // run through the lines until we get to our desired cursorEnd.y
       // but also add all the heights to calculate currentHeight
       let h = 0
-      currentLineWidth = 0
+      currentLineWidth = -1
       totalHeight = 0
       for (const [, width] of this.#lines) {
         const dh = Math.ceil(width / visibleSize.width)
         totalHeight += dh
 
-        if (currentLineWidth === 0 && dh >= cursorEnd.y) {
+        if (currentLineWidth === -1 && dh >= cursorEnd.y) {
           if (cursorEnd.y - h === dh) {
             // the cursor is on the last wrapped line, use modulo divide to calculate the
             // last line width, add 1 for the EOL cursor
@@ -611,6 +594,7 @@ export class Input extends View {
           break
         }
       }
+      currentLineWidth = Math.max(0, currentLineWidth)
     } else if (!this.#lines.length) {
       return [cursorEnd, new Point(0, 0)]
     } else {
@@ -632,7 +616,7 @@ export class Input extends View {
     } else if (cursorEnd.x > currentLineWidth - halfWidth) {
       // or if the cursor is at the end of the line
       // draw it at the end of the viewport
-      cursorX = visibleSize.width - currentLineWidth + cursorEnd.x - 1
+      cursorX = visibleSize.width - currentLineWidth + cursorEnd.x
     } else {
       // otherwise place it in the middle.
       cursorX = halfWidth

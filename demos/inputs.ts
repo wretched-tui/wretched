@@ -61,18 +61,22 @@ elit...`,
   multiline: true,
 })
 
+function box(input: Input) {
+  return Flex.right({
+    children: [new Box({border: 'single', child: input}), new Space()],
+  })
+}
+
 demo(
   Flex.down({
     children: [
       //
-      // singleLine,
-      // emptySingleLine,
-      // Flex.right({
-      //   children: [new Box({border: 'single', child: wrapLine}), new Space()],
-      // }),
-      emptyMultiLine,
-      // restrictedLine,
-      // restrictedMultiLine,
+      box(singleLine),
+      box(emptySingleLine),
+      box(wrapLine),
+      box(emptyMultiLine),
+      box(restrictedLine),
+      box(restrictedMultiLine),
     ],
   }),
   false,
