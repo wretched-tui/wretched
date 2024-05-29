@@ -24,12 +24,7 @@ const emptySingleLine = new Input({
 })
 
 const wrapLine = new Input({
-  text:
-    'Once upon a time... ' +
-    'There was a little k' +
-    'id. She got into all' +
-    ' kinds of trouble. T' +
-    'he End.',
+  text: 'Once upon a time... There was a little kid. She got into all kinds of trouble. The End.',
   wrap: true,
   width: 20,
   height: 3,

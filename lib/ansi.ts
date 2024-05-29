@@ -29,8 +29,28 @@ export function bold(input: string): string {
   return ansi(1, input)
 }
 
+export function dim(input: string): string {
+  return ansi(2, input)
+}
+
+export function italic(input: string): string {
+  return ansi(3, input)
+}
+
 export function underline(input: string): string {
   return ansi(4, input)
+}
+
+export function invert(input: string): string {
+  return ansi(7, input)
+}
+
+export function hide(input: string): string {
+  return ansi(8, input)
+}
+
+export function strikeout(input: string): string {
+  return ansi(9, input)
 }
 
 export function red(input: string): string {
@@ -47,6 +67,10 @@ export function yellow(input: string): string {
 
 export function blue(input: string): string {
   return ansi(34, input)
+}
+
+export function magenta(input: string) {
+  return ansi(35, input)
 }
 
 export function cyan(input: string): string {

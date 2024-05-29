@@ -1,7 +1,6 @@
 import {unicode} from '../sys'
 
 import type {Viewport} from '../Viewport'
-import {type View} from '../View'
 import {type Props as ContainerProps, Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
@@ -16,7 +15,6 @@ import {
   KeyEvent,
   styleTextForHotKey,
 } from '../events'
-import {Style} from '../Style'
 
 type Border = 'default' | 'arrows' | 'none'
 type BorderChars = [string, string]
@@ -119,6 +117,7 @@ export class Button extends Container {
     if (this.#hotKey) {
       viewport.registerHotKey(this.#hotKey)
     }
+
     const textStyle = this.theme.ui({
       isPressed: this.#isPressed,
       isHover: this.#isHover,

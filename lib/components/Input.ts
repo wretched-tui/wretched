@@ -205,7 +205,7 @@ export class Input extends View {
       if (this.#multiline) {
         this.#receiveChar('\n')
       } else {
-        this.#onSubmit?.(this.#chars.join(''))
+        this.#onSubmit?.(this.#text)
         return
       }
     } else if (
