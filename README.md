@@ -1,5 +1,25 @@
 # Wretched
 
+I wanted a curses-style fullscreen application framework that could be powered by React. Check out https://github.com/wretched-tui/wretched-react for the React renderer for Wretched.
+
+### colors.ts
+
+```
+bun demo colors.ts
+```
+
+![example of output](https://raw.githubusercontent.com/wretched-tui/wretched/9afe0235a7191a4b47568ef4e631ac1c3ab5829b/readme/colors.png)
+
+### inputs.ts
+
+```
+bun demo inputs.ts
+```
+
+![example of output](https://raw.githubusercontent.com/wretched-tui/wretched/9afe0235a7191a4b47568ef4e631ac1c3ab5829b/readme/inputs.png)
+
+### demo code
+
 ```tsx
 import {Screen, Box, Flow, Text, Button, interceptConsoleLog} from 'wretched'
 

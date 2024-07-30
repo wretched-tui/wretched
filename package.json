@@ -29,7 +29,7 @@
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
     "build": "bun run clean && bun run tsc && bun run cp-usr",
-    "demo": "cd demos/ && bun run demo"
+    "demo": "bun run build && cd demos/ && bun install && bun run demo"
   },
   "keywords": [
     "curses",
