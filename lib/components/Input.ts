@@ -208,18 +208,18 @@ export class Input extends View {
         this.#onSubmit?.(this.#text)
         return
       }
-    } else if (
-      event.name === 'up' ||
-      event.name === 'home' ||
-      event.full === 'C-a'
-    ) {
+    } else if (event.full === 'C-a') {
+      this.#receiveGotoStart()
+    } else if (event.full === 'C-e') {
+      this.#receiveGotoEnd()
+    } else if (event.name === 'up') {
       this.#receiveKeyUpArrow(event)
-    } else if (
-      event.name === 'down' ||
-      event.name === 'end' ||
-      event.full === 'C-e'
-    ) {
+    } else if (event.name === 'down') {
       this.#receiveKeyDownArrow(event)
+    } else if (event.name === 'home') {
+      this.#receiveHome(event)
+    } else if (event.name === 'end') {
+      this.#receiveEnd(event)
     } else if (event.name === 'left') {
       this.#receiveKeyLeftArrow(event)
     } else if (event.name === 'right') {
@@ -660,6 +660,68 @@ export class Input extends View {
         .slice(0, this.minSelected())
         .concat(char, this.#chars.slice(this.maxSelected()))
       this.#cursor.start = this.#cursor.end = this.minSelected() + 1
+    }
+  }
+
+  #receiveGotoStart() {
+    this.#cursor = {start: 0, end: 0}
+  }
+
+  #receiveGotoEnd() {
+    this.#cursor = {start: this.#chars.length, end: this.#chars.length}
+  }
+
+  #receiveHome({shift}: KeyEvent) {
+    let dest = 0
+    // move the cursor to the previous line, moving the cursor until it is at the
+    // same X position.
+    let cursorPosition = this.#toPosition(
+      this.#cursor.end,
+      this.#visibleWidth,
+    ).mutableCopy()
+    if (cursorPosition.y === 0) {
+      dest = 0
+    } else {
+      const [targetChars, targetWidth] = this.#wrappedLines[cursorPosition.y]
+      dest = this.#wrappedLines
+        .slice(0, cursorPosition.y)
+        .reduce((dest, [, width]) => {
+          return dest + width
+        }, 0)
+    }
+
+    if (shift) {
+      this.#cursor.end = dest
+    } else {
+      this.#cursor = {start: dest, end: dest}
+    }
+  }
+
+  #receiveEnd({shift}: KeyEvent) {
+    let dest = 0
+    // move the cursor to the next line, moving the cursor until it is at the
+    // same X position.
+    let cursorPosition = this.#toPosition(
+      this.#cursor.end,
+      this.#visibleWidth,
+    ).mutableCopy()
+    if (cursorPosition.y === this.#wrappedLines.length - 1) {
+      dest = this.#chars.length
+    } else {
+      const [targetChars, targetWidth] =
+        this.#wrappedLines[cursorPosition.y + 1]
+      dest =
+        this.#wrappedLines
+          .slice(0, cursorPosition.y + 1)
+          .reduce((dest, [, width]) => {
+            return dest + width
+          }, 0) - 1
+    }
+
+    if (shift) {
+      this.#cursor.end = dest
+    } else {
+      this.#cursor = {start: dest, end: dest}
     }
   }
 

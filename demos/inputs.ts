@@ -1,14 +1,4 @@
-import {
-  Box,
-  Button,
-  Drawer,
-  Flex,
-  Flow,
-  Input,
-  Space,
-  Text,
-  interceptConsoleLog,
-} from 'wretched'
+import {Box, Flex, Input, Space, interceptConsoleLog} from 'wretched'
 
 import {demo} from './demo'
 

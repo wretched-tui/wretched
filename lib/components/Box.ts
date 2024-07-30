@@ -15,8 +15,13 @@ export type Border =
   | 'popout'
 
 export type BorderChars =
+  // top, sides, top-left, top-right, bottom-left, bottom-right
+  // '─', '│', '┌', '┐', '└', '┘'
   | [string, string, string, string, string, string]
+  // top, sides, …, bottom
   | [string, string, string, string, string, string, string]
+  // top, left, …, bottom, right
+  // '⠒', '⡇', …, '⠤', '⢸'
   | [string, string, string, string, string, string, string, string]
 
 export interface BorderSizes {
