@@ -87,7 +87,11 @@ export class Input extends View {
     this.#onSubmit = onSubmit
     this.#wrap = wrap ?? false
     this.#multiline = multiline ?? false
-    placeholder ??= ''
+    this.#updatePlaceholderLines(placeholder ?? '')
+    this.#updateLines(text, font)
+  }
+
+  #updatePlaceholderLines(placeholder: string) {
     const placeholderLines =
       placeholder === ''
         ? []
@@ -96,7 +100,6 @@ export class Input extends View {
       line,
       line.reduce((w, c) => w + unicode.charWidth(c), 0),
     ])
-    this.#updateLines(text, font)
   }
 
   #updateLines(text: string | undefined, font: FontFamily | undefined) {
@@ -158,6 +161,14 @@ export class Input extends View {
   }
   set text(text: string) {
     this.#updateLines(text, this.#font)
+  }
+
+  get placeholder() {
+    return this.#placeholder.map(([chars]) => chars.join('')).join('\n')
+  }
+
+  set placeholder(placeholder: string | undefined) {
+    this.#updatePlaceholderLines(placeholder ?? '')
   }
 
   get font() {
