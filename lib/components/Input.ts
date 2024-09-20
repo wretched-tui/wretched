@@ -87,6 +87,7 @@ export class Input extends View {
     this.#onSubmit = onSubmit
     this.#wrap = wrap ?? false
     this.#multiline = multiline ?? false
+    this.#alignment = alignment ?? 'left'
     this.#updatePlaceholderLines(placeholder ?? '')
     this.#updateLines(text, font)
   }
