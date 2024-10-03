@@ -33,7 +33,7 @@ Screen.start(
           new Text({text: 'First, there was Ncurses'}),
           new Button({text: 'Tell me more!'}),
         ],
-      })
+      }),
     ],
   }),
 )
