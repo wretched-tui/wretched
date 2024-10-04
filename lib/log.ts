@@ -1,3 +1,4 @@
+import {ConsoleLog} from './components/Log'
 import {inspect} from './inspect'
 
 const levels = ['debug', 'error', 'info', 'log', 'warn'] as const
@@ -42,6 +43,7 @@ export function decorateConsoleLog() {
 
 function appendLog(level: Level, args: any[]) {
   logs.push({level, args: args.map(arg => inspect(arg, true))})
+  ConsoleLog.default?.invalidateSize()
 }
 
 export function fetchLogs() {

@@ -129,6 +129,14 @@ class LogLineView extends Container {
 }
 
 export class ConsoleLog extends Log {
+  static default: ConsoleLog | undefined
+
+  constructor(props: ViewProps = {}) {
+    super(props)
+
+    ConsoleLog.default = this
+  }
+
   render(viewport: Viewport) {
     fetchLogs().forEach(log => this.appendLog(log))
     super.render(viewport)
