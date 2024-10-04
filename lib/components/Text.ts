@@ -126,8 +126,9 @@ export class Text extends View {
 
   render(viewport: Viewport) {
     const lines: [string, number][] = this.#lines
+    let style: Style | undefined = this.#style || this.theme?.text()
 
-    viewport.usingPen(this.#style, pen => {
+    viewport.usingPen(style, pen => {
       const point = new Point(0, 0).mutableCopy()
       for (const [line, width] of lines) {
         if (!line.length) {
