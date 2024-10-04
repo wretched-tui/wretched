@@ -1,4 +1,3 @@
-import {inspect as nodeInspect} from 'util'
 import {colorize, red} from './ansi'
 
 let _debug = false
@@ -20,7 +19,13 @@ export function inspect(
   value: any,
   wrap: boolean = true,
   recursionDepth = 0,
+  visited = new Set(),
 ): string {
+  if (visited.has(value)) {
+    return red('[Circular]')
+  }
+  visited.add(value)
+
   if (recursionDepth >= 10) {
     return red('...')
   }
@@ -30,11 +35,12 @@ export function inspect(
       Array.from(value.values()),
       wrap,
       recursionDepth,
+      visited,
     )})`
   }
 
   if (value instanceof Map) {
-    return `new Map(${inspect(value.entries(), wrap, recursionDepth)})`
+    return `new Map(${inspect(value.entries(), wrap, recursionDepth, visited)})`
   }
 
   const tab = '  '.repeat(recursionDepth)
@@ -45,7 +51,13 @@ export function inspect(
     value.constructor !== Object &&
     isEmpty(value)
   ) {
-    return nodeInspect(value, {getters: true}).replace('\n', `\n${innerTab}`)
+    return `{${Object.entries(value)
+      .map(([key, val]) => [
+        inspect(key, wrap, recursionDepth + 1, visited),
+        inspect(value, wrap, recursionDepth + 1, visited),
+      ])
+      .reduce((memo, [key, value]) => memo.concat(key + ': ' + value), [])
+      .join(', ')}}`
   } else if (typeof value === 'string') {
     return colorize.string(value, recursionDepth > 0)
   } else if (
@@ -62,7 +74,9 @@ export function inspect(
       return '[]'
     }
 
-    const values = value.map(val => inspect(val, wrap, recursionDepth + 1))
+    const values = value.map(val =>
+      inspect(val, wrap, recursionDepth + 1, visited),
+    )
     const count = values.reduce((len, val) => len + val.length, 0)
     const newline = wrap && count > 100
     let inner: string
@@ -89,12 +103,17 @@ export function inspect(
   // weird ReactFiberNode one-off
   if ('$$typeof' in value && '_owner' in value) {
     const {_owner: _, ...remainder} = value
-    return inspect(remainder, wrap, recursionDepth)
+    return inspect(remainder, wrap, recursionDepth, visited)
   }
 
   const values = keys.map(
     key =>
-      `${colorize.key(key)}: ${inspect(value[key], wrap, recursionDepth + 1)}`,
+      `${colorize.key(key)}: ${inspect(
+        value[key],
+        wrap,
+        recursionDepth + 1,
+        visited,
+      )}`,
   )
   const count = values.reduce((len, val) => len + val.length, 0)
   const newline = wrap && count > 100
