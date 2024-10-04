@@ -27,6 +27,7 @@ interface Props {
   textBackground?: Color
   highlight: Color
   darken: Color
+  child?: Theme
 }
 
 export class Theme {
@@ -38,38 +39,56 @@ export class Theme {
   textBackgroundColor: Color
   highlightColor: Color
   darkenColor: Color
+  #child: Theme | undefined
 
+  static plain = new Theme({
+    background: '#4F4F4F(239)',
+    textBackground: 'default',
+    highlight: '#616161(241)',
+    darken: '#3F3F3F(237)',
+  })
   static primary = new Theme({
     background: '#0032FA',
     highlight: '#0070FF',
     darken: '#0058C8',
+    text: '#0032FA',
+    brightText: '#0070FF',
+    dimText: '#0058C8',
+    child: Theme.plain,
   })
   static secondary = new Theme({
     background: '#D0851C',
     highlight: '#F39614',
     darken: '#A66A16',
+    text: '#D0851C',
+    brightText: '#F39614',
+    dimText: '#A66A16',
+    child: Theme.plain,
   })
   static proceed = new Theme({
     background: '#108040',
     highlight: '#1EB317',
     darken: '#0C6030',
+    text: '#108040',
+    brightText: '#1EB317',
+    dimText: '#0C6030',
+    child: Theme.plain,
   })
   static cancel = new Theme({
     background: '#981618',
     highlight: '#C51B1E',
     darken: '#821113',
+    text: '#981618',
+    brightText: '#C51B1E',
+    dimText: '#821113',
+    child: Theme.plain,
   })
   static selected = new Theme({
     text: '#383838(236)',
     background: '#BDBDBD(250)',
     highlight: '#E6E6E6(254)',
     darken: '#7F7F7F(243)',
-  })
-  static plain = new Theme({
-    background: '#4F4F4F(239)',
-    textBackground: 'default',
-    highlight: '#616161(241)',
-    darken: '#3F3F3F(237)',
+    child: Theme.plain,
   })
   static red = Theme.cancel
   static green = Theme.proceed
@@ -85,6 +104,7 @@ export class Theme {
     textBackground,
     highlight,
     darken,
+    child,
   }: Props) {
     this.textColor = text ?? defaultText
     this.brightTextColor = brightText ?? defaultBrightText
@@ -94,6 +114,15 @@ export class Theme {
     this.textBackgroundColor = textBackground ?? background
     this.highlightColor = highlight
     this.darkenColor = darken
+    this.#child = child
+  }
+
+  /**
+   * UI elements vend a "child" theme that is meant to display well given the
+   * background colors (eg a 'red' UI returns 'plain' text).
+   */
+  child() {
+    return this.#child ?? this
   }
 
   /**
