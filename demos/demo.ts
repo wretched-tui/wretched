@@ -3,7 +3,7 @@ import {interceptConsoleLog} from 'wretched'
 
 import type {View} from 'wretched'
 import {Screen} from 'wretched'
-import {TrackMouse} from 'wretched/components/utility'
+import {TrackMouse} from 'wretched'
 import {ConsoleLog, Flex, Window} from 'wretched'
 
 export async function demo(demoContent: View, showConsoleLog = true) {
