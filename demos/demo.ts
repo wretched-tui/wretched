@@ -8,6 +8,9 @@ import {ConsoleLog, Flex, Window} from 'wretched'
 
 export async function demo(demoContent: View, showConsoleLog = true) {
   process.title = 'Wretched'
+  if (process.argv.includes('--no-log')) {
+    showConsoleLog = false
+  }
 
   const consoleLog = new ConsoleLog({
     height: 10,
