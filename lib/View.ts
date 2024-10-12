@@ -138,7 +138,7 @@ export abstract class View {
   }
 
   get theme(): Theme {
-    return this.#theme ?? this.parent?.theme.child() ?? Theme.plain
+    return this.#theme ?? this.parent?.theme ?? Theme.plain
   }
 
   set theme(value: Theme | undefined) {
