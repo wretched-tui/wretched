@@ -15,6 +15,8 @@ import {
   KeyEvent,
   styleTextForHotKey,
 } from '../events'
+import {Theme} from '../Theme'
+import {childTheme} from '../UI'
 
 type Border = 'default' | 'arrows' | 'none'
 type BorderChars = [string, string]
@@ -48,6 +50,10 @@ export class Button extends Container {
   update(props: Props) {
     this.#update(props)
     super.update(props)
+  }
+
+  childTheme() {
+    return childTheme(super.childTheme(), this.#isPressed, this.#isHover)
   }
 
   #update({text, border, hotKey, onClick}: Props) {
@@ -161,7 +167,7 @@ export class Button extends Container {
       viewport.write(left, new Point(leftX, offset.y + y), textStyle)
       viewport.write(right, new Point(rightX, offset.y + y), textStyle)
     }
-    viewport.clipped(new Rect(offset, naturalSize), textStyle, inside => {
+    viewport.clipped(new Rect(offset, naturalSize), inside => {
       super.render(inside)
     })
   }

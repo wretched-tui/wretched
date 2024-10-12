@@ -15,6 +15,7 @@ import {
   isMouseClicked,
   styleTextForHotKey,
 } from '../events'
+import {childTheme} from '../UI'
 
 interface StyleProps {
   text?: string
@@ -42,6 +43,10 @@ export class Checkbox extends Container {
     }
 
     this.#update(props)
+  }
+
+  childTheme() {
+    return childTheme(super.childTheme(), this.#isPressed, this.#isHover)
   }
 
   add(child: View, at?: number) {

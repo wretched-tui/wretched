@@ -48,7 +48,7 @@ export class Theme {
   static primary = new Theme({
     background: '#0032FA',
     highlight: '#0074FF',
-    darken: '#0058C8',
+    darken: '#002AD3',
     text: '#E2E2E2(253)',
     brightText: '#0074FF',
     dimText: '#0058C8',
