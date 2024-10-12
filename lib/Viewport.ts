@@ -152,7 +152,7 @@ export class Viewport {
    * Does not support newlines (no default wrapping behavior),
    * always prints left-to-right.
    */
-  write(input: string, to: Point, defaultStyle?: Style) {
+  write(input: string, to: Point, style?: Style) {
     const minX = this.#visibleRect.minX(),
       maxX = this.#visibleRect.maxX(),
       minY = this.#visibleRect.minY(),
@@ -161,9 +161,9 @@ export class Viewport {
       return
     }
 
-    defaultStyle ??= this.#style
-    let x = to.x,
-      style = defaultStyle
+    style ??= this.#style
+    const defaultStyle = style
+    let x = to.x
     for (const char of unicode.printableChars(input)) {
       if (char === '\n') {
         break
