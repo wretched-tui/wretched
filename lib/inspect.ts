@@ -21,10 +21,13 @@ export function inspect(
   recursionDepth = 0,
   visited = new Set(),
 ): string {
-  if (visited.has(value)) {
-    return red('[Circular]')
+  if (value && (typeof value === 'object' || typeof value === 'function')) {
+    if (visited.has(value)) {
+      return red('[Circular]')
+    } else {
+      visited.add(value)
+    }
   }
-  visited.add(value)
 
   if (recursionDepth >= 10) {
     return red('...')
