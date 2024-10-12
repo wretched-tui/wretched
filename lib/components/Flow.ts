@@ -11,11 +11,15 @@ interface Props extends ContainerProps {
 
 type ShorthandProps = NonNullable<Props['children']> | Omit<Props, 'direction'>
 
-function fromShorthand(props: ShorthandProps, direction: Direction): Props {
+function fromShorthand(
+  props: ShorthandProps,
+  direction: Direction,
+  extraProps: Omit<Props, 'children' | 'direction'> = {},
+): Props {
   if (Array.isArray(props)) {
-    return {children: props, direction}
+    return {children: props, direction, ...extraProps}
   } else {
-    return {...props, direction}
+    return {...props, direction, ...extraProps}
   }
 }
 
@@ -23,21 +27,33 @@ export class Flow extends Container {
   #direction: Direction = 'leftToRight'
   #spaceBetween: number = 0
 
-  static down(props: ShorthandProps = {}): Flow {
+  static down(
+    props: ShorthandProps = {},
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flow {
     const direction = 'topToBottom'
-    return new Flow(fromShorthand(props, direction))
+    return new Flow(fromShorthand(props, direction, extraProps))
   }
-  static up(props: ShorthandProps = {}): Flow {
+  static up(
+    props: ShorthandProps = {},
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flow {
     const direction = 'bottomToTop'
-    return new Flow(fromShorthand(props, direction))
+    return new Flow(fromShorthand(props, direction, extraProps))
   }
-  static right(props: ShorthandProps = {}): Flow {
+  static right(
+    props: ShorthandProps = {},
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flow {
     const direction = 'leftToRight'
-    return new Flow(fromShorthand(props, direction))
+    return new Flow(fromShorthand(props, direction, extraProps))
   }
-  static left(props: ShorthandProps = {}): Flow {
+  static left(
+    props: ShorthandProps = {},
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flow {
     const direction = 'rightToLeft'
-    return new Flow(fromShorthand(props, direction))
+    return new Flow(fromShorthand(props, direction, extraProps))
   }
 
   constructor(props: Props) {
