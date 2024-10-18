@@ -23,13 +23,14 @@
     "url": "http://github.com/wretched-tui/wretched/issues"
   },
   "scripts": {
-    "prepublishOnly": "bun run clean && bun run tsc && bun run cp-usr && rm -rf dist/demos/",
-    "postpublishOnly": "bun run gittag",
+    "prepublishOnly": "yarn build && rm -rf dist/demos/",
+    "postpublishOnly": "yarn run gittag",
     "gittag": "git tag $(node -e 'console.log(require(\"./package\").version)')",
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
-    "build": "bun run clean && bun run tsc && bun run cp-usr",
-    "demo": "bun run build && cd demos/ && bun install && bun run demo"
+    "build": "yarn clean && yarn tsc && yarn cp-usr",
+    "checksum": ". scripts/check.sh lib",
+    "demo": "yarn checksum && cd demos/ && yarn demo"
   },
   "keywords": [
     "curses",
@@ -47,6 +48,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.3.2",
+    "ssed": "^1.5.0",
     "typescript": "^5.4.3"
   }
 }
