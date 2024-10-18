@@ -105,6 +105,10 @@ export class Box extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     if (this.#highlight) {
       viewport.registerMouse('mouse.move')
     }

@@ -52,6 +52,10 @@ export class Separator extends View {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     const style = this.theme.text()
 
     if (this.#direction === 'vertical') {

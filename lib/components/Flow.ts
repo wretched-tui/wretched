@@ -98,6 +98,10 @@ export class Flow extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     const remainingSize = viewport.contentSize.mutableCopy()
     let origin: MutablePoint
     switch (this.#direction) {

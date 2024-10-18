@@ -80,6 +80,10 @@ export class CollapsibleText extends View {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     const line = this.#text
     if (!line.length) {
       return

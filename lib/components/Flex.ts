@@ -131,6 +131,10 @@ export class Flex extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     let remainingSize =
       viewport.contentSize[isVertical(this.direction) ? 'height' : 'width']
 

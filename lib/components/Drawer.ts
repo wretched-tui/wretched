@@ -212,6 +212,10 @@ export class Drawer extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     if (this.#currentDx !== this.#targetDx()) {
       viewport.registerTick()
     }

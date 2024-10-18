@@ -289,6 +289,10 @@ export class ScrollableList<T> extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     viewport.registerMouse('mouse.wheel')
 
     if (

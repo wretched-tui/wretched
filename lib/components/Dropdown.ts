@@ -163,6 +163,10 @@ export class Dropdown<T, M extends boolean> extends View {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     if (this.#showModal) {
       viewport.requestModal(this.dropdownSelector, () => {
         this.#showModal = false
@@ -391,6 +395,10 @@ class DropdownSelector<T> extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     const naturalSize = this.naturalSize(viewport.contentSize).max(
       viewport.contentSize,
     )

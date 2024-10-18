@@ -420,6 +420,10 @@ export class Slider extends View {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     this.#contentSize = viewport.contentSize
 
     const pt = Point.zero.mutableCopy()

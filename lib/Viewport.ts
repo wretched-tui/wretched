@@ -63,6 +63,10 @@ export class Viewport {
     })
   }
 
+  get isEmpty(): boolean {
+    return this.#contentSize.isEmpty()
+  }
+
   /**
    * @return boolean Whether the modal creation was successful
    */

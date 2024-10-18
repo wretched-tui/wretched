@@ -32,6 +32,10 @@ export class Space extends View {
 
   #prev = this.background
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     if (!this.background) {
       return
     }

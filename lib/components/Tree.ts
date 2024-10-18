@@ -160,6 +160,10 @@ export class Tree<T> extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     const titleView = this.#titleView
     const titleSize = titleView?.naturalSize(viewport.contentSize) ?? Size.zero
     if (titleView) {
@@ -250,6 +254,10 @@ class TreeChild<T> extends Tree<T> {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     const treeSize = this.naturalSize(viewport.contentSize).shrink(
       TREE_BULLET_WIDTH,
       0,
@@ -403,6 +411,10 @@ export class AnimatedHeight extends Container {
   render(viewport: Viewport) {
     if (!this.contentView) {
       return
+    }
+
+    if (viewport.isEmpty) {
+      return super.render(viewport)
     }
 
     if (

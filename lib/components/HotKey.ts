@@ -30,6 +30,10 @@ export class HotKey extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     viewport.registerHotKey(this.#hotKey)
   }
 }

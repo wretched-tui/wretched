@@ -113,6 +113,10 @@ export class Checkbox extends Container {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return super.render(viewport)
+    }
+
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     const uiStyle = this.theme.ui({

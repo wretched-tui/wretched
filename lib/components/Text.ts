@@ -125,6 +125,10 @@ export class Text extends View {
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     const lines: [string, number][] = this.#lines
     let style: Style | undefined = this.#style || this.theme?.text()
 

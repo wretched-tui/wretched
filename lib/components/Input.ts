@@ -258,10 +258,11 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
-    const visibleSize = viewport.contentSize
-    if (visibleSize.isEmpty()) {
+    if (viewport.isEmpty) {
       return
     }
+
+    const visibleSize = viewport.contentSize
 
     // cursorEnd: the location of the cursor relative to the text
     // (ie if the text had been drawn at 0,0, cursorEnd is the screen location of
