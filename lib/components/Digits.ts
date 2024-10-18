@@ -19,6 +19,26 @@ type DigitName =
   | 'D'
   | 'E'
   | 'F'
+  | 'G'
+  | 'H'
+  | 'I'
+  | 'J'
+  | 'K'
+  | 'L'
+  | 'M'
+  | 'N'
+  | 'O'
+  | 'P'
+  | 'Q'
+  | 'R'
+  | 'S'
+  | 'T'
+  | 'U'
+  | 'V'
+  | 'W'
+  | 'X'
+  | 'Y'
+  | 'Z'
   | '0'
   | '1'
   | '2'
@@ -29,13 +49,14 @@ type DigitName =
   | '7'
   | '8'
   | '9'
-  | 'x'
+  | '*'
   | '#'
   | ':'
   | '!'
   | '.'
   | ','
-type Digit = [1 | 2 | 3, string, string, string]
+  | ' '
+type Digit = [number, string, string, string] | '\n'
 
 export class Digits extends View {
   #text: string = ''
@@ -72,11 +93,17 @@ export class Digits extends View {
   #updateNumber(value: string) {
     let filtered = ''
     this.#digits = value.split('').flatMap(c => {
-      c = c.toUpperCase()
+      const upper = c.toUpperCase()
       const digits = this.#bold ? DIGITS_BOLD : DIGITS
-      if (digits[c as DigitName]) {
+      if (c === '\n') {
+        filtered += c
+        return [c]
+      } else if (digits[c as DigitName]) {
         filtered += c
         return [digits[c as DigitName]]
+      } else if (digits[upper as DigitName]) {
+        filtered += upper
+        return [digits[upper as DigitName]]
       } else {
         return []
       }
@@ -84,15 +111,36 @@ export class Digits extends View {
     this.#text = filtered
   }
 
-  naturalSize(availableSize: Size): Size {
-    const width = this.#digits.reduce((total, [w]) => total + w, 0)
-    return new Size(width, 3)
+  naturalSize(): Size {
+    const [width, height] = this.#digits.reduce(
+      ([maxWidth, totalHeight, currentWidth], digit) => {
+        if (digit === '\n') {
+          return [maxWidth, totalHeight + 3, 0]
+        }
+        const [w] = digit
+        const nextWidth = currentWidth + w
+        return [Math.max(maxWidth, nextWidth), totalHeight, nextWidth]
+      },
+      [0, 3, 0],
+    )
+    return new Size(width, height)
   }
 
   render(viewport: Viewport) {
+    if (viewport.isEmpty) {
+      return
+    }
+
     viewport.usingPen(this.#style, pen => {
       const point = new Point(0, 0).mutableCopy()
-      for (const [width, ...lines] of this.#digits) {
+      for (const digit of this.#digits) {
+        if (digit === '\n') {
+          point.x = 0
+          point.y += 3
+          continue
+        }
+
+        const [width, ...lines] = digit
         let y = 0
         for (const line of lines) {
           viewport.write(line, point.offset(0, y++))
@@ -140,6 +188,126 @@ const DIGITS_BOLD: Record<DigitName, Digit> = {
     '┏━╸',
     '┣━ ',
     '╹  ',
+  ],
+  G: [
+    3,
+    '┏━╸',
+    '┃╺┓',
+    '┗━┛',
+  ],
+  H: [
+    3,
+    '╻ ╻',
+    '┣━┫',
+    '╹ ╹',
+  ],
+  I: [
+    1,
+    '┳',
+    '┃',
+    '┻',
+  ],
+  J: [
+    2,
+    ' ┳',
+    ' ┃',
+    '┗┛',
+  ],
+  K: [
+    2,
+    '╻▗',
+    '┣▌',
+    '╹▝',
+  ],
+  L: [
+    3,
+    '╻  ',
+    '┃  ',
+    '┗━╸',
+  ],
+  M: [
+    3,
+    '┏┳┓',
+    '┃╹┃',
+    '╹ ╹',
+  ],
+  N: [
+    3,
+    '┏┓╻',
+    '┃┗┫',
+    '╹ ╹',
+  ],
+  O: [
+    3,
+    '┏━┓',
+    '┃ ┃',
+    '┗━┛',
+  ],
+  P: [
+    3,
+    '┏━┓',
+    '┣━┛',
+    '╹',
+  ],
+  Q: [
+    3,
+    '┏━┓',
+    '┃ ┃',
+    '┗╋┛',
+  ],
+  R: [
+    3,
+    '┏━┓',
+    '┣┳┛',
+    '╹┗╸',
+  ],
+  S: [
+    3,
+    '┏━┓',
+    '┗━┓',
+    '┗━┛',
+  ],
+  T: [
+    3,
+    '╺┳╸',
+    ' ┃ ',
+    ' ╹ ',
+  ],
+  U: [
+    3,
+    '╻ ╻',
+    '┃ ┃',
+    '┗━┛',
+  ],
+  V: [
+    4,
+    '▗  ▗',
+    ' ▚▗▘',
+    '  ▘ ',
+  ],
+  W: [
+    5,
+    '▗   ▗',
+    ' ▚▗▗▘',
+    '  ▘▘ ',
+  ],
+  X: [
+    3,
+    '▗ ▗',
+    ' ▚▘',
+    '▗▘▚',
+  ],
+  Y: [
+    3,
+    '▗ ▗',
+    ' ▚▘',
+    ' ▐',
+  ],
+  Z: [
+    3,
+    '╺━┓',
+    ' ▞',
+    '┗━╸',
   ],
   '0': [
     3,
@@ -201,7 +369,7 @@ const DIGITS_BOLD: Record<DigitName, Digit> = {
     '┗━┫',
     '╺━┛',
   ],
-  'x': [
+  '*': [
     2,
     '  ',
     '▚▞',
@@ -236,6 +404,12 @@ const DIGITS_BOLD: Record<DigitName, Digit> = {
     ' ',
     ' ',
     ',',
+  ],
+  ' ': [
+    2,
+    '  ',
+    '  ',
+    '  ',
   ],
 }
 
@@ -276,6 +450,126 @@ const DIGITS: Record<DigitName, Digit> = {
     '┌─╴',
     '├─ ',
     '╵  ',
+  ],
+  G: [
+    3,
+    '╭─╮',
+    '│─┐',
+    '╰─╯',
+  ],
+  H: [
+    3,
+    '╷ ╷',
+    '├─┤',
+    '╵ ╵',
+  ],
+  I: [
+    1,
+    '┬',
+    '│',
+    '┴',
+  ],
+  J: [
+    2,
+    ' ┬',
+    ' │',
+    '╰╯',
+  ],
+  K: [
+    3,
+    '╷ ╷',
+    '├┬╯',
+    '╵└╴',
+  ],
+  L: [
+    3,
+    '╷  ',
+    '│  ',
+    '╰─╴',
+  ],
+  M: [
+    4,
+    '┌┬┐',
+    '│╵│',
+    '╵ ╵',
+  ],
+  N: [
+    3,
+    '╷ ╷',
+    '│╲│',
+    '╵ ╵',
+  ],
+  O: [
+    3,
+    '╭─╮',
+    '│ │',
+    '╰─╯',
+  ],
+  P: [
+    3,
+    '╭─╮',
+    '├─╯',
+    '╵  ',
+  ],
+  Q: [
+    3,
+    '╭─╮',
+    '│ │',
+    '╰┼╯',
+  ],
+  R: [
+    3,
+    '╭─╮',
+    '├┬╯',
+    '╵└╴',
+  ],
+  S: [
+    3,
+    '╭─╮',
+    '╰─╮',
+    '╰─╯',
+  ],
+  T: [
+    3,
+    '╶┬╴',
+    ' │ ',
+    ' ╵ ',
+  ],
+  U: [
+    3,
+    '╷ ╷',
+    '│ │',
+    '╰─╯',
+  ],
+  V: [
+    3,
+    '   ',
+    '╲ ╱',
+    ' ⋁ ',
+  ],
+  W: [
+    3,
+    '╷ ╷',
+    '│╷│',
+    '└┴┘',
+  ],
+  X: [
+    3,
+    '∖ ╱',
+    ' ╳ ',
+    '╱ ∖',
+  ],
+  Y: [
+    3,
+    '╲ ╱',
+    ' │',
+    ' ╵',
+  ],
+  Z: [
+    3,
+    '╶─┐',
+    ' ╱ ',
+    '└─╴',
   ],
   '0': [
     3,
@@ -337,7 +631,7 @@ const DIGITS: Record<DigitName, Digit> = {
     '╰─┤',
     '╶─╯',
   ],
-  'x': [
+  '*': [
     2,
     '  ',
     '╲╱',
@@ -372,5 +666,11 @@ const DIGITS: Record<DigitName, Digit> = {
     ' ',
     ' ',
     ',',
+  ],
+  ' ': [
+    2,
+    '  ',
+    '  ',
+    '  ',
   ],
 }
