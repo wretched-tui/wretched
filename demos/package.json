@@ -3,9 +3,9 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
+    "demo": "cd dist ; node --enable-source-maps --",
     "clean": "rm -rf dist/",
-    "build": "yarn clean && yarn tsc",
-    "demo": "bun run"
+    "build": "yarn clean && yarn tsc"
   },
   "dependencies": {
     "wretched": "file:../dist"
