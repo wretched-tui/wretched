@@ -12,6 +12,14 @@ interface Props extends ViewProps {
 export class Space extends View {
   background?: Color
 
+  static horizontal(value: number) {
+    return new Space({width: value})
+  }
+
+  static vertical(value: number) {
+    return new Space({height: value})
+  }
+
   constructor(props: Props = {}) {
     super(props)
     this.#update(props)
