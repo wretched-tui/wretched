@@ -13,11 +13,15 @@ interface Props extends ViewProps {
 
 type ShorthandProps = NonNullable<Props['children']> | Omit<Props, 'direction'>
 
-function fromShorthand(props: ShorthandProps, direction: Direction): Props {
+function fromShorthand(
+  props: ShorthandProps,
+  direction: Direction,
+  extraProps: Omit<Props, 'children' | 'direction'> = {},
+): Props {
   if (Array.isArray(props)) {
-    return {children: props, direction}
+    return {children: props, direction, ...extraProps}
   } else {
-    return {...props, direction}
+    return {...props, direction, ...extraProps}
   }
 }
 
@@ -25,21 +29,33 @@ export class Flex extends Container {
   direction: Direction = 'topToBottom'
   #sizes: Map<View, FlexSize> = new Map()
 
-  static down(props: ShorthandProps): Flex {
+  static down(
+    props: ShorthandProps,
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flex {
     const direction: Direction = 'topToBottom'
-    return new Flex(fromShorthand(props, direction))
+    return new Flex(fromShorthand(props, direction, extraProps))
   }
-  static up(props: ShorthandProps): Flex {
+  static up(
+    props: ShorthandProps,
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flex {
     const direction: Direction = 'bottomToTop'
-    return new Flex(fromShorthand(props, direction))
+    return new Flex(fromShorthand(props, direction, extraProps))
   }
-  static right(props: ShorthandProps): Flex {
+  static right(
+    props: ShorthandProps,
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flex {
     const direction: Direction = 'leftToRight'
-    return new Flex(fromShorthand(props, direction))
+    return new Flex(fromShorthand(props, direction, extraProps))
   }
-  static left(props: ShorthandProps): Flex {
+  static left(
+    props: ShorthandProps,
+    extraProps: Omit<Props, 'children' | 'direction'> = {},
+  ): Flex {
     const direction: Direction = 'rightToLeft'
-    return new Flex(fromShorthand(props, direction))
+    return new Flex(fromShorthand(props, direction, extraProps))
   }
 
   constructor({children, direction, ...viewProps}: Props) {
