@@ -52,6 +52,7 @@ export class Size {
   readonly height: number
 
   static zero = new Size(0, 0)
+  static one = new Size(1, 1)
 
   constructor(size: Size)
   constructor(_: {width: number; height: number})

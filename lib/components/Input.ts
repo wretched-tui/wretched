@@ -182,7 +182,7 @@ export class Input extends View {
     let lines: [string[], number][] = this.#lines
 
     if (!lines.length) {
-      return Size.zero
+      return Size.one
     }
 
     let height: number = 0
@@ -258,11 +258,17 @@ export class Input extends View {
   }
 
   render(viewport: Viewport) {
+    const hasFocus = viewport.registerFocus()
     if (viewport.isEmpty) {
       return
     }
 
     const visibleSize = viewport.contentSize
+
+    if (hasFocus) {
+      viewport.registerTick()
+    }
+    viewport.registerMouse('mouse.button.left')
 
     // cursorEnd: the location of the cursor relative to the text
     // (ie if the text had been drawn at 0,0, cursorEnd is the screen location of
@@ -315,12 +321,6 @@ export class Input extends View {
       lines = this.#wrappedLines
     }
 
-    const hasFocus = viewport.registerFocus()
-    if (hasFocus) {
-      viewport.registerTick()
-    }
-    viewport.registerMouse('mouse.button.left')
-
     let isPlaceholder = !Boolean(this.#chars.length)
     let currentStyle = Style.NONE
     const plainStyle = this.theme.text({
@@ -332,6 +332,7 @@ export class Input extends View {
       hasFocus,
     })
     const cursorStyle = plainStyle.merge({underline: true})
+
     const nlStyle = this.theme.text({isPlaceholder: true})
 
     const fontMap = this.#font && FONTS[this.#font]
@@ -340,6 +341,10 @@ export class Input extends View {
       let style: Style = plainStyle
 
       const visibleLines = lines.slice(cursorVisible.y)
+      if (visibleLines.length === 0) {
+        visibleLines.push([[' '], 0])
+      }
+
       // is the viewport tall/wide enough to show ellipses …
       const isTallEnough = viewport.contentSize.height > 4
       const isWideEnough = viewport.contentSize.width > 9
@@ -786,7 +791,10 @@ export class Input extends View {
       this.#cursor.end,
       this.#visibleWidth,
     ).mutableCopy()
-    if (cursorPosition.y === this.#wrappedLines.length - 1) {
+    if (
+      cursorPosition.y === this.#wrappedLines.length - 1 ||
+      this.#wrappedLines.length === 0
+    ) {
       dest = this.#chars.length
     } else {
       const [targetChars, targetWidth] =
