@@ -18,25 +18,34 @@ export type BorderChars =
   // top, sides, top-left, top-right, bottom-left, bottom-right
   // '─', '│', '┌', '┐', '└', '┘'
   | [string, string, string, string, string, string]
-  // top, sides, …, bottom
+  // top, sides, …corners…, bottom
   | [string, string, string, string, string, string, string]
-  // top, left, …, bottom, right
-  // '⠒', '⡇', …, '⠤', '⢸'
+  // top, left, …corners…, bottom, right
   | [string, string, string, string, string, string, string, string]
+export type CalculatedBorderChars = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+]
 
 export interface BorderSizes {
-  maxTop: number
-  maxRight: number
-  maxBottom: number
-  maxLeft: number
-  top: number
-  topLeft: number
-  topRight: number
-  left: number
-  right: number
-  bottom: number
-  bottomLeft: number
-  bottomRight: number
+  maxTop: number // height
+  maxBottom: number // height
+  maxRight: number // width
+  maxLeft: number // width
+  topLeft: {width: number; height: number}
+  topMiddle: {width: number; height: number}
+  topRight: {width: number; height: number}
+  leftMiddle: {width: number; height: number}
+  rightMiddle: {width: number; height: number}
+  bottomLeft: {width: number; height: number}
+  bottomMiddle: {width: number; height: number}
+  bottomRight: {width: number; height: number}
 }
 
 interface Props extends ContainerProps {
@@ -46,12 +55,10 @@ interface Props extends ContainerProps {
 
 export class Box extends Container {
   #border: Border | BorderChars = 'single'
-  #borderChars: BorderChars = BORDERS.single
+  #borderChars: CalculatedBorderChars = BORDERS.single
   #borderSizes: BorderSizes = BORDER_SIZE_ZERO
   #highlight: boolean = false
   #isHover = false
-
-  declare border: Border | BorderChars
 
   constructor(props: Props) {
     super(props)
@@ -60,14 +67,17 @@ export class Box extends Container {
 
     Object.defineProperty(this, 'border', {
       enumerable: true,
-      get: () => {
-        return this.#border
-      },
-      set: (value: Border | BorderChars) => {
-        this.#border = value
-        ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
-      },
+      writable: true,
     })
+  }
+
+  get border() {
+    return this.#border
+  }
+
+  set border(value: Border | BorderChars) {
+    this.#border = value
+    ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
   }
 
   update(props: Props) {
@@ -77,9 +87,7 @@ export class Box extends Container {
 
   #update({highlight, border}: Props) {
     this.#highlight = highlight ?? false
-    ;[this.#borderChars, this.#borderSizes] = calculateBorder(
-      border ?? 'single',
-    )
+    this.border = border ?? 'single'
   }
 
   naturalSize(size: Size): Size {
@@ -116,28 +124,35 @@ export class Box extends Container {
     const [top, left, tl, tr, bl, br, bottom, right] = this.#borderChars
 
     const maxX = viewport.contentSize.width
-    const maxY = viewport.contentSize.height - this.#borderSizes.bottom
-    let borderStyle = this.theme.text({isHover: this.#isHover})
+    const maxY = viewport.contentSize.height
+    const innerWidth = Math.max(
+      0,
+      maxX - this.#borderSizes.maxLeft - this.#borderSizes.maxRight,
+    )
+    const innerHeight = Math.max(
+      0,
+      maxY - this.#borderSizes.maxTop - this.#borderSizes.maxBottom,
+    )
+    const leftMaxX = this.#borderSizes.maxLeft
+    const topMaxY = this.#borderSizes.maxTop
+    const middleMaxX = this.#borderSizes.maxLeft + innerWidth
+    const middleMaxY = this.#borderSizes.maxTop + innerHeight
 
+    const borderStyle = this.theme.text({isHover: this.#isHover})
     const innerStyle = new Style({background: borderStyle.background})
-    for (let y = this.#borderSizes.top; y < maxY; ++y) {
-      viewport.write(
-        ' '.repeat(
-          Math.max(0, maxX - this.#borderSizes.left - this.#borderSizes.right),
-        ),
-        new Point(this.#borderSizes.left, y),
-        innerStyle,
-      )
+    const innerOrigin = new Point(
+      this.#borderSizes.maxLeft,
+      this.#borderSizes.maxTop,
+    )
+    if (innerHeight && innerWidth) {
+      for (let y = 0; y < innerHeight; ++y) {
+        const spaces = ' '.repeat(innerWidth)
+        viewport.write(spaces, innerOrigin.offset(0, y), innerStyle)
+      }
     }
 
     viewport.clipped(
-      new Rect(
-        new Point(this.#borderSizes.left, this.#borderSizes.top),
-        viewport.contentSize.shrink(
-          this.#borderSizes.left + this.#borderSizes.right,
-          this.#borderSizes.top + this.#borderSizes.bottom,
-        ),
-      ),
+      new Rect(innerOrigin, [innerWidth, innerHeight]),
       inside => {
         super.render(inside)
       },
@@ -149,45 +164,55 @@ export class Box extends Container {
         top.split('\n'),
         tr.split('\n'),
       ]
-      for (let line = 0; line < this.#borderSizes.maxTop; ++line) {
+      for (let lineY = 0; lineY < topMaxY; ++lineY) {
         const [lineTL, lineTop, lineTR] = [
-          tlLines[line] ?? '',
-          topLines[line] ?? '',
-          trLines[line] ?? '',
+          tlLines[lineY] ?? '',
+          topLines[lineY] ?? '',
+          trLines[lineY] ?? '',
         ]
-        viewport.write(
-          lineTL +
-            lineTop.repeat(
-              Math.max(
-                0,
-                viewport.contentSize.width -
-                  this.#borderSizes.topRight -
-                  this.#borderSizes.topLeft,
-              ),
-            ) +
-            lineTR,
-          new Point(0, line),
-        )
+        viewport.write(lineTL, new Point(0, lineY))
+        if (lineTop.length) {
+          viewport.write(
+            lineTop
+              .repeat(-~(innerWidth / this.#borderSizes.topMiddle.width))
+              .slice(0, innerWidth),
+            new Point(leftMaxX, lineY),
+          )
+        }
+        viewport.write(lineTR, new Point(middleMaxX, lineY))
       }
-      viewport.write(
-        bl +
-          (bottom ?? top).repeat(
-            Math.max(
-              0,
-              viewport.contentSize.width -
-                this.#borderSizes.bottomLeft -
-                this.#borderSizes.bottomRight,
-            ),
-          ) +
-          br,
-        new Point(0, maxY),
-      )
-      for (let y = this.#borderSizes.top; y < maxY; ++y) {
-        viewport.write(left, new Point(0, y))
-        viewport.write(
-          right ?? left,
-          new Point(maxX - this.#borderSizes.right, y),
-        )
+
+      const [leftLines, rightLines] = [left.split('\n'), right.split('\n')]
+      for (let lineY = topMaxY; lineY < middleMaxY; ++lineY) {
+        const [lineL, lineR] = [
+          leftLines[(lineY - topMaxY) % leftLines.length] ?? '',
+          rightLines[(lineY - topMaxY) % rightLines.length] ?? '',
+        ]
+        viewport.write(lineL, new Point(0, lineY))
+        viewport.write(lineR, new Point(middleMaxX, lineY))
+      }
+
+      const [blLines, bottomLines, brLines] = [
+        bl.split('\n'),
+        bottom.split('\n'),
+        br.split('\n'),
+      ]
+      for (let lineY = middleMaxY; lineY < maxY; ++lineY) {
+        const [lineBL, lineBottom, lineBR] = [
+          blLines[lineY - middleMaxY] ?? '',
+          bottomLines[lineY - middleMaxY] ?? '',
+          brLines[lineY - middleMaxY] ?? '',
+        ]
+        viewport.write(lineBL, new Point(0, lineY))
+        if (lineBottom.length) {
+          viewport.write(
+            lineBottom
+              .repeat(-~(innerWidth / this.#borderSizes.topMiddle.width))
+              .slice(0, innerWidth),
+            new Point(leftMaxX, lineY),
+          )
+        }
+        viewport.write(lineBR, new Point(middleMaxX, lineY))
       }
     })
   }
@@ -195,35 +220,52 @@ export class Box extends Container {
 
 function calculateBorder(
   border: Border | BorderChars,
-): [BorderChars, BorderSizes] {
-  let chars: BorderChars, sizes: BorderSizes
+): [CalculatedBorderChars, BorderSizes] {
+  let chars: CalculatedBorderChars, sizes: BorderSizes
   if (typeof border === 'string') {
     chars = BORDERS[border]
-  } else {
+  } else if (border.length === 8) {
     chars = border
+  } else if (border.length === 7) {
+    chars = [...border, border[1]]
+  } else {
+    chars = [...border, border[0], border[1]]
   }
 
-  const top = borderSize(chars[0])
-  const left = borderSize(chars[1])
+  // TLTL\n| TOP TOP\n|TRTR\n
+  // TL    | TOP      |TR
+  // ------+----------+----
+  // LEFT\n|          |RIGHT\n
+  // LEFT  |          |RIGHT
+  // ------+----------+----
+  // BLBL\n| BOTTOM\n |BRBR\n
+  // BL    | BOTTOM   |BR
+
   const topLeft = borderSize(chars[2])
+  const topMiddle = borderSize(chars[0])
   const topRight = borderSize(chars[3])
+  const leftMiddle = borderSize(chars[1])
   const bottomLeft = borderSize(chars[4])
+  const bottomMiddle = chars[6] !== undefined ? borderSize(chars[6]) : topMiddle
   const bottomRight = borderSize(chars[5])
-  const bottom = chars[6] !== undefined ? borderSize(chars[6]) : top
-  const right = chars[7] !== undefined ? borderSize(chars[7]) : left
+  const rightMiddle = chars[7] !== undefined ? borderSize(chars[7]) : leftMiddle
   sizes = {
-    maxLeft: Math.max(topLeft.width, left.width, bottomLeft.width),
-    maxRight: Math.max(topRight.width, right.width, bottomRight.width),
-    maxTop: Math.max(top.height, topLeft.height, topRight.height),
-    maxBottom: Math.max(bottom.height, bottomLeft.height, bottomRight.height),
-    top: top.height,
-    bottom: bottom.height,
-    left: left.width,
-    right: right.width,
-    topLeft: topLeft.width,
-    topRight: topRight.width,
-    bottomLeft: bottomLeft.width,
-    bottomRight: bottomRight.width,
+    maxLeft: Math.max(topLeft.width, leftMiddle.width, bottomLeft.width),
+    maxRight: Math.max(topRight.width, rightMiddle.width, bottomRight.width),
+    maxTop: Math.max(topLeft.height, topMiddle.height, topRight.height),
+    maxBottom: Math.max(
+      bottomLeft.height,
+      bottomMiddle.height,
+      bottomRight.height,
+    ),
+    topLeft,
+    topMiddle,
+    topRight,
+    leftMiddle,
+    rightMiddle,
+    bottomLeft,
+    bottomMiddle,
+    bottomRight,
   }
 
   return [chars, sizes]
@@ -236,11 +278,11 @@ function borderSize(str: string) {
   return unicode.stringSize(str)
 }
 
-const BORDERS: Record<Border, BorderChars> = {
-  single: ['─', '│', '┌', '┐', '└', '┘'],
-  bold: ['━', '┃', '┏', '┓', '┗', '┛'],
-  double: ['═', '║', '╔', '╗', '╚', '╝'],
-  rounded: ['─', '│', '╭', '╮', '╰', '╯'],
+const BORDERS: Record<Border, CalculatedBorderChars> = {
+  single: ['─', '│', '┌', '┐', '└', '┘', '─', '│'],
+  bold: ['━', '┃', '┏', '┓', '┗', '┛', '━', '┃'],
+  double: ['═', '║', '╔', '╗', '╚', '╝', '═', '║'],
+  rounded: ['─', '│', '╭', '╮', '╰', '╯', '─', '│'],
   dotted: ['⠒', '⡇', '⡖', '⢲', '⠧', '⠼', '⠤', '⢸'],
   popout: [' \n─', '│', ' \n┌', ' /\\   \n/  \\─┐', '└', '┘', '─', '│'],
 }
@@ -250,12 +292,12 @@ const BORDER_SIZE_ZERO: BorderSizes = {
   maxRight: 0,
   maxBottom: 0,
   maxLeft: 0,
-  top: 0,
-  topLeft: 0,
-  topRight: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  bottomLeft: 0,
-  bottomRight: 0,
+  topMiddle: new Size(0, 0),
+  topLeft: new Size(0, 0),
+  topRight: new Size(0, 0),
+  leftMiddle: new Size(0, 0),
+  rightMiddle: new Size(0, 0),
+  bottomMiddle: new Size(0, 0),
+  bottomLeft: new Size(0, 0),
+  bottomRight: new Size(0, 0),
 }
