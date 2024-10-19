@@ -27,6 +27,8 @@ type ViewConstructor = (program: BlessedProgram) => View | Promise<View>
 
 export class Screen {
   #program: SGRTerminal
+  #onExit?: () => void
+
   rootView: View
 
   #buffer: Buffer
@@ -92,6 +94,13 @@ export class Screen {
         : await viewConstructor(program)
 
     const screen = new Screen(program, rootView)
+    screen.onExit(() => {
+      program.clear()
+      program.disableMouse()
+      program.showCursor()
+      program.normalBuffer()
+    })
+
     program.on('focus', function () {
       screen.trigger({type: 'focus'})
     })
@@ -106,14 +115,7 @@ export class Screen {
 
     if (opts?.quitChar) {
       program.key(`C-${opts.quitChar}`, () => {
-        program.clear()
-        program.disableMouse()
-        program.showCursor()
-        program.normalBuffer()
         screen.exit()
-
-        flushLogs()
-        process.exit(0)
       })
     }
 
@@ -152,6 +154,18 @@ export class Screen {
     })
   }
 
+  onExit(callback: () => void) {
+    if (this.#onExit) {
+      const prev = this.#onExit
+      this.#onExit = () => {
+        prev()
+        callback()
+      }
+    } else {
+      this.#onExit = callback
+    }
+  }
+
   start() {
     this.rootView.moveToScreen(this)
     this.render()
@@ -160,6 +174,10 @@ export class Screen {
   exit() {
     this.#tickManager.stop()
     this.rootView.moveToScreen(null)
+
+    this.#onExit?.()
+    flushLogs()
+    process.exit(0)
   }
 
   trigger(event: SystemEvent) {
