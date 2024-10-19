@@ -488,7 +488,7 @@ const DIGITS: Record<DigitName, Digit> = {
     '╰─╴',
   ],
   M: [
-    4,
+    3,
     '┌┬┐',
     '│╵│',
     '╵ ╵',
