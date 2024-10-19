@@ -122,12 +122,12 @@ const boxes = [
   }),
 ]
 const digits1 = new Digits({
-  text: `a quick brown fox jumps over the lazy dog. 123,456.7890`,
+  text: 'Sphinx of black quartz, judge my vow. 123,456.7890',
 })
 
 const digits2 = new Digits({
   bold: true,
-  text: `a quick brown fox jumps over the lazy dog. 123,456.7890`,
+  text: 'Sphinx of black quartz, judge my vow. 123,456.7890',
 })
 
 const drawerView = Flow.down({
