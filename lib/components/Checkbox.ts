@@ -45,8 +45,8 @@ export class Checkbox extends Container {
     this.#update(props)
   }
 
-  childTheme() {
-    return childTheme(super.childTheme(), this.#isPressed, this.#isHover)
+  childTheme(view: View) {
+    return childTheme(super.childTheme(view), this.#isPressed, this.#isHover)
   }
 
   add(child: View, at?: number) {

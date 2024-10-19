@@ -47,6 +47,7 @@ export class Theme {
   })
   static primary = new Theme({
     background: '#0032FA',
+    textBackground: '#00197F',
     highlight: '#0074FF',
     darken: '#002AD3',
     text: '#E2E2E2(253)',
@@ -55,6 +56,7 @@ export class Theme {
   })
   static secondary = new Theme({
     background: '#D0851C',
+    textBackground: '#805211',
     highlight: '#F39614',
     darken: '#A66A16',
     text: '#E2E2E2(253)',
@@ -63,6 +65,7 @@ export class Theme {
   })
   static proceed = new Theme({
     background: '#108040',
+    textBackground: '#073F20',
     highlight: '#1EB317',
     darken: '#0C6030',
     text: '#E2E2E2(253)',
@@ -71,6 +74,7 @@ export class Theme {
   })
   static cancel = new Theme({
     background: '#981618',
+    textBackground: '#4A0A0B',
     highlight: '#C51B1E',
     darken: '#821113',
     text: '#E2E2E2(253)',
@@ -80,6 +84,7 @@ export class Theme {
   static selected = new Theme({
     text: '#383838(236)',
     background: '#BDBDBD(250)',
+    textBackground: '#BDBDBD(250)',
     highlight: '#E6E6E6(254)',
     darken: '#7F7F7F(243)',
   })

@@ -10,6 +10,8 @@ import {
   isMouseEnter,
   isMouseExit,
 } from '../events'
+import type {Style} from '../Style'
+import {Theme} from '../Theme'
 
 interface Props extends ViewProps {
   location?: Edge
@@ -211,6 +213,14 @@ export class Drawer extends Container {
     return [drawerSize, contentSize]
   }
 
+  childTheme(view: View) {
+    if (view === this.drawerView) {
+      return this.theme
+    }
+
+    return this.parent?.childTheme(this) ?? Theme.plain
+  }
+
   render(viewport: Viewport) {
     if (viewport.isEmpty) {
       return super.render(viewport)
@@ -222,23 +232,28 @@ export class Drawer extends Container {
 
     const [drawerSize] = this.#saveDrawerSize(viewport.contentSize)
 
+    const style = this.theme.ui({
+      isHover: this.#isHover,
+      isPressed: this.#isPressed,
+    })
+
     switch (this.#location) {
       case 'top':
-        this.#renderTop(viewport, drawerSize)
+        this.#renderTop(viewport, drawerSize, style)
         break
       case 'right':
-        this.#renderRight(viewport, drawerSize)
+        this.#renderRight(viewport, drawerSize, style)
         break
       case 'bottom':
-        this.#renderBottom(viewport, drawerSize)
+        this.#renderBottom(viewport, drawerSize, style)
         break
       case 'left':
-        this.#renderLeft(viewport, drawerSize)
+        this.#renderLeft(viewport, drawerSize, style)
         break
     }
   }
 
-  #renderTop(viewport: Viewport, drawerSize: Size) {
+  #renderTop(viewport: Viewport, drawerSize: Size, style: Style) {
     const drawerButtonRect = new Rect(
       new Point(0, ~~this.#currentDx),
       new Size(viewport.contentSize.width, DRAWER_BTN_SIZE.horizontal.height),
@@ -258,10 +273,10 @@ export class Drawer extends Container {
     )
 
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerTop(viewport, drawerButtonRect)
+    this.#renderDrawerTop(viewport, drawerButtonRect, style)
   }
 
-  #renderBottom(viewport: Viewport, drawerSize: Size) {
+  #renderBottom(viewport: Viewport, drawerSize: Size, style: Style) {
     const drawerButtonRect = new Rect(
       new Point(
         0,
@@ -285,10 +300,10 @@ export class Drawer extends Container {
       ),
     )
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerBottom(viewport, drawerButtonRect)
+    this.#renderDrawerBottom(viewport, drawerButtonRect, style)
   }
 
-  #renderRight(viewport: Viewport, drawerSize: Size) {
+  #renderRight(viewport: Viewport, drawerSize: Size, style: Style) {
     const drawerButtonRect = new Rect(
       new Point(
         viewport.contentSize.width -
@@ -312,10 +327,10 @@ export class Drawer extends Container {
       ),
     )
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerRight(viewport, drawerButtonRect)
+    this.#renderDrawerRight(viewport, drawerButtonRect, style)
   }
 
-  #renderLeft(viewport: Viewport, drawerSize: Size) {
+  #renderLeft(viewport: Viewport, drawerSize: Size, style: Style) {
     const drawerButtonRect = new Rect(
       new Point(~~this.#currentDx, 0),
       new Size(DRAWER_BTN_SIZE.vertical.width, viewport.contentSize.height),
@@ -335,7 +350,7 @@ export class Drawer extends Container {
     )
 
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerLeft(viewport, drawerButtonRect)
+    this.#renderDrawerLeft(viewport, drawerButtonRect, style)
   }
 
   #renderContent(
@@ -384,11 +399,7 @@ export class Drawer extends Container {
     }
   }
 
-  #renderDrawerTop(viewport: Viewport, drawerButtonRect: Rect) {
-    const style = this.theme.text({
-      isHover: this.#isHover,
-      isPressed: this.#isPressed,
-    })
+  #renderDrawerTop(viewport: Viewport, drawerButtonRect: Rect, style: Style) {
     viewport.usingPen(style, () => {
       const drawerWidth = drawerButtonRect.size.width,
         drawerY = drawerButtonRect.minY(),
@@ -462,11 +473,11 @@ export class Drawer extends Container {
     })
   }
 
-  #renderDrawerBottom(viewport: Viewport, drawerButtonRect: Rect) {
-    const style = this.theme.text({
-      isHover: this.#isHover,
-      isPressed: this.#isPressed,
-    })
+  #renderDrawerBottom(
+    viewport: Viewport,
+    drawerButtonRect: Rect,
+    style: Style,
+  ) {
     viewport.usingPen(style, () => {
       const drawerWidth = drawerButtonRect.size.width,
         drawerY = drawerButtonRect.maxY(),
@@ -540,11 +551,7 @@ export class Drawer extends Container {
     })
   }
 
-  #renderDrawerRight(viewport: Viewport, drawerButtonRect: Rect) {
-    const style = this.theme.text({
-      isHover: this.#isHover,
-      isPressed: this.#isPressed,
-    })
+  #renderDrawerRight(viewport: Viewport, drawerButtonRect: Rect, style: Style) {
     viewport.usingPen(style, () => {
       const drawerHeight = drawerButtonRect.size.height,
         drawerX = drawerButtonRect.maxX(),
@@ -606,11 +613,7 @@ export class Drawer extends Container {
     })
   }
 
-  #renderDrawerLeft(viewport: Viewport, drawerButtonRect: Rect) {
-    const style = this.theme.text({
-      isHover: this.#isHover,
-      isPressed: this.#isPressed,
-    })
+  #renderDrawerLeft(viewport: Viewport, drawerButtonRect: Rect, style: Style) {
     viewport.usingPen(style, () => {
       const drawerHeight = drawerButtonRect.size.height,
         drawerX = drawerButtonRect.minX(),

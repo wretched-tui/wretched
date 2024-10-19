@@ -15,8 +15,8 @@ import {
   KeyEvent,
   styleTextForHotKey,
 } from '../events'
-import {Theme} from '../Theme'
 import {childTheme} from '../UI'
+import type {View} from '../View'
 
 type Border = 'default' | 'arrows' | 'none'
 type BorderChars = [string, string]
@@ -52,8 +52,8 @@ export class Button extends Container {
     super.update(props)
   }
 
-  childTheme() {
-    return childTheme(super.childTheme(), this.#isPressed, this.#isHover)
+  childTheme(view: View) {
+    return childTheme(super.childTheme(view), this.#isPressed, this.#isHover)
   }
 
   #update({text, border, hotKey, onClick}: Props) {
