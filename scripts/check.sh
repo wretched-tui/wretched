@@ -1,5 +1,5 @@
 function checksum() {
-  find $1 -type f -name '*.ts' -exec sha1sum "{}" \; | \
+  find $1 -type f '(' -name '*.ts' -or -name '*.js' ')' -exec sha1sum "{}" \; | \
     ssed 'sort/(lib.*)' 1 join | \
     sha1sum | \
     ssed 1
