@@ -30,7 +30,8 @@
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
     "build": "yarn clean && yarn tsc && yarn cp-usr",
     "checksum": ". scripts/check.sh lib",
-    "demo": "yarn checksum && cd demos/ && yarn demo"
+    "demo": "yarn checksum && cd demos/ && yarn demo",
+    "reset": "yarn checksum && cd demos/ && yarn demo reset"
   },
   "keywords": [
     "curses",
