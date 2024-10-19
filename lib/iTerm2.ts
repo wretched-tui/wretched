@@ -4,12 +4,12 @@ import {StringDecoder} from 'string_decoder'
 import type {Color} from './Color'
 import {colorToHex} from './Color'
 
-let _restoreBg: string | undefined
-
 /**
  * Sets iTerm2 proprietary ANSI codes
  */
 export class iTerm2 {
+  static _restoreBg: string | undefined
+
   /**
    * Returns a promise in case you really want to do flow control here, but it's not
    * necessary; you can fire and forget this as part of `Screen.start()`
@@ -31,19 +31,21 @@ export class iTerm2 {
       program.once('data', (input: any) => {
         const decoder = new StringDecoder('utf8')
         const response = decoder.write(input)
-        _restoreBg = parseBackgroundResponse(response)
+        iTerm2._restoreBg = parseBackgroundResponse(response)
 
         program.write(setBackgroundCommand(hex))
-        setTimeout(resolve, 4)
+        setTimeout(resolve, 5)
       })
+
+      setTimeout(resolve, 10)
 
       program.write(getBackgroundColorCommand())
     })
   }
 
   static restoreBg(program: BlessedProgram) {
-    if (_restoreBg) {
-      program.write(setBackgroundCommand(_restoreBg))
+    if (iTerm2._restoreBg) {
+      program.write(setBackgroundCommand(iTerm2._restoreBg))
     }
   }
 }
