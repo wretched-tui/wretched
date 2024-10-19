@@ -17,21 +17,10 @@ interface Props extends ViewProps {
 }
 
 export class CollapsibleText extends View {
-  #text: string = ''
+  #lines: string[] = []
   #style: Props['style']
   #isCollapsed = true
   #isPressed = false
-
-  get text(): string {
-    return this.#text
-  }
-  set text(value: string) {
-    if (this.#text === value) {
-      return
-    }
-    this.#text = value.split('\n')[0]
-    this.invalidateSize()
-  }
 
   constructor(props: Props) {
     super(props)
@@ -45,25 +34,53 @@ export class CollapsibleText extends View {
 
   #update({text, style}: Props) {
     this.#style = style
-    this.#text = text.split('\n')[0]
+    this.#lines = text.split('\n')
+  }
+
+  get text(): string {
+    return this.#lines.join('\n')
+  }
+  set text(value: string) {
+    this.#lines = value.split('\n')
+    this.invalidateSize()
   }
 
   naturalSize(availableSize: Size): Size {
-    const size = Size.zero.mutableCopy()
-    let lineWidth = unicode.lineWidth(this.#text)
-    if (this.#isCollapsed) {
-      size.width = lineWidth
-      size.height = 1
-      return size
+    if (this.#lines.length === 0) {
+      return Size.zero
     }
 
-    if (lineWidth > availableSize.width) {
-      lineWidth += 2
+    if (this.#lines.length === 1) {
+      const {width: lineWidth, height: lineHeight} = unicode.stringSize(
+        this.#lines,
+        availableSize.width,
+      )
+      if (lineWidth <= availableSize.width && lineHeight === 1) {
+        return new Size(lineWidth, 1)
+      }
+
+      if (this.#isCollapsed) {
+        return new Size(lineWidth + 2, 1)
+      }
+
+      return new Size(lineWidth + 2, lineHeight)
     }
-    const lineHeight = Math.ceil(lineWidth / availableSize.width)
-    size.width = availableSize.width
-    size.height += lineHeight
-    return size
+
+    if (this.#isCollapsed) {
+      const lineWidth = unicode.lineWidth(this.#lines[0])
+      if (lineWidth <= availableSize.width) {
+        return new Size(lineWidth, 1)
+      }
+
+      return new Size(lineWidth + 2, 1)
+    }
+
+    const stringSize = new Size(
+      unicode.stringSize(this.#lines, availableSize.width),
+    ).mutableCopy()
+    stringSize.width += 2
+
+    return stringSize
   }
 
   receiveMouse(event: MouseEvent) {
@@ -84,17 +101,19 @@ export class CollapsibleText extends View {
       return
     }
 
-    const line = this.#text
-    if (!line.length) {
+    const lines = this.#lines
+    if (!lines.length) {
       return
     }
 
-    const width = unicode.lineWidth(line)
     viewport.usingPen(this.#style, pen => {
+      const {width, height} = unicode.stringSize(
+        lines,
+        viewport.contentSize.width,
+      )
       const point = new Point(0, 0).mutableCopy()
-      let didWrap = false
       let offsetX = 0
-      if (viewport.visibleRect.size.width < width) {
+      if (viewport.visibleRect.size.width < width || height > 1) {
         viewport.registerMouse('mouse.button.left')
         viewport.write(
           this.#isCollapsed ? '► ' : '▼ ',
@@ -105,36 +124,46 @@ export class CollapsibleText extends View {
       }
       point.x = offsetX
 
-      for (const char of unicode.printableChars(line)) {
-        const width = unicode.charWidth(char)
-        if (width === 0) {
-          // track the current style regardless of wether we are printing
-          pen.replacePen(Style.fromSGR(char))
-          continue
+      for (const line of this.#lines) {
+        let didWrap = false
+
+        for (const char of unicode.printableChars(line)) {
+          const width = unicode.charWidth(char)
+          if (width === 0) {
+            // track the current style regardless of wether we are printing
+            pen.replacePen(Style.fromSGR(char))
+            continue
+          }
+
+          if (!this.#isCollapsed && point.x >= viewport.contentSize.width) {
+            didWrap = true
+            point.x = offsetX
+            point.y += 1
+          }
+
+          // don't print preceding whitespace after line wrap
+          if (didWrap && char.match(/\s/)) {
+            continue
+          }
+          didWrap = false
+
+          if (
+            point.x >= viewport.visibleRect.minX() &&
+            point.x + width - 1 < viewport.visibleRect.maxX() &&
+            point.y >= viewport.visibleRect.minY()
+          ) {
+            viewport.write(char, point)
+          }
+
+          point.x += width
         }
 
-        if (!this.#isCollapsed && point.x >= viewport.contentSize.width) {
-          didWrap = true
-          point.x = offsetX
-          point.y += 1
+        point.y += 1
+        if (point.y >= viewport.visibleRect.maxY()) {
+          break
         }
-
-        if (didWrap && char.match(/\s/)) {
-          continue
-        }
-        didWrap = false
-
-        if (
-          point.x >= viewport.visibleRect.minX() &&
-          point.x + width - 1 < viewport.visibleRect.maxX()
-        ) {
-          viewport.write(char, point)
-        }
-
-        point.x += width
+        point.x = offsetX
       }
-
-      point.y += 1
     })
   }
 }

@@ -638,9 +638,16 @@ export const unicode: {
   lineWidth(text: string): number
   /**
    * Return the width and height of the entire string. Width is the maximum length of
-   * all the lines, and height is the number of lines, including
+   * all the lines, and height is the number of lines, assuming no lines wrap.
    */
   stringSize(text: string | string[]): {width: number; height: number}
+  /**
+   * Return the width and height of the entire string, taking max-width into account.
+   */
+  stringSize(
+    text: string | string[],
+    maxWidth: number,
+  ): {width: number; height: number}
   /**
    * Breaks the string up into graphemes: single ASCII characters, Emoji characters,
    * and ANSI sequences.
