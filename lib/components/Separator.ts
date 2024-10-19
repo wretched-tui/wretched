@@ -27,6 +27,14 @@ export class Separator extends View {
   #padding: number = 0
   #border: Border = 'single'
 
+  static horizontal(props: Omit<Props, 'direction'> = {}): Separator {
+    return new Separator({direction: 'horizontal', ...props})
+  }
+
+  static vertical(props: Omit<Props, 'direction'> = {}): Separator {
+    return new Separator({direction: 'vertical', ...props})
+  }
+
   constructor(props: Props) {
     super(props)
     this.#update(props)
