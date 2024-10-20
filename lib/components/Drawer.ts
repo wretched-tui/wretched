@@ -232,28 +232,45 @@ export class Drawer extends Container {
 
     const [drawerSize] = this.#saveDrawerSize(viewport.contentSize)
 
-    const style = this.theme.ui({
+    const _uiStyle = this.theme.ui({
       isHover: this.#isHover,
       isPressed: this.#isPressed,
     })
+    const textStyle = this.theme
+      .text({
+        isHover: this.#isHover,
+        isPressed: this.#isPressed,
+      })
+      .merge({foreground: _uiStyle.foreground})
+    const uiStyle =
+      this.#isHover || this.#isPressed
+        ? _uiStyle
+        : _uiStyle.merge({
+            background: textStyle.background,
+          })
 
     switch (this.#location) {
       case 'top':
-        this.#renderTop(viewport, drawerSize, style)
+        this.#renderTop(viewport, drawerSize, uiStyle, textStyle)
         break
       case 'right':
-        this.#renderRight(viewport, drawerSize, style)
+        this.#renderRight(viewport, drawerSize, uiStyle, textStyle)
         break
       case 'bottom':
-        this.#renderBottom(viewport, drawerSize, style)
+        this.#renderBottom(viewport, drawerSize, uiStyle, textStyle)
         break
       case 'left':
-        this.#renderLeft(viewport, drawerSize, style)
+        this.#renderLeft(viewport, drawerSize, uiStyle, textStyle)
         break
     }
   }
 
-  #renderTop(viewport: Viewport, drawerSize: Size, style: Style) {
+  #renderTop(
+    viewport: Viewport,
+    drawerSize: Size,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
     const drawerButtonRect = new Rect(
       new Point(0, ~~this.#currentDx),
       new Size(viewport.contentSize.width, DRAWER_BTN_SIZE.horizontal.height),
@@ -273,10 +290,15 @@ export class Drawer extends Container {
     )
 
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerTop(viewport, drawerButtonRect, style)
+    this.#renderDrawerTop(viewport, drawerButtonRect, uiStyle, textStyle)
   }
 
-  #renderBottom(viewport: Viewport, drawerSize: Size, style: Style) {
+  #renderBottom(
+    viewport: Viewport,
+    drawerSize: Size,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
     const drawerButtonRect = new Rect(
       new Point(
         0,
@@ -300,10 +322,15 @@ export class Drawer extends Container {
       ),
     )
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerBottom(viewport, drawerButtonRect, style)
+    this.#renderDrawerBottom(viewport, drawerButtonRect, uiStyle, textStyle)
   }
 
-  #renderRight(viewport: Viewport, drawerSize: Size, style: Style) {
+  #renderRight(
+    viewport: Viewport,
+    drawerSize: Size,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
     const drawerButtonRect = new Rect(
       new Point(
         viewport.contentSize.width -
@@ -327,10 +354,15 @@ export class Drawer extends Container {
       ),
     )
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerRight(viewport, drawerButtonRect, style)
+    this.#renderDrawerRight(viewport, drawerButtonRect, uiStyle, textStyle)
   }
 
-  #renderLeft(viewport: Viewport, drawerSize: Size, style: Style) {
+  #renderLeft(
+    viewport: Viewport,
+    drawerSize: Size,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
     const drawerButtonRect = new Rect(
       new Point(~~this.#currentDx, 0),
       new Size(DRAWER_BTN_SIZE.vertical.width, viewport.contentSize.height),
@@ -350,7 +382,7 @@ export class Drawer extends Container {
     )
 
     this.#renderContent(viewport, drawerButtonRect, contentRect, drawerRect)
-    this.#renderDrawerLeft(viewport, drawerButtonRect, style)
+    this.#renderDrawerLeft(viewport, drawerButtonRect, uiStyle, textStyle)
   }
 
   #renderContent(
@@ -399,46 +431,43 @@ export class Drawer extends Container {
     }
   }
 
-  #renderDrawerTop(viewport: Viewport, drawerButtonRect: Rect, style: Style) {
-    viewport.usingPen(style, () => {
-      const drawerWidth = drawerButtonRect.size.width,
-        drawerY = drawerButtonRect.minY(),
-        minX = drawerButtonRect.minX(),
-        maxX = drawerButtonRect.maxX(),
-        point = new Point(0, 0).mutableCopy(),
-        buttonWidth = Math.min(
-          drawerWidth - DRAWER_BORDER,
-          Math.max(DRAWER_BTN_SIZE.horizontal.width, ~~(drawerWidth / 3)),
-        ),
-        button0 = Math.max(1, ~~((drawerWidth - buttonWidth) / 2)),
-        button1 = button0 + buttonWidth
+  #renderDrawerTop(
+    viewport: Viewport,
+    drawerButtonRect: Rect,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
+    const drawerY = drawerButtonRect.minY(),
+      minX = drawerButtonRect.minX(),
+      maxX = drawerButtonRect.maxX() - 1,
+      point = new Point(0, 0).mutableCopy()
 
+    viewport.usingPen(textStyle, () => {
       for (; point.y < drawerY; point.y++) {
         point.x = minX
         viewport.write('│', point)
-        point.x = maxX - 1
+        point.x = maxX
         viewport.write('│', point)
       }
+    })
 
+    viewport.usingPen(uiStyle, () => {
       point.y = drawerButtonRect.minY()
-      for (point.x = minX; point.x < maxX; point.x++) {
-        const drawButton = point.x >= button0 && point.x < button1
+      for (point.x = minX; point.x <= maxX; point.x++) {
         let drawer: [string, string, string]
         if (point.x === 0) {
-          drawer = ['╰', '', '']
-        } else if (point.x === button0) {
           if (this.#isHover) {
-            drawer = ['╮', '│', '╰']
+            drawer = ['╮', '│', '│']
           } else {
-            drawer = ['╮', '╰', '']
+            drawer = ['╮', '│', '']
           }
-        } else if (point.x === button1 - 1) {
+        } else if (point.x === maxX) {
           if (this.#isHover) {
-            drawer = ['╭', '│', '╯']
+            drawer = ['╭', '│', '│']
           } else {
-            drawer = ['╭', '╯', '']
+            drawer = ['╭', '│', '']
           }
-        } else if (drawButton) {
+        } else {
           let chevron: string
           if (point.x % 2 === 0) {
             chevron = ' '
@@ -458,10 +487,6 @@ export class Drawer extends Container {
             c3 = ''
           }
           drawer = [c1, c2, c3]
-        } else if (point.x === maxX - 1) {
-          drawer = ['╯', '', '']
-        } else {
-          drawer = ['─', '', '']
         }
 
         viewport.write(drawer[0], point.offset(0, 0))
@@ -476,47 +501,40 @@ export class Drawer extends Container {
   #renderDrawerBottom(
     viewport: Viewport,
     drawerButtonRect: Rect,
-    style: Style,
+    uiStyle: Style,
+    textStyle: Style,
   ) {
-    viewport.usingPen(style, () => {
-      const drawerWidth = drawerButtonRect.size.width,
-        drawerY = drawerButtonRect.maxY(),
-        minX = drawerButtonRect.minX(),
-        maxX = drawerButtonRect.maxX(),
-        point = new Point(0, drawerY).mutableCopy(),
-        buttonWidth = Math.min(
-          drawerWidth - DRAWER_BORDER,
-          Math.max(DRAWER_BTN_SIZE.horizontal.width, ~~(drawerWidth / 3)),
-        ),
-        button0 = Math.max(1, ~~((drawerWidth - buttonWidth) / 2)),
-        button1 = button0 + buttonWidth
+    const drawerY = drawerButtonRect.maxY(),
+      minX = drawerButtonRect.minX(),
+      maxX = drawerButtonRect.maxX() - 1,
+      point = new Point(0, drawerY).mutableCopy()
 
+    viewport.usingPen(textStyle, () => {
       for (; point.y < viewport.contentSize.height; point.y++) {
         point.x = minX
         viewport.write('│', point)
-        point.x = maxX - 1
+        point.x = maxX
         viewport.write('│', point)
       }
+    })
 
+    viewport.usingPen(uiStyle, () => {
       point.y = drawerButtonRect.minY()
-      for (point.x = minX; point.x < maxX; point.x++) {
-        const drawButton = point.x >= button0 && point.x < button1
+      for (point.x = minX; point.x <= maxX; point.x++) {
         let drawer: [string, string, string]
         if (point.x === 0) {
-          drawer = ['', '', '╭']
-        } else if (point.x === button0) {
           if (this.#isHover) {
-            drawer = ['╭', '│', '╯']
+            drawer = ['╭', '│', '│']
           } else {
-            drawer = ['', '╭', '╯']
+            drawer = ['', '╭', '│']
           }
-        } else if (point.x === button1 - 1) {
+        } else if (point.x === maxX) {
           if (this.#isHover) {
-            drawer = ['╮', '│', '╰']
+            drawer = ['╮', '│', '│']
           } else {
-            drawer = ['', '╮', '╰']
+            drawer = ['', '╮', '│']
           }
-        } else if (drawButton) {
+        } else {
           let chevron: string
           if (point.x % 2 === 0) {
             chevron = ' '
@@ -536,10 +554,6 @@ export class Drawer extends Container {
             c3 = chevron
           }
           drawer = [c1, c2, c3]
-        } else if (point.x === maxX - 1) {
-          drawer = ['', '', '╮']
-        } else {
-          drawer = ['', '', '─']
         }
 
         if (drawer[0] !== '') {
@@ -551,61 +565,51 @@ export class Drawer extends Container {
     })
   }
 
-  #renderDrawerRight(viewport: Viewport, drawerButtonRect: Rect, style: Style) {
-    viewport.usingPen(style, () => {
-      const drawerHeight = drawerButtonRect.size.height,
-        drawerX = drawerButtonRect.maxX(),
-        minY = drawerButtonRect.minY(),
-        maxY = drawerButtonRect.maxY(),
-        point = new Point(drawerX, 0).mutableCopy(),
-        buttonHeight = Math.min(
-          drawerHeight - DRAWER_BORDER,
-          Math.max(DRAWER_BTN_SIZE.vertical.height, ~~(drawerHeight / 3)),
-        ),
-        button0 = Math.max(1, ~~((drawerHeight - buttonHeight) / 2)),
-        button1 = button0 + buttonHeight
+  #renderDrawerRight(
+    viewport: Viewport,
+    drawerButtonRect: Rect,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
+    const drawerX = drawerButtonRect.maxX(),
+      minY = drawerButtonRect.minY(),
+      maxY = drawerButtonRect.maxY() - 1,
+      point = new Point(drawerX, 0).mutableCopy()
 
+    viewport.usingPen(textStyle, () => {
       for (; point.x < viewport.contentSize.width; point.x++) {
         point.y = minY
         viewport.write('─', point)
-        point.y = maxY - 1
+        point.y = maxY
         viewport.write('─', point)
       }
+    })
 
-      for (point.y = minY; point.y < maxY; point.y++) {
+    viewport.usingPen(uiStyle, () => {
+      for (point.y = minY; point.y <= maxY; point.y++) {
         point.x = drawerButtonRect.minX()
-        const drawButton = point.y >= button0 && point.y < button1
         let drawer: string
         if (point.y === 0) {
-          drawer = '╭'
-          point.x += 2
-        } else if (point.y === button0) {
           if (this.#isHover) {
-            drawer = '╭─╯'
+            drawer = '╭──'
           } else {
-            drawer = '╭╯'
+            drawer = '╭─'
             point.x += 1
           }
-        } else if (point.y === button1 - 1) {
+        } else if (point.y === maxY) {
           if (this.#isHover) {
-            drawer = '╰─╮'
+            drawer = '╰──'
           } else {
-            drawer = '╰╮'
+            drawer = '╰─'
             point.x += 1
           }
-        } else if (drawButton) {
+        } else {
           drawer = ''
           if (!this.#isHover) {
             point.x += 1
           }
           drawer += '│'
           drawer += this.#isOpen ? '›' : '‹'
-        } else if (point.y === maxY - 1) {
-          drawer = '╰'
-          point.x += 2
-        } else {
-          drawer = '│'
-          point.x += 2
         }
 
         viewport.write(drawer, point)
@@ -613,46 +617,39 @@ export class Drawer extends Container {
     })
   }
 
-  #renderDrawerLeft(viewport: Viewport, drawerButtonRect: Rect, style: Style) {
-    viewport.usingPen(style, () => {
-      const drawerHeight = drawerButtonRect.size.height,
-        drawerX = drawerButtonRect.minX(),
-        minY = drawerButtonRect.minY(),
-        maxY = drawerButtonRect.maxY(),
-        point = new Point(0, 0).mutableCopy(),
-        buttonHeight = Math.min(
-          drawerHeight - DRAWER_BORDER,
-          Math.max(DRAWER_BTN_SIZE.vertical.height, ~~(drawerHeight / 3)),
-        ),
-        button0 = Math.max(1, ~~((drawerHeight - buttonHeight) / 2)),
-        button1 = button0 + buttonHeight
+  #renderDrawerLeft(
+    viewport: Viewport,
+    drawerButtonRect: Rect,
+    uiStyle: Style,
+    textStyle: Style,
+  ) {
+    const drawerX = drawerButtonRect.minX(),
+      minY = drawerButtonRect.minY(),
+      maxY = drawerButtonRect.maxY() - 1,
+      point = new Point(0, 0).mutableCopy()
 
+    viewport.usingPen(textStyle, () => {
       for (; point.x < drawerX; point.x++) {
         point.y = minY
         viewport.write('─', point)
-        point.y = maxY - 1
+        point.y = maxY
         viewport.write('─', point)
       }
+    })
 
+    viewport.usingPen(uiStyle, () => {
       point.x = drawerX
-      for (point.y = minY; point.y < maxY; point.y++) {
-        const drawButton = point.y >= button0 && point.y < button1
+      for (point.y = minY; point.y <= maxY; point.y++) {
         let drawer: string
         if (point.y === 0) {
-          drawer = '╮'
-        } else if (point.y === button0) {
-          drawer = '╰' + (this.#isHover ? '─' : '') + '╮'
-        } else if (point.y === button1 - 1) {
-          drawer = '╭' + (this.#isHover ? '─' : '') + '╯'
-        } else if (drawButton) {
+          drawer = '─' + (this.#isHover ? '─' : '') + '╮'
+        } else if (point.y === maxY) {
+          drawer = '─' + (this.#isHover ? '─' : '') + '╯'
+        } else {
           drawer = ''
           drawer += this.#isHover ? ' ' : ''
           drawer += this.#isOpen ? '‹' : '›'
           drawer += '│'
-        } else if (point.y === maxY - 1) {
-          drawer = '╯'
-        } else {
-          drawer = '│'
         }
 
         viewport.write(drawer, point)
