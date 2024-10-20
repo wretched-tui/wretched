@@ -1,4 +1,5 @@
 import {
+  interceptConsoleLog,
   Box,
   Button,
   Checkbox,
@@ -24,16 +25,15 @@ import {
 import {demo} from './demo'
 import {inspect} from 'wretched'
 
+interceptConsoleLog()
+
 // Dropdown,
 // Input,
 // Log,
-// Progress,
 // Scrollable,
 // ScrollableList,
-// Separator,
 // Slider,
 // Space,
-// Text,
 // Tree,
 
 const OBJ = {
@@ -45,6 +45,7 @@ const OBJ = {
     long: 'finally, a long sentence, one that goes on a little too long, it could be argued.',
   },
 }
+
 const inspect1 = inspect(OBJ, false)
 const inspect2 = inspect(OBJ, true)
 
@@ -77,6 +78,17 @@ const progress = [
   new Progress({theme: 'green', progress: 75, showPercent: true}),
   new Progress({theme: 'plain', progress: 100, showPercent: true}),
 ]
+
+const tree = new Tree({
+  titleView: new Text({text: 'Title view'}),
+  data: [{path: '1'}, {path: '2'}, {path: '3'}],
+  render({path}, index) {
+    return new Text({text: `Item ${path}`})
+  },
+  getChildren({path}) {
+    return [{path: `${path}.1`}, {path: `${path}.2`}, {path: `${path}.3`}]
+  },
+})
 
 const collapsible = new Collapsible({
   isCollapsed: true,
@@ -148,6 +160,7 @@ const contentView = Flow.down({
     Flex.right(boxes, {height: 8}),
     digits1,
     digits2,
+    tree,
   ],
 })
 

@@ -1,12 +1,17 @@
-import {iTerm2} from 'wretched'
-import {interceptConsoleLog} from 'wretched'
-
 import type {View} from 'wretched'
-import {Screen} from 'wretched'
-import {TrackMouse} from 'wretched'
-import {ConsoleLog, Flex, Window} from 'wretched'
+import {
+  Screen,
+  TrackMouse,
+  ConsoleLog,
+  Flex,
+  Window,
+  iTerm2,
+  interceptConsoleLog,
+} from 'wretched'
 
 export async function demo(demoContent: View, showConsoleLog = true) {
+  interceptConsoleLog()
+
   process.title = 'Wretched'
   if (process.argv.includes('--no-log')) {
     showConsoleLog = false
@@ -18,7 +23,6 @@ export async function demo(demoContent: View, showConsoleLog = true) {
   const [screen, program] = await Screen.start(
     async program => {
       await iTerm2.setBackground(program, [23, 23, 23])
-      interceptConsoleLog()
 
       return new Window({
         child: new TrackMouse({
