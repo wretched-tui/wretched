@@ -15,64 +15,46 @@ import {
 } from '../events'
 import {Style} from '../Style'
 
-type RenderFn<T> = (data: T) => View
-type GetChildrenFn<T> = (item: T) => T[]
+type RenderFn<T> = (datum: T, path: string) => View
+type GetChildrenFn<T> = (datum: T, path: string) => T[]
 
 interface StyleProps<T> {
-  isSelectable?: boolean
-  isSelected?: boolean
   data: T[]
   render: RenderFn<T>
-  getChildren: GetChildrenFn<T>
+  getChildren?: GetChildrenFn<T>
   titleView: View
 }
 
 type Props<T> = StyleProps<T> & ViewProps
-type ChildProps<T> = Props<T> & {
-  isLast: boolean
-  isExpanded?: boolean
+type PathData = {hasChildren: boolean; isExpanded: boolean; isLast: boolean}
+type ChildProps = ViewProps & {
+  view: View
+  pathData: PathData[]
+  onToggle: () => void
 }
+
+// must be in the form `.${index0}`, `.${index0}.${index1}`, `.${index0}.${index1}.${index2}`
+type Path = string
 
 const TREE_BULLET_WIDTH = 4
 
-export class Tree<T> extends Container {
-  #isSelectable = false
-  #isSelected = false
+export class Tree<T extends any> extends Container {
   #titleView?: View
-  #itemViews: [T, TreeChild<T>][] = []
+
   #data: T[] = []
-  #render?: RenderFn<T>
   #getChildren: GetChildrenFn<T> = () => []
+  #render: RenderFn<T> = () => null as unknown as View
+  #expanded: Set<Path> = new Set()
+  #itemViews: Map<Path, TreeChild> = new Map()
+  #viewPaths: Map<TreeChild, Path> = new Map()
   #contentView = Flow.down()
-  _animatedView = new AnimatedHeight({
-    child: this.#contentView,
-  })
-  declare isExpanded: boolean
 
   constructor(props: Props<T>) {
     super(props)
 
     this.#update(props)
 
-    this.add(this._animatedView)
-
-    Object.defineProperties(this, {
-      isExpanded: {
-        enumerable: true,
-        get: () => this._isExpanded(),
-      },
-    })
-  }
-
-  /**
-   * The top level Tree is always expanded, child trees are collapsible
-   */
-  _isExpanded() {
-    return true
-  }
-
-  isEmpty() {
-    return this.#data.length === 0
+    this.add(this.#contentView)
   }
 
   update(props: Props<T>) {
@@ -80,69 +62,89 @@ export class Tree<T> extends Container {
     super.update(props)
   }
 
-  #update({
-    titleView,
-    isSelectable,
-    isSelected,
-    data,
-    render,
-    getChildren,
-  }: Props<T>) {
+  #update({titleView, data, render, getChildren}: Props<T>) {
     if (titleView && titleView !== this.#titleView) {
       this.#titleView?.removeFromParent()
       this.add(titleView)
       this.#titleView = titleView
     }
 
-    this.#isSelectable = isSelectable ?? false
-    this.#isSelected = isSelectable === true ? isSelected ?? false : false
     this.#data = data
+    this.#getChildren = getChildren ?? (() => [])
     this.#render = render
-    this.#getChildren = getChildren
 
-    const prevTrees: [T, TreeChild<T>][] = this.#itemViews
-    const removeTrees: TreeChild<T>[] = []
-    const nextTrees: [T, TreeChild<T>][] = []
-    let insertIndex = this.#titleView ? 1 : 0
-    // does not support -but should- reordered data
+    this.#resetViews()
+  }
+
+  #resetViews() {
+    const prevChildren = new Set([...this.#itemViews].map(([, child]) => child))
+    this.#addViews(this.#data, prevChildren)
+
+    for (const view of prevChildren) {
+      view.removeFromParent()
+    }
+  }
+
+  #addViews(
+    data: T[],
+    prevChildren: Set<View>,
+    count: {current: number} = {current: 0},
+    pathPrefix: string = '',
+    prevData: PathData[] = [],
+  ) {
     for (let index = 0; index < data.length; index++) {
-      const item = data[index]
-      const itemView = render(item)
-      const childData = getChildren(item)
+      const path = `${pathPrefix}.${index}`
+      const datum = data[index]
+      const isExpanded = this.#isChildExpanded(path)
+      const children = this.#getChildren(datum, path)
+      const hasChildren = children.length > 0
+      const isLast = index === data.length - 1
+      const currentPathData = {
+        isLast,
+        isExpanded,
+        hasChildren,
+      }
+      const pathData = [...prevData, currentPathData]
 
-      const isLast = item === data[data.length - 1]
-      const [prevData, prevView] =
-        prevTrees.length > index ? prevTrees[index] : []
-      let tree: TreeChild<T>
-      if (prevData === data && prevView) {
-        tree = prevView
-        tree.isLast = isLast
+      let view = this.#itemViews.get(path)
+      if (view) {
+        view.pathData = pathData
       } else {
-        if (prevView) {
-          removeTrees.push(prevView)
-        }
-        tree = new TreeChild({
-          titleView: itemView,
-          isSelectable,
-          isSelected: false,
-          isExpanded: false,
-          isLast,
-          data: childData,
-          render,
-          getChildren,
+        const itemView = this.#render(datum, path)
+        view = new TreeChild({
+          view: itemView,
+          pathData,
+          onToggle: () => {
+            if (this.#expanded.has(path)) {
+              this.#expanded.delete(path)
+            } else {
+              this.#expanded.add(path)
+            }
+            this.#resetViews()
+            this.#contentView.invalidateSize()
+          },
         })
+
+        this.#itemViews.set(path, view)
+        this.#viewPaths.set(view, path)
       }
 
-      insertIndex += 1
-      this.#contentView.add(tree, insertIndex)
-      nextTrees.push([item, tree])
-    }
+      if (!view.parent) {
+        this.#contentView.add(view, count.current)
+      }
 
-    for (const prevView of removeTrees) {
-      this.#contentView.removeChild(prevView)
-    }
+      count.current += 1
 
-    this.#itemViews = nextTrees
+      prevChildren.delete(view)
+
+      if (isExpanded) {
+        this.#addViews(children, prevChildren, count, path, pathData)
+      }
+    }
+  }
+
+  #isChildExpanded(path: string) {
+    return this.#expanded.has(path)
   }
 
   naturalSize(availableSize: Size): Size {
@@ -152,7 +154,7 @@ export class Tree<T> extends Container {
     }
 
     const remainingSize = availableSize.shrink(0, titleSize.height)
-    const contentSize = this._animatedView.naturalSize(remainingSize)
+    const contentSize = this.#contentView.naturalSize(remainingSize)
     return new Size(
       Math.max(titleSize.width, contentSize.width),
       titleSize.height + contentSize.height,
@@ -174,33 +176,24 @@ export class Tree<T> extends Container {
 
     viewport.clipped(
       viewport.contentRect.inset({top: titleSize.height}),
-      inside => this._animatedView.render(inside),
+      inside => this.#contentView.render(inside),
     )
   }
 }
 
-class TreeChild<T> extends Tree<T> {
-  #isExpanded = false
+class TreeChild extends Container {
+  #pathData: PathData[] = []
+  #hasChildren = false
   #isPressed = false
   #isHover = false
+  #onToggle = () => {}
 
-  isLast = true
+  constructor({pathData, onToggle, ...props}: ChildProps) {
+    super({...props, child: props.view})
 
-  constructor(props: ChildProps<T>) {
-    super(props)
-
-    Object.defineProperties(this, {
-      titleView: {
-        enumerable: true,
-        get: () => props.titleView,
-      },
-    })
-
-    this.#update(props)
-  }
-
-  _isExpanded() {
-    return this.#isExpanded
+    this.#pathData = pathData
+    this.#hasChildren = pathData.at(-1)?.hasChildren ?? false
+    this.#onToggle = onToggle
   }
 
   isPressed() {
@@ -211,28 +204,14 @@ class TreeChild<T> extends Tree<T> {
     return this.#isHover
   }
 
-  update(props: ChildProps<T>) {
-    this.#update(props)
-    super.update(props)
-  }
-
-  #update({isExpanded, isLast, data}: ChildProps<T>) {
-    this.#isExpanded = data.length === 0 ? true : isExpanded ?? true
-    this._animatedView.isExpanded = this.#isExpanded
-    this.isLast = isLast
-  }
-
   receiveMouse(event: MouseEvent) {
     if (isMousePressInside(event)) {
       this.#isPressed = true
     } else if (isMousePressOutside(event)) {
       this.#isPressed = false
 
-      if (isMouseClicked(event) && !this.isEmpty()) {
-        const isExpanded = !this.#isExpanded
-        this.#isExpanded = isExpanded
-        this._animatedView.isExpanded = isExpanded
-        this._animatedView.invalidateSize()
+      if (isMouseClicked(event) && this.#hasChildren) {
+        this.#onToggle()
         this.invalidateSize()
       }
     }
@@ -246,9 +225,14 @@ class TreeChild<T> extends Tree<T> {
     }
   }
 
+  set pathData(value: PathData[]) {
+    this.#pathData = value
+    this.invalidateSize()
+  }
+
   naturalSize(availableSize: Size): Size {
     const size = super.naturalSize(availableSize).mutableCopy()
-    size.width += TREE_BULLET_WIDTH
+    size.width += TREE_BULLET_WIDTH * this.#pathData.length
 
     return size
   }
@@ -258,15 +242,18 @@ class TreeChild<T> extends Tree<T> {
       return super.render(viewport)
     }
 
-    const treeSize = this.naturalSize(viewport.contentSize).shrink(
-      TREE_BULLET_WIDTH,
-      0,
-    )
-    const treeRect = new Rect(new Point(TREE_BULLET_WIDTH, 0), treeSize)
-
-    if (!this.isEmpty()) {
+    if (this.#hasChildren) {
       viewport.registerMouse(['mouse.move', 'mouse.button.left'])
     }
+
+    const treeSize = this.naturalSize(viewport.contentSize).shrink(
+      TREE_BULLET_WIDTH * this.#pathData.length,
+      0,
+    )
+    const treeRect = new Rect(
+      new Point(TREE_BULLET_WIDTH * this.#pathData.length, 0),
+      treeSize,
+    )
 
     let textStyle: Style
     if (this.isPressed() || this.isHover()) {
@@ -275,44 +262,59 @@ class TreeChild<T> extends Tree<T> {
       textStyle = Style.NONE
     }
 
-    let firstLine: string, middleLine: string, lastLine: string
-    if (this.isEmpty()) {
-      if (this.isLast) {
-        firstLine = '└──╴'
-        middleLine = '    '
-        lastLine = '    '
-      } else {
-        firstLine = '├──╴'
-        middleLine = '│   '
-        lastLine = '│   '
-      }
-    } else {
-      if (this.isLast) {
-        firstLine = '└'
-        middleLine = '    '
-        lastLine = '    '
-      } else {
-        firstLine = '├'
-        middleLine = '│   '
-        lastLine = '│   '
-      }
+    let firstLine: string = '',
+      middleLine: string = '',
+      lastLine: string = ''
+    for (let index = 0; index < this.#pathData.length; index++) {
+      const {hasChildren, isExpanded, isLast} = this.#pathData[index]
+      if (index === this.#pathData.length - 1) {
+        if (hasChildren) {
+          if (isLast) {
+            firstLine += '└'
+          } else {
+            firstLine += '├'
+          }
 
-      if (this.isExpanded) {
-        if (this.isHover()) {
-          firstLine += '─╴▾'
-        } else if (this.isPressed()) {
-          firstLine += '━╸▾'
+          if (isExpanded) {
+            if (this.isHover()) {
+              firstLine += '─╴▾'
+            } else if (this.isPressed()) {
+              firstLine += '━╸▾'
+            } else {
+              firstLine += '─╴▿'
+            }
+          } else {
+            if (this.isHover()) {
+              firstLine += '─╴▸'
+            } else if (this.isPressed()) {
+              firstLine += '━╸▸'
+            } else {
+              firstLine += '─╴▹'
+            }
+          }
         } else {
-          firstLine += '─╴▿'
+          if (isLast) {
+            firstLine += '└──╴'
+          } else {
+            firstLine += '├──╴'
+          }
         }
+
+        if (isLast) {
+          middleLine += '    '
+          lastLine += '    '
+        } else {
+          middleLine += '│   '
+          lastLine += '│   '
+        }
+      } else if (isLast) {
+        firstLine += '    '
+        middleLine += '    '
+        lastLine += '    '
       } else {
-        if (this.isHover()) {
-          firstLine += '─╴▸'
-        } else if (this.isPressed()) {
-          firstLine += '━╸▸'
-        } else {
-          firstLine += '─╴▹'
-        }
+        firstLine += '│   '
+        middleLine += '│   '
+        lastLine += '│   '
       }
     }
 
@@ -326,104 +328,5 @@ class TreeChild<T> extends Tree<T> {
     }
 
     viewport.clipped(treeRect, inside => super.render(inside))
-  }
-}
-
-const ANIMATION_DURATION = 160
-
-export class AnimatedHeight extends Container {
-  #frameTime = 0
-
-  #startingHeight?: number
-  #currentHeight?: number
-  #targetHeight?: number
-
-  isExpanded = false
-
-  get contentView(): View | undefined {
-    return this.children[0]
-  }
-
-  naturalSize(availableSize: Size) {
-    if (this.contentView === undefined) {
-      return Size.zero
-    }
-
-    const nextSize = this.contentView.naturalSize(availableSize)
-    const nextHeight = this.isExpanded ? nextSize.height : 0
-
-    if (
-      this.#currentHeight === undefined ||
-      nextHeight === this.#currentHeight
-    ) {
-      // if the currentHeight has never been set, start at the initial height.
-      // or if the currentHeight is the correct height, no animation necessary
-      this.#currentHeight = nextHeight
-      this.#startingHeight = this.#targetHeight = undefined
-
-      return new Size(nextSize.width, nextHeight)
-    } else if (
-      this.#targetHeight !== undefined &&
-      nextHeight !== this.#targetHeight
-    ) {
-      // animation was already in progress, but height changed
-      this.#frameTime = ANIMATION_DURATION - this.#frameTime
-      this.#startingHeight = this.#targetHeight
-      this.#targetHeight = nextHeight
-    } else if (
-      this.#startingHeight === undefined ||
-      this.#targetHeight === undefined
-    ) {
-      // height changed
-      this.#frameTime = 0
-      this.#startingHeight = this.#currentHeight
-      this.#targetHeight = nextHeight
-    }
-
-    const height = interpolate(
-      this.#frameTime,
-      [0, ANIMATION_DURATION],
-      [this.#startingHeight, this.#targetHeight],
-    )
-
-    this.#currentHeight = height
-    return new Size(nextSize.width, height)
-  }
-
-  receiveTick(dt: number): boolean {
-    if (
-      this.#currentHeight === this.#targetHeight ||
-      this.#startingHeight === undefined ||
-      this.#targetHeight === undefined
-    ) {
-      this.#frameTime = 0
-      this.#startingHeight = undefined
-      this.#targetHeight = undefined
-      return false
-    }
-
-    this.#frameTime = Math.min(this.#frameTime + dt, ANIMATION_DURATION)
-    this.invalidateSize()
-
-    return true
-  }
-
-  render(viewport: Viewport) {
-    if (!this.contentView) {
-      return
-    }
-
-    if (viewport.isEmpty) {
-      return super.render(viewport)
-    }
-
-    if (
-      this.#targetHeight !== undefined &&
-      this.#currentHeight !== this.#targetHeight
-    ) {
-      viewport.registerTick()
-    }
-
-    this.contentView.render(viewport)
   }
 }
