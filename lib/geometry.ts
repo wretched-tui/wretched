@@ -193,6 +193,22 @@ export class Rect {
     this.size = new Size(width, height)
   }
 
+  atX(value: number): Rect {
+    return new Rect([value, this.origin.y], this.size)
+  }
+
+  atY(value: number): Rect {
+    return new Rect([this.origin.x, value], this.size)
+  }
+
+  withWidth(value: number): Rect {
+    return new Rect(this.origin, [value, this.size.height])
+  }
+
+  withHeight(value: number): Rect {
+    return new Rect(this.origin, [this.size.width, value])
+  }
+
   copy() {
     return new Rect(this.origin.copy(), this.size.copy())
   }
