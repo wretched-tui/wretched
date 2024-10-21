@@ -44,7 +44,7 @@ const dropdown = new Dropdown({
   multiple: true,
   theme: 'proceed',
   onSelect(value: any) {
-    console.log(value)
+    console.info(value)
   },
   padding: {left: 2, right: 2},
   height: 1,

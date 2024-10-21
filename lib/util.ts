@@ -3,7 +3,7 @@ import {unicode} from './sys'
 let _debug = false
 /**
  * A global function to turn debugging on/off, useful to test things that would
- * otherwise output way too much, ie console.log in render()
+ * otherwise output way too much, ie console in render()
  */
 export function debug(value?: boolean): boolean {
   return (_debug = value ?? _debug)

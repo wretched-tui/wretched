@@ -23,6 +23,13 @@ bun demo inputs.ts
 ```tsx
 import {Screen, Box, Flow, Text, Button, interceptConsoleLog} from 'wretched'
 
+// Recommended:
+interceptConsoleLog()
+// While the terminal is in full screen mode, you probably don't want to log
+// debug info to stdout - it will appear wherever the cursor happens to be,
+// and will clobber your output. You can mount the <ConsoleLog /> to view logs,
+// otherwise when you exit (Ctrl-C) the logs will be flushed to stdout.
+
 Screen.start(
   new Box({
     border: 'single',
@@ -37,11 +44,6 @@ Screen.start(
     ],
   }),
 )
-
-// Recommended:
-interceptConsoleLog()
-// While the terminal is in full screen mode, you probably don't want to write console.log to
-// stdout - it will appear whever the cursor happens to be, and will clobber your output. You can mount the <ConsoleLog /> to view logs, otherwise when you exit (Ctrl-C) the logs will be flushed to stdout.
 ```
 
 ## History

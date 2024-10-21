@@ -9,7 +9,7 @@ const firstInput = new Input({
 const dontClickMe = new Button({
   text: 'Not me!',
   onClick() {
-    console.log("You DIDN'T")
+    console.info("You DIDN'T")
     firstInput.removeFromParent()
   },
 })
@@ -92,7 +92,7 @@ drawer = new Drawer({
                         text: 'Click me!🙂',
                         width: 'natural',
                         onClick() {
-                          console.log('You did!')
+                          console.info('You did!')
                         },
                       }),
                       new Space({height: 1}),

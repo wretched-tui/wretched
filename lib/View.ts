@@ -83,7 +83,7 @@ export abstract class View {
         enumerable: false,
         value: this.#naturalSizeWrap(naturalSize).bind(this),
       },
-      // don't want to include these in console.log output
+      // don't want to include these in inspect output
       parent: {
         enumerable: false,
       },

@@ -10,7 +10,7 @@ export class TestTerminal implements SGRTerminal {
     this.y = y
   }
   write(str: string) {
-    console.log(`x: ${this.x}, y: ${this.y}: ${str}`)
+    console.info(`x: ${this.x}, y: ${this.y}: ${str}`)
   }
 
   cols: number = 5
