@@ -56,13 +56,7 @@ export function inspect(
     value.constructor !== Object &&
     isEmpty(value)
   ) {
-    return `${value.constructor.name}({${Object.entries(value)
-      .map(([key, val]) => [
-        inspect(key, wrap, recursionDepth + 1, visited),
-        inspect(value, wrap, recursionDepth + 1, visited),
-      ])
-      .reduce((memo, [key, value]) => memo.concat(key + ': ' + value), [])
-      .join(', ')}})`
+    return `${value.constructor.name}({})`
   } else if (typeof value === 'string') {
     return colorize.string(value, recursionDepth > 0)
   } else if (
