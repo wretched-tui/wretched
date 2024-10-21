@@ -20,6 +20,8 @@ import {
   Space,
   Text,
   Tree,
+  type FontFamily,
+  FontFamilies,
 } from 'wretched'
 
 import {demo} from './demo'
@@ -34,7 +36,6 @@ interceptConsoleLog()
 // ScrollableList,
 // Slider,
 // Space,
-// Tree,
 
 const OBJ = {
   word: 'something',
@@ -74,10 +75,81 @@ const progress = [
   new Progress({progress: 0, showPercent: true}),
   new Progress({theme: 'blue', progress: 15, showPercent: true}),
   new Progress({theme: 'orange', progress: 46, showPercent: true}),
-  new Progress({theme: 'red', progress: 55, showPercent: true}),
-  new Progress({theme: 'green', progress: 75, showPercent: true}),
-  new Progress({theme: 'plain', progress: 100, showPercent: true}),
+  new Progress({theme: 'red', height: 2, progress: 55, showPercent: true}),
+  new Progress({theme: 'green', height: 3, progress: 75, showPercent: true}),
+  new Progress({theme: 'plain', height: 4, progress: 100, showPercent: true}),
 ]
+
+const slider0 = new Slider({
+  width: 1,
+  direction: 'vertical',
+  range: [0, 255],
+  position: ~~(Math.random() * 255),
+  buttons: true,
+  step: 1,
+})
+const slider1 = new Slider({
+  direction: 'vertical',
+  range: [0, 255],
+  position: ~~(Math.random() * 255),
+  buttons: true,
+  step: 1,
+  border: true,
+})
+
+const slider2 = new Slider({
+  height: 1,
+  direction: 'horizontal',
+  range: [0, 255],
+  position: ~~(Math.random() * 255),
+  buttons: true,
+  step: 1,
+})
+const slider3 = new Slider({
+  direction: 'horizontal',
+  range: [0, 255],
+  position: ~~(Math.random() * 255),
+  buttons: true,
+  step: 1,
+  border: true,
+})
+
+const titleInput = new Input({
+  text: '',
+  placeholder: 'Title',
+})
+
+const storyInput = new Input({
+  text: '',
+  placeholder: 'Story',
+  wrap: true,
+  multiline: true,
+})
+
+const wrapCheckbox = new Checkbox({
+  text: `Wrap lines?`,
+  isChecked: true,
+  onChange(value) {
+    storyInput.wrap = value
+  },
+})
+
+const fontSelect = new Dropdown({
+  theme: 'proceed',
+  onSelect(value: FontFamily) {
+    titleInput.font = value
+    storyInput.font = value
+  },
+  height: 1,
+  choices: FontFamilies.map(f => [f, f]),
+  selected: 'default',
+})
+
+const storybox = Flow.down([
+  Flow.right([wrapCheckbox, Space.horizontal(1), fontSelect]),
+  titleInput,
+  storyInput,
+])
 
 const tree = new Tree({
   titleView: new Text({text: 'Title view'}),
@@ -147,22 +219,32 @@ const drawerView = Flow.down({
   children: [new Text({text: 'Drawer'}), Separator.horizontal()],
 })
 
-const contentView = Flow.down({
-  children: [
-    Flex.right([
-      Flow.down([primary1, Space.vertical(1), primary2]),
-      Flow.down([button1, Space.vertical(1), button2]),
-      Flow.down(checkboxes, {padding: 1}),
-      Flow.down(progress, {width: 40}),
-    ]),
-    collapsible,
-    collapsibleText,
-    Flex.right(boxes, {height: 8}),
-    digits1,
-    digits2,
-    tree,
-  ],
-})
+const contentView = Flex.right([
+  Flow.down(
+    {
+      children: [
+        Flex.right([
+          Flow.down([primary1, Space.vertical(1), primary2]),
+          Flow.down([button1, Space.vertical(1), button2]),
+          Flow.down(checkboxes, {padding: 1}),
+          Flow.down(progress, {width: 40}),
+          slider0,
+          storybox,
+        ]),
+        slider2,
+        slider3,
+        collapsible,
+        collapsibleText,
+        Flex.right(boxes, {height: 8}),
+        digits1,
+        digits2,
+        tree,
+      ],
+    },
+    {flex: 1},
+  ),
+  Flex.down([['flex1', slider1], Space.vertical(1)]),
+])
 
 demo(
   new Drawer({
