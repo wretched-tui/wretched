@@ -62,10 +62,12 @@ export class Progress extends View {
       : ''
     const percentStartPoint = new Point(
       ~~((viewport.contentSize.width - percent.length) / 2),
-      ~~(viewport.contentSize.height / 2),
+      viewport.contentSize.height <= 1 ? 0 : 1,
     )
     const textStyle = this.theme.text()
-    const controlStyle = this.theme.ui({isHover: true}).invert()
+    const controlStyle = this.theme.ui({isHover: true}).invert().merge({
+      background: textStyle.background,
+    })
     const altTextStyle = new Style({
       foreground: textStyle.foreground,
       background: controlStyle.foreground,
@@ -77,6 +79,7 @@ export class Progress extends View {
           viewport.contentSize.width - 1,
         ]),
       )
+
       viewport.visibleRect.forEachPoint(pt => {
         let char: string,
           style = textStyle
