@@ -15,6 +15,8 @@ function isEmpty(object: object) {
   return true
 }
 
+const MAX = 200
+
 export function inspect(
   value: any,
   wrap: boolean = true,
@@ -54,13 +56,13 @@ export function inspect(
     value.constructor !== Object &&
     isEmpty(value)
   ) {
-    return `{${Object.entries(value)
+    return `${value.constructor.name}({${Object.entries(value)
       .map(([key, val]) => [
         inspect(key, wrap, recursionDepth + 1, visited),
         inspect(value, wrap, recursionDepth + 1, visited),
       ])
       .reduce((memo, [key, value]) => memo.concat(key + ': ' + value), [])
-      .join(', ')}}`
+      .join(', ')}})`
   } else if (typeof value === 'string') {
     return colorize.string(value, recursionDepth > 0)
   } else if (
@@ -81,10 +83,20 @@ export function inspect(
       inspect(val, wrap, recursionDepth + 1, visited),
     )
     const count = values.reduce((len, val) => len + val.length, 0)
-    const newline = wrap && count > 100
+    const newline = wrap && count > MAX
     let inner: string
     if (newline) {
-      inner = values.join(`,\n${innerTab}`)
+      const [prev, line] = values.reduce(
+        ([prev, line], value) => {
+          if (line.length + value.length > MAX) {
+            return [(prev ? prev + `,\n${innerTab}` : '') + line, value]
+          }
+
+          return [prev, line ? line + ', ' + value : value]
+        },
+        ['', ''] as [string, string],
+      )
+      inner = (prev ? prev + `,\n${innerTab}` : '') + line
     } else {
       inner = values.join(', ')
     }
@@ -119,9 +131,21 @@ export function inspect(
       )}`,
   )
   const count = values.reduce((len, val) => len + val.length, 0)
-  const newline = wrap && count > 100
+  const newline = wrap && count > MAX
   let inner: string
   if (newline) {
+    const [prev, line] = values.reduce(
+      ([prev, line], value) => {
+        if (line.length + value.length > MAX) {
+          return [(prev ? prev + `,\n${innerTab}` : '') + line, value]
+        }
+
+        return [prev, line ? line + ', ' + value : line]
+      },
+      ['', ''] as [string, string],
+    )
+    inner = (prev ? prev + `,\n${innerTab}` : '') + line
+
     inner = values.join(`,\n${innerTab}`)
   } else {
     inner = values.join(', ')
