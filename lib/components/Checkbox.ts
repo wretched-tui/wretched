@@ -20,7 +20,7 @@ import {childTheme} from '../UI'
 interface StyleProps {
   text?: string
   isChecked: boolean
-  onCheck?: (isChecked: boolean) => void
+  onChange?: (isChecked: boolean) => void
   hotKey?: HotKey
 }
 
@@ -29,7 +29,7 @@ type Props = StyleProps & ContainerProps
 export class Checkbox extends Container {
   isChecked: boolean = false
   #hotKey?: HotKey
-  #onCheck: StyleProps['onCheck']
+  #onChange: StyleProps['onChange']
   #textView?: Text
   #contentView?: View
   #isPressed = false
@@ -62,7 +62,7 @@ export class Checkbox extends Container {
     super.update(props)
   }
 
-  #update({text, hotKey, isChecked, onCheck}: Props) {
+  #update({text, hotKey, isChecked, onChange}: Props) {
     if (this.#textView && text !== undefined) {
       const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
       this.#textView.text = styledText
@@ -70,7 +70,7 @@ export class Checkbox extends Container {
 
     this.isChecked = isChecked
     this.#hotKey = hotKey
-    this.#onCheck = onCheck
+    this.#onChange = onChange
   }
 
   get text() {
@@ -101,7 +101,7 @@ export class Checkbox extends Container {
 
       if (isMouseClicked(event)) {
         this.isChecked = !this.isChecked
-        this.#onCheck?.(this.isChecked)
+        this.#onChange?.(this.isChecked)
       }
     }
 

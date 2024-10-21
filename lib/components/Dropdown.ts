@@ -242,7 +242,7 @@ class DropdownSelector<T> extends Container {
     this.#checkbox = new Checkbox({
       text: 'Select all',
       isChecked: false,
-      onCheck: value => {
+      onChange: value => {
         if (value) {
           this.#selected = new Set(Array(this.#choices.length).keys())
         } else {
