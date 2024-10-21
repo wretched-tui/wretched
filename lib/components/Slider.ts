@@ -16,6 +16,8 @@ import type {Style} from '../Style'
 
 type Direction = 'vertical' | 'horizontal'
 
+const MIN = 5
+
 type ButtonProps =
   | {
       /**
@@ -118,6 +120,7 @@ export class Slider extends View {
 
   naturalSize(available: Size) {
     if (this.#direction === 'horizontal') {
+      const minWidth = MIN + 2 * (this.#buttons ? 3 : this.#border ? 1 : 0)
       if (this.#border) {
         //╭─┬──
         //│◃│█╶
@@ -125,25 +128,33 @@ export class Slider extends View {
         // ╭──
         // │█╶
         // ╰──
-        return new Size(available.width, 3)
+        return new Size(minWidth, 3)
       } else {
         // [◃]
         // █╶─
-        return new Size(available.width, 1)
+        return new Size(minWidth, 1)
       }
     } else {
+      const minHeight =
+        MIN +
+        2 *
+          (this.#buttons && this.#border
+            ? 3
+            : this.#buttons || this.#border
+            ? 1
+            : 0)
       if (this.#border) {
         // ╭─╮
         // │▵│
         // ├─┤ ╭─╮
         // │█│ │█│
         // │╷│ │╷│
-        return new Size(3, available.height)
+        return new Size(3, MIN)
       } else {
         // ▵
         // █   █
         // ╷   ╷
-        return new Size(1, available.height)
+        return new Size(1, MIN)
       }
     }
   }
@@ -271,8 +282,9 @@ export class Slider extends View {
     sliderStyle: Style,
     buttonStyle: Style,
   ) {
-    const height = this.#border ? 3 : 1
-    const marginX = this.#buttons ? 3 : this.#border ? 1 : 0
+    const hasBorder = this.#border && viewport.contentSize.height >= 3
+    const height = hasBorder ? 3 : 1
+    const marginX = this.#buttons ? 3 : hasBorder ? 1 : 0
     const outerRect = new Rect(
       [0, 0],
       [viewport.visibleRect.size.width, height],
@@ -285,12 +297,12 @@ export class Slider extends View {
     if (this.#buttons) {
       const left = this.#isHoverButtons ? '◂' : '◃'
       const right = this.#isHoverButtons ? '▸' : '▹'
-      ;(this.#border ? ['╭─┬', `│${left}│`, '╰─┴'] : [`[${left}]`]).forEach(
+      ;(hasBorder ? ['╭─┬', `│${left}│`, '╰─┴'] : [`[${left}]`]).forEach(
         (line, offsetY) => {
           viewport.write(line, Point.zero.offset(0, offsetY), buttonStyle)
         },
       )
-      ;(this.#border ? ['┬─╮', `│${right}│`, '┴─╯'] : [`[${right}]`]).forEach(
+      ;(hasBorder ? ['┬─╮', `│${right}│`, '┴─╯'] : [`[${right}]`]).forEach(
         (line, offsetY) => {
           viewport.write(
             line,
@@ -302,7 +314,7 @@ export class Slider extends View {
           )
         },
       )
-    } else if (this.#border) {
+    } else if (hasBorder) {
       ;['╭', '│', '╰'].forEach((char, offsetY) => {
         viewport.write(char, Point.zero.offset(0, offsetY), sliderStyle)
       })
@@ -349,9 +361,10 @@ export class Slider extends View {
   }
 
   #renderVertical(viewport: Viewport, sliderStyle: Style, buttonStyle: Style) {
-    const width = this.#border ? 3 : 1
+    const hasBorder = this.#border && viewport.contentSize.width >= 3
+    const width = hasBorder ? 3 : 1
     const marginY =
-      this.#buttons && this.#border ? 3 : this.#buttons || this.#border ? 1 : 0
+      this.#buttons && hasBorder ? 3 : this.#buttons || hasBorder ? 1 : 0
     const outerRect = new Rect(
       [0, 0],
       [width, viewport.visibleRect.size.height],
@@ -364,12 +377,12 @@ export class Slider extends View {
     if (this.#buttons) {
       const up = this.#isHoverButtons ? '▴' : '▵'
       const down = this.#isHoverButtons ? '▾' : '▿'
-      ;(this.#border ? ['╭─╮', `│${up}│`, '├─┤'] : [up]).forEach(
+      ;(hasBorder ? ['╭─╮', `│${up}│`, '├─┤'] : [up]).forEach(
         (line, offsetY) => {
           viewport.write(line, Point.zero.offset(0, offsetY), buttonStyle)
         },
       )
-      ;(this.#border ? ['╰─╯', `│${down}│`, '├─┤'] : [down]).forEach(
+      ;(hasBorder ? ['╰─╯', `│${down}│`, '├─┤'] : [down]).forEach(
         (line, offsetY) => {
           viewport.write(
             line,
@@ -378,7 +391,7 @@ export class Slider extends View {
           )
         },
       )
-    } else if (this.#border) {
+    } else if (hasBorder) {
       viewport.write('╭─╮', Point.zero.offset(0, 0), sliderStyle)
       viewport.write(
         '╰─╯',
