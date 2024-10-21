@@ -8,10 +8,8 @@ import {
   type BorderChars as BoxBorderChars,
   Box,
   Button,
-  Flex,
   Flow,
   ScrollableList,
-  Separator,
   Text,
   Checkbox,
 } from '../components'
@@ -147,7 +145,7 @@ export class Dropdown<T, M extends boolean> extends View {
 
   naturalSize(): Size {
     const size = new Size(unicode.stringSize(this.#titleLines()))
-    return size.grow(5, 0)
+    return size.grow(8, 0)
   }
 
   receiveMouse(event: MouseEvent) {
@@ -346,25 +344,14 @@ class DropdownSelector<T> extends Container {
   }
 
   cellForItem(choice: T, row: number): View {
-    const button = this.#cellButton(choice, row)
-
-    return Flex.right({
-      children: [
-        ['flex1', button],
-        new Separator({direction: 'vertical', border: 'single'}),
-      ],
-    })
-  }
-
-  #cellButton(choice: T, row: number) {
     const lines: string[] = this.#choices[row][0]
     const isSelected = [...this.#selected].some(index => index === row)
 
     return new Button({
       theme: isSelected ? 'selected' : undefined,
       border: 'none',
+      align: 'left',
       child: new Text({
-        width: 'fill',
         lines: lines.map((line, index) => {
           return dropdownPrefix(this.#multiple, index, isSelected) + line
         }),
@@ -429,7 +416,13 @@ class DropdownSelector<T> extends Container {
       placement = 'above'
     }
 
-    const width = viewport.parentRect.size.width
+    const width = Math.max(
+      viewport.parentRect.size.width,
+      Math.min(
+        naturalSize.width,
+        viewport.contentSize.width - viewport.parentRect.minX(),
+      ),
+    )
     const x = Math.max(
       0,
       viewport.parentRect.maxX() - width,
@@ -445,7 +438,7 @@ class DropdownSelector<T> extends Container {
 
     this.#box.border = BORDERS[placement]
 
-    const rect = new Rect(new Point(x, y), new Size(width, height))
+    const rect = new Rect([x, y], [width, height])
     viewport.clipped(rect, inside => super.render(inside))
   }
 }
@@ -475,7 +468,7 @@ function dropdownSelectedRows<T>(
 }
 
 function dropdownPrefix(multiple: boolean, index: number, isSelected: boolean) {
-  if (index === 0) {
+  if (index !== 0) {
     return '  '
   }
 
