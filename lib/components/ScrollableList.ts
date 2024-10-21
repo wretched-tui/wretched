@@ -74,6 +74,7 @@ export class ScrollableList<T> extends Container {
 
   naturalSize(availableSize: Size): Size {
     let {row, offset: y} = this.#contentOffset
+    const scrollWidth = this.#showScrollbars ? 1 : 0
 
     while (y < availableSize.height) {
       const view = this.viewForRow(row)
@@ -81,14 +82,20 @@ export class ScrollableList<T> extends Container {
         break
       }
 
-      const rowSize = this.sizeForRow(row, availableSize.width, view)
+      const rowSize = this.sizeForRow(
+        row,
+        availableSize.width - scrollWidth,
+        view,
+      )
+      // persist #maxWidth so that the largest row _remains_ the largest row even
+      // after it scrolls out of the visible window
       this.#maxWidth = Math.max(this.#maxWidth, rowSize.width)
       y += rowSize.height
       row += 1
     }
 
     return new Size(
-      this.#maxWidth + (this.#showScrollbars ? 1 : 0),
+      this.#maxWidth + scrollWidth,
       Math.min(availableSize.height, y),
     )
   }
@@ -97,6 +104,7 @@ export class ScrollableList<T> extends Container {
    * Tells ScrollableList to re-fetch all rows.
    */
   invalidate() {
+    this.#maxWidth = 0
     this.invalidateAllRows('view')
     super.invalidateSize()
   }
@@ -124,7 +132,8 @@ export class ScrollableList<T> extends Container {
     this.#sizeCache.delete(item)
   }
 
-  invalidateSize(): void {
+  invalidateSize() {
+    this.#maxWidth = 0
     this.invalidateAllRows('size')
     super.invalidateSize()
   }
@@ -259,6 +268,7 @@ export class ScrollableList<T> extends Container {
     if (contentWidth === this.contentSize.width && item) {
       this.#sizeCache.set(item, size)
     }
+
     return size
   }
 
