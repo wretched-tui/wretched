@@ -480,10 +480,10 @@ function dropdownPrefix(multiple: boolean, index: number, isSelected: boolean) {
 }
 
 const BORDERS: BorderChars = {
-  control: ['─', '│', '╭', '┬─╮', '╰', '┴─╯'],
-  hover: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
-  below: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
-  above: ['─', '│', '╭', '┬─╮', '╰', '┴─╯', '─', '│'],
+  control: ['─', '│', '╭', '╮', '╰', '╯'],
+  hover: ['─', '│', '╭', '╮', '╰', '╯', '─', '│'],
+  below: ['─', '│', '╭', '╮', '╰', '╯', '─', '│'],
+  above: ['─', '│', '╭', '╮', '╰', '╯', '─', '│'],
 }
 
 const BOX: Record<

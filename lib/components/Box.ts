@@ -125,7 +125,17 @@ export class Box extends Container {
 
     const maxX = viewport.contentSize.width
     const maxY = viewport.contentSize.height
-    const innerWidth = Math.max(
+    const innerTopWidth = Math.max(
+      0,
+      maxX - this.#borderSizes.topLeft.width - this.#borderSizes.topRight.width,
+    )
+    const innerBottomWidth = Math.max(
+      0,
+      maxX -
+        this.#borderSizes.bottomLeft.width -
+        this.#borderSizes.bottomRight.width,
+    )
+    const innerMiddleWidth = Math.max(
       0,
       maxX - this.#borderSizes.maxLeft - this.#borderSizes.maxRight,
     )
@@ -134,9 +144,11 @@ export class Box extends Container {
       maxY - this.#borderSizes.maxTop - this.#borderSizes.maxBottom,
     )
     const leftMaxX = this.#borderSizes.maxLeft
-    const topMaxY = this.#borderSizes.maxTop
-    const middleMaxX = this.#borderSizes.maxLeft + innerWidth
-    const middleMaxY = this.#borderSizes.maxTop + innerHeight
+    const topRightX = this.#borderSizes.topLeft.width + innerTopWidth
+    const bottomRightX = this.#borderSizes.bottomLeft.width + innerBottomWidth
+    const middleRightX = this.#borderSizes.maxLeft + innerMiddleWidth
+    const topInnerY = this.#borderSizes.maxTop
+    const bottomInnerY = this.#borderSizes.maxTop + innerHeight
 
     const borderStyle = this.theme.text({isHover: this.#isHover})
     const innerStyle = new Style({background: borderStyle.background})
@@ -144,15 +156,15 @@ export class Box extends Container {
       this.#borderSizes.maxLeft,
       this.#borderSizes.maxTop,
     )
-    if (innerHeight && innerWidth) {
+    if (innerHeight && innerMiddleWidth) {
       for (let y = 0; y < innerHeight; ++y) {
-        const spaces = ' '.repeat(innerWidth)
+        const spaces = ' '.repeat(innerMiddleWidth)
         viewport.write(spaces, innerOrigin.offset(0, y), innerStyle)
       }
     }
 
     viewport.clipped(
-      new Rect(innerOrigin, [innerWidth, innerHeight]),
+      new Rect(innerOrigin, [innerMiddleWidth, innerHeight]),
       inside => {
         super.render(inside)
       },
@@ -164,7 +176,7 @@ export class Box extends Container {
         top.split('\n'),
         tr.split('\n'),
       ]
-      for (let lineY = 0; lineY < topMaxY; ++lineY) {
+      for (let lineY = 0; lineY < topInnerY; ++lineY) {
         const [lineTL, lineTop, lineTR] = [
           tlLines[lineY] ?? '',
           topLines[lineY] ?? '',
@@ -174,22 +186,22 @@ export class Box extends Container {
         if (lineTop.length) {
           viewport.write(
             lineTop
-              .repeat(-~(innerWidth / this.#borderSizes.topMiddle.width))
-              .slice(0, innerWidth),
+              .repeat(-~(innerTopWidth / this.#borderSizes.topMiddle.width))
+              .slice(0, innerTopWidth),
             new Point(leftMaxX, lineY),
           )
         }
-        viewport.write(lineTR, new Point(middleMaxX, lineY))
+        viewport.write(lineTR, new Point(topRightX, lineY))
       }
 
       const [leftLines, rightLines] = [left.split('\n'), right.split('\n')]
-      for (let lineY = topMaxY; lineY < middleMaxY; ++lineY) {
+      for (let lineY = topInnerY; lineY < bottomInnerY; ++lineY) {
         const [lineL, lineR] = [
-          leftLines[(lineY - topMaxY) % leftLines.length] ?? '',
-          rightLines[(lineY - topMaxY) % rightLines.length] ?? '',
+          leftLines[(lineY - topInnerY) % leftLines.length] ?? '',
+          rightLines[(lineY - topInnerY) % rightLines.length] ?? '',
         ]
         viewport.write(lineL, new Point(0, lineY))
-        viewport.write(lineR, new Point(middleMaxX, lineY))
+        viewport.write(lineR, new Point(middleRightX, lineY))
       }
 
       const [blLines, bottomLines, brLines] = [
@@ -197,22 +209,22 @@ export class Box extends Container {
         bottom.split('\n'),
         br.split('\n'),
       ]
-      for (let lineY = middleMaxY; lineY < maxY; ++lineY) {
+      for (let lineY = bottomInnerY; lineY < maxY; ++lineY) {
         const [lineBL, lineBottom, lineBR] = [
-          blLines[lineY - middleMaxY] ?? '',
-          bottomLines[lineY - middleMaxY] ?? '',
-          brLines[lineY - middleMaxY] ?? '',
+          blLines[lineY - bottomInnerY] ?? '',
+          bottomLines[lineY - bottomInnerY] ?? '',
+          brLines[lineY - bottomInnerY] ?? '',
         ]
         viewport.write(lineBL, new Point(0, lineY))
         if (lineBottom.length) {
           viewport.write(
             lineBottom
-              .repeat(-~(innerWidth / this.#borderSizes.topMiddle.width))
-              .slice(0, innerWidth),
+              .repeat(-~(innerBottomWidth / this.#borderSizes.topMiddle.width))
+              .slice(0, innerBottomWidth),
             new Point(leftMaxX, lineY),
           )
         }
-        viewport.write(lineBR, new Point(middleMaxX, lineY))
+        viewport.write(lineBR, new Point(bottomRightX, lineY))
       }
     })
   }

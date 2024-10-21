@@ -208,7 +208,7 @@ export class Input extends View {
   naturalSize(available: Size): Size {
     let lines: [string[], number][] = this.#lines
 
-    if (!lines.length) {
+    if (!lines.length || !available.width) {
       return Size.one
     }
 

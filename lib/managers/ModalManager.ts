@@ -36,9 +36,11 @@ export class ModalManager {
     this.#modalView.moveToScreen(screen)
 
     let lastView: View = screen.rootView
+    // this.#modal can be assigned _another modal_
     while (this.#modal) {
       const [view, onClose, rect] = this.#modal
 
+      // preRender calls reset() which assigns this.#modal = undefined
       screen.preRender(view)
       lastView = view
 

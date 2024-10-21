@@ -96,8 +96,9 @@ export class Flex extends Container {
 
   naturalSize(availableSize: Size): Size {
     const size = Size.zero.mutableCopy()
-    let remainingSize =
-      availableSize[isVertical(this.direction) ? 'height' : 'width']
+    let remainingSize = isVertical(this.direction)
+      ? availableSize.height
+      : availableSize.width
     let hasFlex = false
     for (const child of this.children) {
       const flexSize = this.#sizes.get(child) ?? 'natural'

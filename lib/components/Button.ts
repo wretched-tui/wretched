@@ -163,12 +163,8 @@ export class Button extends Container {
         this.#align === 'center'
           ? Math.round((viewport.contentSize.width - naturalSize.width) / 2)
           : this.#align === 'left'
-          ? viewport.contentSize.width > naturalSize.width
-            ? 1
-            : 0
-          : viewport.contentSize.width -
-            naturalSize.width -
-            (viewport.contentSize.width > naturalSize.width ? 1 : 0),
+          ? 1
+          : viewport.contentSize.width - naturalSize.width - 1,
       offset = new Point(
         offsetLeft,
         Math.round((viewport.contentSize.height - naturalSize.height) / 2),
