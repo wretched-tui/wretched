@@ -18,10 +18,10 @@ interface TextProps {
 }
 
 interface StyleProps {
-  text: string
-  alignment: Alignment
-  wrap: boolean
-  multiline: boolean
+  text?: string
+  alignment?: Alignment
+  wrap?: boolean
+  multiline?: boolean
   font?: FontFamily
 }
 
@@ -30,7 +30,7 @@ interface Cursor {
   end: number
 }
 
-export type Props = Partial<StyleProps> & TextProps & ViewProps
+export type Props = StyleProps & TextProps & ViewProps
 
 const NL_SIGIL = '⤦'
 
@@ -47,7 +47,6 @@ export class Input extends View {
   #chars: string[] = []
   #lines: [string[], number][] = []
   #wrappedLines: [string[], number][] = []
-  #alignment: StyleProps['alignment'] = 'left'
   #wrap: boolean = false
   #multiline: boolean = false
   #font: FontFamily = 'default'
@@ -56,9 +55,6 @@ export class Input extends View {
 
   // Printable width
   #maxLineWidth: number = 0
-  #maxLineHeight: number = 0
-  // Text drawing starts at this offset (if it can't fit on screen)
-  #offset: number = 0
   #cursor: Cursor = {start: 0, end: 0}
   #visibleWidth = 0
 
@@ -88,7 +84,7 @@ export class Input extends View {
     this.#wrap = wrap ?? false
     this.#multiline = multiline ?? false
     this.#updatePlaceholderLines(placeholder ?? '')
-    this.#updateLines(text, font)
+    this.#updateLines(text ?? '', font ?? 'default')
   }
 
   #updatePlaceholderLines(placeholder: string) {
@@ -103,7 +99,12 @@ export class Input extends View {
   }
 
   #updateLines(text: string | undefined, font: FontFamily | undefined) {
-    this.#font = font ?? 'default'
+    text ??= this.#text
+    if (font === undefined) {
+      font = this.#font
+    } else {
+      this.#font = font
+    }
 
     const startIsAtEnd = this.#cursor.start === this.#chars.length
     const endIsAtEnd = this.#cursor.end === this.#chars.length
@@ -136,22 +137,22 @@ export class Input extends View {
     this.#lines = lines
     this.#visibleWidth = 0
 
-    this.#cursor.start = Math.min(this.#cursor.start, this.#chars.length)
-    this.#cursor.end = Math.min(this.#cursor.end, this.#chars.length)
-
     if (endIsAtEnd) {
       this.#cursor.end = this.#chars.length
+    } else {
+      this.#cursor.end = Math.min(this.#cursor.end, this.#chars.length)
     }
 
     if (startIsAtEnd) {
       this.#cursor.start = this.#chars.length
+    } else {
+      this.#cursor.start = Math.min(this.#cursor.start, this.#chars.length)
     }
 
     this.#maxLineWidth = lines.reduce((maxWidth, [, width]) => {
       // the _printable_ width, not the number of characters
       return Math.max(maxWidth, width)
     }, 0)
-    this.#maxLineHeight = lines.length
 
     this.invalidateSize()
   }
@@ -160,7 +161,9 @@ export class Input extends View {
     return this.#text
   }
   set text(text: string) {
-    this.#updateLines(text, this.#font)
+    if (text !== this.#text) {
+      this.#updateLines(text, undefined)
+    }
   }
 
   get placeholder() {
@@ -175,7 +178,31 @@ export class Input extends View {
     return this.#font
   }
   set font(font: FontFamily) {
-    this.#updateLines(this.#text, font)
+    if (font !== this.#font) {
+      this.#updateLines(undefined, font)
+    }
+  }
+
+  get wrap() {
+    return this.#wrap
+  }
+
+  set wrap(wrap: boolean) {
+    if (wrap !== this.#wrap) {
+      this.#wrap = wrap
+      this.#updateLines(undefined, undefined)
+    }
+  }
+
+  get multiline() {
+    return this.#multiline
+  }
+
+  set multiline(multiline: boolean) {
+    if (multiline !== this.#multiline) {
+      this.#multiline = multiline
+      this.#updateLines(undefined, undefined)
+    }
   }
 
   naturalSize(available: Size): Size {
@@ -469,6 +496,7 @@ export class Input extends View {
       let y = 0,
         index = 0
       let x = 0
+      // immediately after a line wrap, we don't want to also increase y by 1
       let isFirst = true
       for (const [chars] of this.#lines) {
         if (!isFirst) {
@@ -479,40 +507,43 @@ export class Input extends View {
         x = 0
         for (const char of chars) {
           if (index === offset) {
+            if (x === visibleWidth) {
+              x = 0
+              y += 1
+            }
             return new Point(x, y)
           }
 
           const charWidth = unicode.charWidth(char)
-          if (x + charWidth >= visibleWidth) {
-            x = 0
+          if (x + charWidth > visibleWidth) {
+            x = charWidth
             y += 1
-            index += 1
-            isFirst = true
           } else {
             x += charWidth
-            index += 1
           }
+
+          index += 1
         }
       }
 
       return new Point(x, y)
-    } else {
-      let y = 0,
-        index = 0
-      for (const [chars] of this.#lines) {
-        if (index + chars.length > offset) {
-          let x = 0
-          for (const char of chars.slice(0, offset - index)) {
-            x += unicode.charWidth(char)
-          }
-          return new Point({x, y})
-        }
-        index += chars.length
-        y += 1
-      }
-
-      return new Point(0, y)
     }
+
+    let y = 0,
+      index = 0
+    for (const [chars] of this.#lines) {
+      if (index + chars.length > offset) {
+        let x = 0
+        for (const char of chars.slice(0, offset - index)) {
+          x += unicode.charWidth(char)
+        }
+        return new Point({x, y})
+      }
+      index += chars.length
+      y += 1
+    }
+
+    return new Point(0, y)
   }
 
   /**
@@ -581,7 +612,7 @@ export class Input extends View {
    * The cursor is placed so that it will appear at the start or end of the viewport
    * when it is near the start or end of the line, otherwise it tries to be centered.
    */
-  #cursorPosition(visibleSize: Size) {
+  #cursorPosition(visibleSize: Size): [Point, Point] {
     const halfWidth = Math.floor(visibleSize.width / 2)
     const halfHeight = Math.floor(visibleSize.height / 2)
 
@@ -590,6 +621,10 @@ export class Input extends View {
     let cursorEnd = this.#toPosition(this.#cursor.end, visibleSize.width)
 
     let currentLineWidth: number, totalHeight: number
+    if (!this.#lines.length) {
+      return [cursorEnd, new Point(0, 0)]
+    }
+
     if (this.#wrap) {
       // run through the lines until we get to our desired cursorEnd.y
       // but also add all the heights to calculate currentHeight
@@ -611,9 +646,8 @@ export class Input extends View {
           break
         }
       }
+
       currentLineWidth = Math.max(0, currentLineWidth)
-    } else if (!this.#lines.length) {
-      return [cursorEnd, new Point(0, 0)]
     } else {
       currentLineWidth = this.#lines[cursorEnd.y]?.[1] ?? 0
       totalHeight = this.#lines.length
