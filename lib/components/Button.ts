@@ -17,12 +17,14 @@ import {
 } from '../events'
 import {childTheme} from '../UI'
 import type {View} from '../View'
+import {Alignment} from './types'
 
 type Border = 'default' | 'arrows' | 'none'
 type BorderChars = [string, string]
 
 export interface Props extends ContainerProps {
   text?: string
+  align?: Alignment
   border?: Border
   onClick?: () => void
   hotKey?: HotKey
@@ -33,6 +35,7 @@ export class Button extends Container {
   #onClick?: Props['onClick']
   #textView?: Text = undefined
   #border: Border = 'default'
+  #align: Alignment = 'center'
   #isPressed = false
   #isHover = false
 
@@ -56,12 +59,13 @@ export class Button extends Container {
     return childTheme(super.childTheme(view), this.#isPressed, this.#isHover)
   }
 
-  #update({text, border, hotKey, onClick}: Props) {
+  #update({text, border, align, hotKey, onClick}: Props) {
     if (this.#textView && text !== undefined) {
       const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
       this.#textView.text = styledText
     }
 
+    this.#align = align ?? 'center'
     this.#border = border ?? 'default'
     this.#hotKey = hotKey
     this.#onClick = onClick
@@ -155,9 +159,16 @@ export class Button extends Container {
     const naturalSize = super.naturalSize(
       viewport.contentSize.shrink(leftWidth + rightWidth, 0),
     )
-    const offsetLeft = Math.round(
-        (viewport.contentSize.width - naturalSize.width) / 2,
-      ),
+    const offsetLeft =
+        this.#align === 'center'
+          ? Math.round((viewport.contentSize.width - naturalSize.width) / 2)
+          : this.#align === 'left'
+          ? viewport.contentSize.width > naturalSize.width
+            ? 1
+            : 0
+          : viewport.contentSize.width -
+            naturalSize.width -
+            (viewport.contentSize.width > naturalSize.width ? 1 : 0),
       offset = new Point(
         offsetLeft,
         Math.round((viewport.contentSize.height - naturalSize.height) / 2),
