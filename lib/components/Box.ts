@@ -249,26 +249,42 @@ function calculateBorder(
   const bottomMiddle = chars[6] !== undefined ? borderSize(chars[6]) : topMiddle
   const bottomRight = borderSize(chars[5])
   const rightMiddle = chars[7] !== undefined ? borderSize(chars[7]) : leftMiddle
-  sizes = {
-    maxLeft: Math.max(topLeft.width, leftMiddle.width, bottomLeft.width),
-    maxRight: Math.max(topRight.width, rightMiddle.width, bottomRight.width),
-    maxTop: Math.max(topLeft.height, topMiddle.height, topRight.height),
-    maxBottom: Math.max(
-      bottomLeft.height,
-      bottomMiddle.height,
-      bottomRight.height,
-    ),
-    topLeft,
-    topMiddle,
-    topRight,
-    leftMiddle,
-    rightMiddle,
-    bottomLeft,
-    bottomMiddle,
-    bottomRight,
-  }
 
-  return [chars, sizes]
+  return [
+    chars,
+    {
+      maxLeft: leftMiddle.width,
+      maxRight: rightMiddle.width,
+      // if leftMiddle and rightMiddle are the same width as topLeft and topRight
+      // corners, use topMiddle.height as maxTop.
+      // Otherwise, use the max of the corners and middle.
+      maxTop:
+        leftMiddle.width === topLeft.width &&
+        rightMiddle.width === topRight.width
+          ? topMiddle.height
+          : Math.max(topLeft.height, topMiddle.height, topRight.height),
+      // if leftMiddle and rightMiddle are the same width as bottomLeft and bottomRight
+      // corners, use bottomMiddle.height as maxBottom.
+      // Otherwise, use the max of the corners and middle.
+      maxBottom:
+        leftMiddle.width === topLeft.width &&
+        rightMiddle.width === topRight.width
+          ? bottomMiddle.height
+          : Math.max(
+              bottomLeft.height,
+              bottomMiddle.height,
+              bottomRight.height,
+            ),
+      topLeft,
+      topMiddle,
+      topRight,
+      leftMiddle,
+      rightMiddle,
+      bottomLeft,
+      bottomMiddle,
+      bottomRight,
+    },
+  ]
 }
 
 function borderSize(str: string) {
