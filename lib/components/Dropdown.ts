@@ -12,6 +12,8 @@ import {
   ScrollableList,
   Text,
   Checkbox,
+  Separator,
+  Flex,
 } from '../components'
 import {
   type MouseEvent,
@@ -344,6 +346,18 @@ class DropdownSelector<T> extends Container {
   }
 
   cellForItem(choice: T, row: number): View {
+    const button = this.#cellButton(choice, row)
+
+    return Flex.right({
+      shrink: true,
+      children: [
+        ['flex1', button],
+        new Separator({direction: 'vertical', border: 'single'}),
+      ],
+    })
+  }
+
+  #cellButton(choice: T, row: number) {
     const lines: string[] = this.#choices[row][0]
     const isSelected = [...this.#selected].some(index => index === row)
 
