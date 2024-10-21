@@ -1,5 +1,5 @@
 import type {Viewport} from '../Viewport'
-import type {Props as ViewProps} from '../View'
+import type {Dimension, Props as ViewProps} from '../View'
 import type {Color} from '../Color'
 import {Style} from '../Style'
 import {View} from '../View'
@@ -12,12 +12,12 @@ interface Props extends ViewProps {
 export class Space extends View {
   background?: Color
 
-  static horizontal(value: number) {
-    return new Space({width: value})
+  static horizontal(value: Dimension, extraProps: Props = {}) {
+    return new Space({width: value, ...extraProps})
   }
 
-  static vertical(value: number) {
-    return new Space({height: value})
+  static vertical(value: Dimension, extraProps: Props = {}) {
+    return new Space({height: value, ...extraProps})
   }
 
   constructor(props: Props = {}) {

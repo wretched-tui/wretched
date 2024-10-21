@@ -8,7 +8,7 @@ import {System} from './System'
 import type {KeyEvent, MouseEvent} from './events'
 import {Point, Size, Rect} from './geometry'
 
-type Dimension = number | 'fill' | 'natural'
+export type Dimension = number | 'fill' | 'natural'
 export type FlexSize = 'natural' | number
 export type FlexShorthand = FlexSize | `flex${number}`
 
