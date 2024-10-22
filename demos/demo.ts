@@ -9,7 +9,10 @@ import {
   interceptConsoleLog,
 } from 'wretched'
 
-export async function demo(demoContent: View, showConsoleLog = true) {
+export async function demo(
+  demoContent: View,
+  showConsoleLog: boolean | number = true,
+) {
   interceptConsoleLog()
 
   process.title = 'Wretched'
@@ -18,7 +21,7 @@ export async function demo(demoContent: View, showConsoleLog = true) {
   }
 
   const consoleLog = new ConsoleLog({
-    height: 10,
+    height: typeof showConsoleLog === 'number' ? showConsoleLog : 10,
   })
   const [screen, program] = await Screen.start(
     async program => {

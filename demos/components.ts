@@ -11,7 +11,6 @@ import {
   Flex,
   Flow,
   Input,
-  Log,
   Progress,
   Scrollable,
   ScrollableList,
@@ -29,12 +28,9 @@ import {inspect} from 'wretched'
 
 interceptConsoleLog()
 
-// Dropdown,
-// Input,
 // Log,
 // Scrollable,
 // ScrollableList,
-// Slider,
 // Space,
 
 const OBJ = {
@@ -205,13 +201,20 @@ const boxes = [
     flex: 1,
   }),
 ]
+
 const digits1 = new Digits({
-  text: 'Sphinx of black quartz, judge my vow. 123,456.7890',
+  text: 'Sphinx of black quartz,\njudge my vow.\n123,456.7890',
 })
 
 const digits2 = new Digits({
   bold: true,
-  text: 'Sphinx of black quartz, judge my vow. 123,456.7890',
+  text: 'Sphinx of black quartz,\njudge my vow.\n123,456.7890',
+})
+
+const scrollable = new Scrollable({
+  child: Flow.down([digits1, digits2]),
+  width: 20,
+  height: 4,
 })
 
 const drawerView = Flow.down({
@@ -236,8 +239,7 @@ const contentView = Flex.right([
         collapsible,
         collapsibleText,
         Flex.right(boxes, {height: 8}),
-        digits1,
-        digits2,
+        scrollable,
         tree,
       ],
     },
@@ -246,11 +248,4 @@ const contentView = Flex.right([
   Flex.down([['flex1', slider1], Space.vertical(1)]),
 ])
 
-demo(
-  new Drawer({
-    theme: 'secondary',
-    drawerView,
-    contentView,
-  }),
-  false,
-)
+demo(scrollable, 20)
