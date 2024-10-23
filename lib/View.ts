@@ -33,6 +33,7 @@ export interface Props {
   maxWidth?: number
   maxHeight?: number
   padding?: number | Partial<Edges>
+  isVisible?: boolean
   // only used as a child of <Flex> views
   flex?: FlexShorthand
   // use this however you want
@@ -65,6 +66,7 @@ export abstract class View {
   #minHeight: Props['minHeight']
   #maxWidth: Props['maxWidth']
   #maxHeight: Props['maxHeight']
+  #isVisible: NonNullable<Props['isVisible']> = true
   padding: Edges | undefined
   flex: FlexSize = 'natural'
 
@@ -108,6 +110,7 @@ export abstract class View {
     minHeight,
     maxWidth,
     maxHeight,
+    isVisible,
     padding,
     flex,
     debug,
@@ -121,6 +124,7 @@ export abstract class View {
     this.#minHeight = minHeight
     this.#maxWidth = maxWidth
     this.#maxHeight = maxHeight
+    this.#isVisible = isVisible ?? true
 
     this.padding = toEdges(padding)
     this.flex = flex === undefined ? 'natural' : parseFlexShorthand(flex)
@@ -141,12 +145,21 @@ export abstract class View {
     return this.#theme ?? this.parent?.childTheme(this) ?? Theme.plain
   }
 
+  set theme(value: Theme | undefined) {
+    this.#theme = value
+  }
+
   childTheme(_view: View) {
     return this.theme
   }
 
-  set theme(value: Theme | undefined) {
-    this.#theme = value
+  get isVisible(): boolean {
+    return this.#isVisible
+  }
+
+  set isVisible(value: boolean) {
+    this.#isVisible = value
+    this.invalidateSize()
   }
 
   get screen(): Screen | null {
