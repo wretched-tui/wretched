@@ -248,4 +248,11 @@ const contentView = Flex.right([
   Flex.down([['flex1', slider1], Space.vertical(1)]),
 ])
 
-demo(scrollable, 20)
+demo(
+  new Drawer({
+    theme: 'secondary',
+    drawerView,
+    contentView,
+  }),
+  false,
+)
