@@ -304,10 +304,10 @@ export function interpolate(
 export type Mutable<T extends Point | Size | Rect> = T extends Point
   ? MutablePoint
   : T extends Size
-  ? MutableSize
-  : T extends Rect
-  ? MutableRect
-  : never
+    ? MutableSize
+    : T extends Rect
+      ? MutableRect
+      : never
 
 type PointArg = [number, number] | Pick<Point, 'x' | 'y'>
 type PointArgs = [number, number] | [PointArg]

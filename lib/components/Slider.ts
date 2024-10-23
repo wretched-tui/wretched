@@ -141,8 +141,8 @@ export class Slider extends View {
           (this.#buttons && this.#border
             ? 3
             : this.#buttons || this.#border
-            ? 1
-            : 0)
+              ? 1
+              : 0)
       if (this.#border) {
         // ╭─╮
         // │▵│

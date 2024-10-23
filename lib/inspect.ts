@@ -102,8 +102,8 @@ export function inspect(
     value.constructor === undefined
       ? ''
       : value.constructor.name === 'Object'
-      ? ''
-      : value.constructor.name.concat(' ')
+        ? ''
+        : value.constructor.name.concat(' ')
   const keys = Object.keys(value)
   if (keys.length === 0) {
     return '{}'

@@ -81,14 +81,14 @@ export class Style {
         style.foreground === null
           ? undefined
           : style.foreground === undefined
-          ? this.foreground
-          : style.foreground,
+            ? this.foreground
+            : style.foreground,
       background:
         style.background === null
           ? undefined
           : style.background === undefined
-          ? this.background
-          : style.background,
+            ? this.background
+            : style.background,
     })
   }
 

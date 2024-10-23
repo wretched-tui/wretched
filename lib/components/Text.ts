@@ -145,8 +145,8 @@ export class Text extends View {
           this.#alignment === 'left'
             ? 0
             : this.#alignment === 'center'
-            ? ~~((viewport.contentSize.width - width) / 2)
-            : viewport.contentSize.width - width
+              ? ~~((viewport.contentSize.width - width) / 2)
+              : viewport.contentSize.width - width
         point.x = offsetX
         for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)
