@@ -9,7 +9,6 @@ import {
   Drawer,
   Dropdown,
   Flex,
-  Flow,
   Input,
   Progress,
   Scrollable,
@@ -141,8 +140,8 @@ const fontSelect = new Dropdown({
   selected: 'default',
 })
 
-const storybox = Flow.down([
-  Flow.right([wrapCheckbox, Space.horizontal(1), fontSelect]),
+const storybox = Flex.down([
+  Flex.right([wrapCheckbox, Space.horizontal(1), fontSelect]),
   titleInput,
   storyInput,
 ])
@@ -212,25 +211,25 @@ const digits2 = new Digits({
 })
 
 const scrollable = new Scrollable({
-  child: Flow.down([digits1, digits2]),
+  child: Flex.down([digits1, digits2]),
   width: 20,
   height: 4,
 })
 
-const drawerView = Flow.down({
+const drawerView = Flex.down({
   maxWidth: 40,
   children: [new Text({text: 'Drawer'}), Separator.horizontal()],
 })
 
 const contentView = Flex.right([
-  Flow.down(
+  Flex.down(
     {
       children: [
         Flex.right([
-          Flow.down([primary1, Space.vertical(1), primary2]),
-          Flow.down([button1, Space.vertical(1), button2]),
-          Flow.down(checkboxes, {padding: 1}),
-          Flow.down(progress, {width: 40}),
+          Flex.down([primary1, Space.vertical(1), primary2]),
+          Flex.down([button1, Space.vertical(1), button2]),
+          Flex.down(checkboxes, {padding: 1}),
+          Flex.down(progress, {width: 40}),
           slider0,
           storybox,
         ]),

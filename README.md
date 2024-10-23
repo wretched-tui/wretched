@@ -34,13 +34,10 @@ Screen.start(
   new Box({
     border: 'single',
     children: [
-      new Flow({
-        direction: 'topToBottom',
-        children: [
-          new Text({text: 'First, there was Ncurses'}),
-          new Button({text: 'Tell me more!'}),
-        ],
-      }),
+      Flow.down([
+        new Text({text: 'First, there was Ncurses'}),
+        new Button({text: 'Tell me more!'}),
+      ]),
     ],
   }),
 )

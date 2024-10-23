@@ -1,4 +1,4 @@
-import {Box, Button, Drawer, Flex, Flow, Input, Space, Text} from 'wretched'
+import {Box, Button, Drawer, Flex, Input, Space, Text} from 'wretched'
 
 import {demo} from './demo'
 
@@ -85,20 +85,17 @@ drawer = new Drawer({
                 ['flex1', new Space()],
                 [
                   'flex1',
-                  new Flow({
-                    direction: 'topToBottom',
-                    children: [
-                      new Button({
-                        text: 'Click me!🙂',
-                        width: 'natural',
-                        onClick() {
-                          console.info('You did!')
-                        },
-                      }),
-                      new Space({height: 1}),
-                      dontClickMe,
-                    ],
-                  }),
+                  Flex.down([
+                    new Button({
+                      text: 'Click me!🙂',
+                      width: 'natural',
+                      onClick() {
+                        console.info('You did!')
+                      },
+                    }),
+                    new Space({height: 1}),
+                    dontClickMe,
+                  ]),
                 ],
                 ['flex1', new Space()],
               ],

@@ -8,7 +8,7 @@ import {Container} from '../Container'
 import {Text} from './Text'
 import {ScrollableList} from './ScrollableList'
 import {Collapsible} from './Collapsible'
-import {Flow} from './Flow'
+import {Flex} from './Flex'
 
 export class Log extends Container {
   #logs: LogLine[] = []
@@ -113,9 +113,8 @@ class LogLineView extends Container {
     }
 
     this.add(
-      new Flow({
-        direction: 'leftToRight',
-        spaceBetween: 1,
+      Flex.right({
+        gap: 1,
         children: [
           new Text({
             text: header,

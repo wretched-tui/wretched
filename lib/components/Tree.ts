@@ -1,9 +1,9 @@
 import type {Viewport} from '../Viewport'
 
 import {type Props as ViewProps, View} from '../View'
-import {Flow} from './Flow'
-import {type Props as ContainerProps, Container} from '../Container'
-import {Rect, Point, Size, interpolate} from '../geometry'
+import {Flex} from './Flex'
+import {Container} from '../Container'
+import {Rect, Point, Size} from '../geometry'
 import {
   type MouseEvent,
   isMousePressInside,
@@ -47,7 +47,7 @@ export class Tree<T extends any> extends Container {
   #expanded: Set<Path> = new Set()
   #itemViews: Map<Path, TreeChild> = new Map()
   #viewPaths: Map<TreeChild, Path> = new Map()
-  #contentView = Flow.down()
+  #contentView = Flex.down()
 
   constructor(props: Props<T>) {
     super(props)

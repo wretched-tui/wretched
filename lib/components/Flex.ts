@@ -10,6 +10,7 @@ interface Props extends ViewProps {
   children?: ([FlexShorthand, View] | View)[]
   direction?: Direction
   shrink?: boolean
+  gap?: number
 }
 
 type ShorthandProps = NonNullable<Props['children']> | Omit<Props, 'direction'>
@@ -28,41 +29,45 @@ function fromShorthand(
 
 export class Flex extends Container {
   #direction: Direction = 'topToBottom'
+  #gap: number = 0
   #shrink: boolean = false
   #sizes: Map<View, FlexSize> = new Map()
 
   static down(
-    props: ShorthandProps,
+    props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
     const direction: Direction = 'topToBottom'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
+
   static up(
-    props: ShorthandProps,
+    props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
     const direction: Direction = 'bottomToTop'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
+
   static right(
-    props: ShorthandProps,
+    props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
     const direction: Direction = 'leftToRight'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
+
   static left(
-    props: ShorthandProps,
+    props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
     const direction: Direction = 'rightToLeft'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
-  constructor({children, direction, shrink, ...viewProps}: Props) {
+  constructor({children, direction, shrink, gap, ...viewProps}: Props) {
     super(viewProps)
-    this.#update({direction, shrink})
+    this.#update({direction, shrink, gap})
     this.#updateChildren(children)
   }
 
@@ -92,28 +97,39 @@ export class Flex extends Container {
     }
   }
 
-  #update({direction, shrink}: Props) {
+  #update({direction, shrink, gap}: Props) {
     this.#direction = direction ?? 'topToBottom'
     this.#shrink = shrink ?? false
+    this.#gap = gap ?? 0
   }
 
   naturalSize(availableSize: Size): Size {
     const size = Size.zero.mutableCopy()
-    let remainingSize = isVertical(this.#direction)
-      ? availableSize.height
-      : availableSize.width
+    const remainingSize = availableSize.mutableCopy()
     let hasFlex = false
     for (const child of this.children) {
-      const availableChildSize = isVertical(this.#direction)
-        ? new Size(availableSize.width, remainingSize)
-        : new Size(remainingSize, availableSize.height)
-      const childSize = child.naturalSize(availableChildSize)
-      if (isVertical(this.#direction)) {
-        remainingSize = Math.max(0, remainingSize - childSize.height)
+      const childSize = child.naturalSize(remainingSize)
+      if (!child.isVisible) {
+        continue
+      }
+
+      if (this.isVertical) {
+        if (size.height) {
+          size.height += this.#gap
+        }
+
+        remainingSize.height = Math.max(
+          0,
+          remainingSize.height - childSize.height,
+        )
         size.width = Math.max(size.width, childSize.width)
         size.height += childSize.height
       } else {
-        remainingSize = Math.max(0, remainingSize - childSize.width)
+        if (size.width) {
+          size.width += this.#gap
+        }
+
+        remainingSize.width = Math.max(0, remainingSize.width - childSize.width)
         size.width += childSize.width
         size.height = Math.max(size.height, childSize.height)
       }
@@ -124,16 +140,12 @@ export class Flex extends Container {
       }
     }
 
-    if (hasFlex) {
-      if (isVertical(this.#direction)) {
-        const height = this.#shrink
-          ? size.height
-          : Math.max(size.height, availableSize.height)
+    if (hasFlex && !this.#shrink) {
+      if (this.isVertical) {
+        const height = Math.max(size.height, availableSize.height)
         return new Size(size.width, height)
       } else {
-        const width = this.#shrink
-          ? size.width
-          : Math.max(size.width, availableSize.width)
+        const width = Math.max(size.width, availableSize.width)
         return new Size(width, size.height)
       }
     }
@@ -151,14 +163,18 @@ export class Flex extends Container {
     this.#sizes.set(child, flexSize)
   }
 
+  get isVertical() {
+    return (
+      this.#direction === 'topToBottom' || this.#direction === 'bottomToTop'
+    )
+  }
+
   render(viewport: Viewport) {
     if (viewport.isEmpty) {
       return super.render(viewport)
     }
 
-    let remainingSize = isVertical(this.#direction)
-      ? viewport.contentSize.height
-      : viewport.contentSize.width
+    const remainingSize = viewport.contentSize.mutableCopy()
 
     let flexTotal = 0
     let flexCount = 0
@@ -167,19 +183,32 @@ export class Flex extends Container {
     // as well be memoized along with the flex amounts
     const flexViews: [FlexSize, number, View][] = []
     for (const child of this.children) {
+      if (!child.isVisible) {
+        continue
+      }
+
+      if (flexViews.length) {
+        if (this.isVertical) {
+          remainingSize.height = Math.max(0, remainingSize.height - this.#gap)
+        } else {
+          remainingSize.width = Math.max(0, remainingSize.width - this.#gap)
+        }
+      }
+
       const flexSize = this.#sizes.get(child) ?? 'natural'
       if (flexSize === 'natural') {
-        const availableChildSize = isVertical(this.#direction)
-          ? new Size(viewport.contentSize.width, remainingSize)
-          : new Size(remainingSize, viewport.contentSize.height)
-        const childSize = child.naturalSize(availableChildSize)
-        if (isVertical(this.#direction)) {
+        const childSize = child.naturalSize(remainingSize)
+
+        if (this.isVertical) {
           flexViews.push(['natural', childSize.height, child])
-          remainingSize = Math.max(0, remainingSize - childSize.height)
+          remainingSize.height -= childSize.height
         } else {
           flexViews.push(['natural', childSize.width, child])
-          remainingSize = Math.max(0, remainingSize - childSize.width)
+          remainingSize.width -= childSize.width
         }
+
+        remainingSize.height = Math.max(0, remainingSize.height)
+        remainingSize.width = Math.max(0, remainingSize.width)
       } else {
         flexTotal += flexSize
         flexViews.push([flexSize, flexSize, child])
@@ -206,12 +235,20 @@ export class Flex extends Container {
 
     // second pass, divide up the remainingSize to the flex views, subtracting off
     // of remainingSize. The last view receives any leftover height
-    const totalRemainingSize = remainingSize
+    const totalRemainingSize = this.isVertical
+      ? remainingSize.height
+      : remainingSize.width
+    let remainingDimension = totalRemainingSize
+    let isFirst = true
     for (const [flexSize, amount, child] of flexViews) {
       const childSize = viewport.contentSize.mutableCopy()
 
+      if (!isFirst) {
+        remainingDimension -= this.#gap
+      }
+
       if (flexSize === 'natural') {
-        if (isVertical(this.#direction)) {
+        if (this.isVertical) {
           childSize.height = amount
         } else {
           childSize.width = amount
@@ -221,14 +258,14 @@ export class Flex extends Container {
         // views; the last view receives the amount left in remainingSize (0..1)
         let size = (totalRemainingSize / flexTotal) * amount + correctAmount
         correctAmount = size - ~~size
-        remainingSize -= ~~size
+        remainingDimension -= ~~size
 
         // --flexCount === 0 checks for the last flex view
         if (--flexCount === 0) {
-          size += remainingSize
+          size += remainingDimension
         }
 
-        if (isVertical(this.#direction)) {
+        if (this.isVertical) {
           childSize.height = ~~size
         } else {
           childSize.width = ~~size
@@ -241,19 +278,33 @@ export class Flex extends Container {
         origin.y -= childSize.height
       }
 
+      if (!isFirst) {
+        if (this.#direction === 'leftToRight') {
+          origin.x += this.#gap
+        } else if (this.#direction === 'topToBottom') {
+          origin.y += this.#gap
+        }
+      }
+
       viewport.clipped(new Rect(origin, childSize), inside => {
         child.render(inside)
       })
+
+      if (!isFirst) {
+        if (this.#direction === 'rightToLeft') {
+          origin.x -= this.#gap
+        } else if (this.#direction === 'bottomToTop') {
+          origin.y -= this.#gap
+        }
+      }
 
       if (this.#direction === 'leftToRight') {
         origin.x += childSize.width
       } else if (this.#direction === 'topToBottom') {
         origin.y += childSize.height
       }
+
+      isFirst = false
     }
   }
-}
-
-function isVertical(direction: Direction) {
-  return direction === 'topToBottom' || direction === 'bottomToTop'
 }
