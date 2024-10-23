@@ -9,9 +9,14 @@ sum=$(checksum $1)
 
 if [[ -f .sum && $(<.sum) == $sum ]]; then
   echo "No changes"
+  return 0
 else
   echo "Changes detected"
-  yarn build
-  [ -f .sum ] && rm .sum
-  echo $sum > .sum
+  if yarn build ; then
+    [ -f .sum ] && rm .sum
+    echo $sum > .sum
+    return
+  else
+    return $?
+  fi
 fi
