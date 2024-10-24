@@ -196,7 +196,11 @@ export class Dropdown<T, M extends boolean> extends View {
     }
 
     viewport.write(
-      this.#showModal ? '◇' : this.#isHover ? '▼' : '▽',
+      this.#showModal
+        ? ARROWS.open
+        : this.#isHover
+          ? ARROWS.hover
+          : ARROWS.default,
       new Point(
         viewport.contentSize.width - 2,
         viewport.contentSize.height / 2,
@@ -491,6 +495,8 @@ function dropdownPrefix(multiple: boolean, index: number, isSelected: boolean) {
     return isSelected ? BOX.single.checked : BOX.single.unchecked
   }
 }
+
+const ARROWS = {hover: '▼', default: '▽', open: '◇'}
 
 const BORDERS: BorderChars = {
   control: ['─', '│', '╭', '╮', '╰', '╯'],
