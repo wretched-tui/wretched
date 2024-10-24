@@ -115,9 +115,14 @@ const slider3 = new Slider({
   border: true,
 })
 
+const summary = new Text()
+
 const titleInput = new Input({
   text: '',
   placeholder: 'Title',
+  onChange() {
+    summary.text = titleInput.text + '\n' + storyInput.text
+  },
 })
 
 const storyInput = new Input({
@@ -125,6 +130,9 @@ const storyInput = new Input({
   placeholder: 'Story',
   wrap: true,
   multiline: true,
+  onChange() {
+    summary.text = titleInput.text + '\n' + storyInput.text
+  },
 })
 
 const wrapCheckbox = new Checkbox({
@@ -150,6 +158,8 @@ const storybox = Flex.down([
   Flex.right([wrapCheckbox, Space.horizontal(1), fontSelect]),
   titleInput,
   storyInput,
+  Space.vertical(1),
+  summary,
 ])
 
 const tree = new Tree({
