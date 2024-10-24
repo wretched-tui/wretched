@@ -146,17 +146,17 @@ export class Progress extends View {
           }
         } else if (pt.y === 0) {
           if (pt.x === 0) {
-            char = '┌'
+            char = '╭'
           } else if (pt.x === viewport.contentSize.width - 1) {
-            char = '┐'
+            char = '╮'
           } else {
             char = '─'
           }
         } else if (pt.y === viewport.contentSize.height - 1) {
           if (pt.x === 0) {
-            char = '└'
+            char = '╰'
           } else if (pt.x === viewport.contentSize.width - 1) {
-            char = '┘'
+            char = '╯'
           } else {
             char = '─'
           }
@@ -210,17 +210,17 @@ export class Progress extends View {
         }
       } else if (pt.x === 0) {
         if (pt.y === 0) {
-          char = '┌'
+          char = '╭'
         } else if (pt.y === viewport.contentSize.height - 1) {
-          char = '└'
+          char = '╰'
         } else {
           char = '│'
         }
       } else if (pt.x === viewport.contentSize.width - 1) {
         if (pt.y === 0) {
-          char = '┐'
+          char = '╮'
         } else if (pt.y === viewport.contentSize.height - 1) {
-          char = '┘'
+          char = '╯'
         } else {
           char = '│'
         }
