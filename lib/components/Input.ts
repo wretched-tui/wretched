@@ -8,7 +8,7 @@ import {View} from '../View'
 import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 import {System} from '../System'
-import type {Alignment, FontFamily} from './types'
+import type {FontFamily} from './types'
 import {FONTS} from './fonts'
 
 interface TextProps {
@@ -19,7 +19,6 @@ interface TextProps {
 
 interface StyleProps {
   text?: string
-  alignment?: Alignment
   wrap?: boolean
   multiline?: boolean
   font?: FontFamily
@@ -40,13 +39,21 @@ const NL_SIGIL = '⤦'
  */
 export class Input extends View {
   /**
-   * Array of graphemes
+   * Array of graphemes, with pre-calculated length
    */
-  #placeholder: [string[], number][] = [[[], 0]]
+  #placeholder: [string[], number][] = []
+  #printableLines: [string[], number][] = []
+  /**
+   * Cached after assignment - this is converted to #chars and #lines
+   */
   #text: string = ''
+  /**
+   * For easy edit operations. Gets converted to #lines for printing.
+   */
   #chars: string[] = []
-  #lines: [string[], number][] = []
   #wrappedLines: [string[], number][] = []
+
+  // formatting options
   #wrap: boolean = false
   #multiline: boolean = false
   #font: FontFamily = 'default'
@@ -74,7 +81,6 @@ export class Input extends View {
     wrap,
     multiline,
     font,
-    alignment,
     placeholder,
     onChange,
     onSubmit,
@@ -84,7 +90,7 @@ export class Input extends View {
     this.#wrap = wrap ?? false
     this.#multiline = multiline ?? false
     this.#updatePlaceholderLines(placeholder ?? '')
-    this.#updateLines(text ?? '', font ?? 'default')
+    this.#updateLines(unicode.printableChars(text ?? ''), font ?? 'default')
   }
 
   #updatePlaceholderLines(placeholder: string) {
@@ -98,8 +104,8 @@ export class Input extends View {
     ])
   }
 
-  #updateLines(text: string | undefined, font: FontFamily | undefined) {
-    text ??= this.#text
+  #updateLines(_chars: string[] | undefined, font: FontFamily | undefined) {
+    let chars = _chars ?? this.#chars
     if (font === undefined) {
       font = this.#font
     } else {
@@ -108,33 +114,49 @@ export class Input extends View {
 
     const startIsAtEnd = this.#cursor.start === this.#chars.length
     const endIsAtEnd = this.#cursor.end === this.#chars.length
-    let lines: [string[], number][]
-    if (text !== undefined && text !== '') {
+    if (chars.length > 0) {
       if (!this.#multiline) {
-        text = text.replaceAll('\n', ' ')
+        chars = chars.map(char => (char === '\n' ? ' ' : char))
       }
 
-      this.#chars = []
-      this.#text = text
-      lines = text.split('\n').map((line, index, all) => {
-        const printableLine = unicode.printableChars(line)
-        if (index > 0) {
-          this.#chars.push('\n')
-        }
-        this.#chars.push(...printableLine)
-        // every line needs a ' ' at the end, for the EOL cursor
+      this.#text = chars.filter(char => !isAccentChar(char)).join('')
+      this.#chars = chars
+      const [charLines] = this.#chars.reduce(
+        ([lines, line], char, index) => {
+          if (char === '\n') {
+            lines.push(line)
+            if (index === this.#chars.length - 1) {
+              lines.push([])
+            }
+            return [lines, []]
+          }
+
+          line.push(char)
+          if (index === this.#chars.length - 1) {
+            lines.push(line)
+            return [lines, []]
+          }
+
+          return [lines, line]
+        },
+        [[], []] as [string[][], string[]],
+      )
+      this.#printableLines = charLines.map((printableLine, index, all) => {
+        // every line needs a ' ' or NL_SIGIL at the end, for the EOL cursor
         return [
           printableLine.concat(index === all.length - 1 ? ' ' : NL_SIGIL),
-          unicode.lineWidth(line) + 1,
+          printableLine.reduce(
+            (width, char) => width + unicode.charWidth(char),
+            0,
+          ) + 1,
         ]
       })
     } else {
       this.#text = ''
-      lines = this.#placeholder.map(([line, width]) => {
+      this.#printableLines = this.#placeholder.map(([line, width]) => {
         return [line.concat(' '), width]
       })
     }
-    this.#lines = lines
     this.#visibleWidth = 0
 
     if (endIsAtEnd) {
@@ -149,7 +171,7 @@ export class Input extends View {
       this.#cursor.start = Math.min(this.#cursor.start, this.#chars.length)
     }
 
-    this.#maxLineWidth = lines.reduce((maxWidth, [, width]) => {
+    this.#maxLineWidth = this.#printableLines.reduce((maxWidth, [, width]) => {
       // the _printable_ width, not the number of characters
       return Math.max(maxWidth, width)
     }, 0)
@@ -162,7 +184,7 @@ export class Input extends View {
   }
   set text(text: string) {
     if (text !== this.#text) {
-      this.#updateLines(text, undefined)
+      this.#updateLines(unicode.printableChars(text), undefined)
     }
   }
 
@@ -206,7 +228,7 @@ export class Input extends View {
   }
 
   naturalSize(available: Size): Size {
-    let lines: [string[], number][] = this.#lines
+    let lines: [string[], number][] = this.#printableLines
 
     if (!lines.length || !available.width) {
       return Size.one
@@ -238,10 +260,12 @@ export class Input extends View {
 
   receiveKey(event: KeyEvent) {
     const prevChars = this.#chars
+    const prevText = this.#text
+    let removeAccent = true
 
     if (event.name === 'enter' || event.name === 'return') {
       if (this.#multiline) {
-        this.#receiveChar('\n')
+        this.#receiveChar('\n', true)
       } else {
         this.#onSubmit?.(this.#text)
         return
@@ -268,12 +292,22 @@ export class Input extends View {
       this.#receiveKeyDelete()
     } else if (event.full === 'M-backspace' || event.full === 'C-w') {
       this.#receiveKeyDeleteWord()
+    } else if (isKeyAccent(event)) {
+      this.#receiveKeyAccent(event)
+      removeAccent = false
     } else if (isKeyPrintable(event)) {
       this.#receiveKeyPrintable(event)
     }
 
+    if (removeAccent) {
+      this.#chars = this.#chars.filter(char => !isAccentChar(char))
+    }
+
     if (prevChars !== this.#chars) {
-      this.#updateLines(this.#chars.join(''), this.#font)
+      this.#updateLines(this.#chars, undefined)
+    }
+
+    if (prevText !== this.#text) {
       this.#onChange?.(this.#text)
     }
   }
@@ -311,7 +345,7 @@ export class Input extends View {
       cursorEnd.y - cursorPosition.y,
     )
 
-    let lines: [string[], number][] = this.#lines
+    let lines: [string[], number][] = this.#printableLines
 
     if (
       visibleSize.width !== this.#visibleWidth ||
@@ -413,7 +447,9 @@ export class Input extends View {
               char === NL_SIGIL && scanTextPosition.x + charWidth === width
 
             if (isEmptySelection(this.#cursor)) {
-              if (hasFocus && inCursor) {
+              if (isAccentChar(char)) {
+                style = plainStyle.merge({underline: true, inverse: true})
+              } else if (hasFocus && inCursor) {
                 style = inNewline
                   ? nlStyle.merge({underline: true})
                   : cursorStyle
@@ -498,7 +534,7 @@ export class Input extends View {
       let x = 0
       // immediately after a line wrap, we don't want to also increase y by 1
       let isFirst = true
-      for (const [chars] of this.#lines) {
+      for (const [chars] of this.#printableLines) {
         if (!isFirst) {
           y += 1
         }
@@ -531,7 +567,7 @@ export class Input extends View {
 
     let y = 0,
       index = 0
-    for (const [chars] of this.#lines) {
+    for (const [chars] of this.#printableLines) {
       if (index + chars.length > offset) {
         let x = 0
         for (const char of chars.slice(0, offset - index)) {
@@ -555,7 +591,7 @@ export class Input extends View {
       let y = 0,
         index = 0
       let x = 0
-      for (const [chars] of this.#lines) {
+      for (const [chars] of this.#printableLines) {
         if (y) {
           y += 1
         }
@@ -579,13 +615,13 @@ export class Input extends View {
 
       return index
     } else {
-      if (position.y >= this.#lines.length) {
+      if (position.y >= this.#printableLines.length) {
         return this.#chars.length
       }
 
       let y = 0,
         index = 0
-      for (const [chars, width] of this.#lines) {
+      for (const [chars, width] of this.#printableLines) {
         if (y === position.y) {
           let x = 0
           for (const char of chars) {
@@ -621,7 +657,7 @@ export class Input extends View {
     let cursorEnd = this.#toPosition(this.#cursor.end, visibleSize.width)
 
     let currentLineWidth: number, totalHeight: number
-    if (!this.#lines.length) {
+    if (!this.#printableLines.length) {
       return [cursorEnd, new Point(0, 0)]
     }
 
@@ -631,7 +667,7 @@ export class Input extends View {
       let h = 0
       currentLineWidth = -1
       totalHeight = 0
-      for (const [, width] of this.#lines) {
+      for (const [, width] of this.#printableLines) {
         const dh = Math.ceil(width / visibleSize.width)
         totalHeight += dh
 
@@ -649,8 +685,8 @@ export class Input extends View {
 
       currentLineWidth = Math.max(0, currentLineWidth)
     } else {
-      currentLineWidth = this.#lines[cursorEnd.y]?.[1] ?? 0
-      totalHeight = this.#lines.length
+      currentLineWidth = this.#printableLines[cursorEnd.y]?.[1] ?? 0
+      totalHeight = this.#printableLines.length
     }
 
     // Calculate the viewport location where the cursor will be drawn
@@ -696,21 +732,44 @@ export class Input extends View {
     return [cursorEnd, new Point(cursorX, cursorY)]
   }
 
-  #receiveKeyPrintable({char}: KeyEvent) {
-    this.#receiveChar(char)
+  #receiveKeyAccent(event: KeyEvent) {
+    this.#chars = this.#chars.filter(char => !isAccentChar(char))
+
+    let char = ACCENT_KEYS[event.full]
+    if (!char) {
+      return
+    }
+
+    this.#receiveChar(char, false)
   }
 
-  #receiveChar(char: string) {
+  #receiveKeyPrintable({char}: KeyEvent) {
+    if (
+      this.#cursor.start === this.#cursor.end &&
+      isAccentChar(this.#chars[this.#cursor.start])
+    ) {
+      // if character under cursor is an accent, replace it.
+      const accented = accentChar(this.#chars[this.#cursor.start], char)
+      this.#receiveChar(accented, true)
+      return
+    }
+
+    this.#receiveChar(char, true)
+  }
+
+  #receiveChar(char: string, advance: boolean) {
     if (isEmptySelection(this.#cursor)) {
       this.#chars = this.#chars
         .slice(0, this.#cursor.start)
         .concat(char, this.#chars.slice(this.#cursor.start))
-      this.#cursor.start = this.#cursor.end = this.#cursor.start + 1
+      this.#cursor.start = this.#cursor.end =
+        this.#cursor.start + (advance ? 1 : 0)
     } else {
       this.#chars = this.#chars
         .slice(0, this.minSelected())
         .concat(char, this.#chars.slice(this.maxSelected()))
-      this.#cursor.start = this.#cursor.end = this.minSelected() + 1
+      this.#cursor.start = this.#cursor.end =
+        this.minSelected() + (advance ? 1 : 0)
     }
   }
 
@@ -1029,4 +1088,176 @@ function isInSelection(
   }
 
   return true
+}
+
+function isAccentChar(char: string) {
+  return ACCENTS[char] !== undefined
+}
+
+const ACCENTS: {[T in string]?: {[U in string]?: string}} = {
+  '`': {
+    A: 'À',
+    E: 'È',
+    I: 'Ì',
+    O: 'Ò',
+    U: 'Ù',
+    N: 'Ǹ',
+    a: 'à',
+    e: 'è',
+    i: 'ì',
+    o: 'ò',
+    u: 'ù',
+    n: 'ǹ',
+  },
+  '¸': {
+    C: 'Ç',
+    D: 'Ḑ',
+    E: 'Ȩ',
+    G: 'Ģ',
+    H: 'Ḩ',
+    K: 'Ķ',
+    L: 'Ļ',
+    N: 'Ņ',
+    R: 'Ŗ',
+    S: 'Ş',
+    T: 'Ţ',
+    c: 'ç',
+    d: 'ḑ',
+    e: 'ȩ',
+    g: 'ģ',
+    h: 'ḩ',
+    k: 'ķ',
+    l: 'ļ',
+    n: 'ņ',
+    r: 'ŗ',
+    s: 'ş',
+    t: 'ţ',
+  },
+  '´': {
+    A: 'Á',
+    C: 'Ć',
+    E: 'É',
+    G: 'Ǵ',
+    I: 'Í',
+    K: 'Ḱ',
+    L: 'Ĺ',
+    M: 'Ḿ',
+    N: 'Ń',
+    O: 'Ó',
+    P: 'Ṕ',
+    R: 'Ŕ',
+    S: 'Ś',
+    U: 'Ú',
+    W: 'Ẃ',
+    Y: 'Ý',
+    a: 'á',
+    c: 'ć',
+    e: 'é',
+    g: 'ǵ',
+    i: 'í',
+    k: 'ḱ',
+    l: 'ĺ',
+    m: 'ḿ',
+    n: 'ń',
+    o: 'ó',
+    p: 'ṕ',
+    r: 'ŕ',
+    s: 'ś',
+    u: 'ú',
+    w: 'ẃ',
+    y: 'ý',
+  },
+  ˆ: {
+    A: 'Â',
+    C: 'Ĉ',
+    E: 'Ê',
+    G: 'Ĝ',
+    H: 'Ĥ',
+    I: 'Î',
+    J: 'Ĵ',
+    O: 'Ô',
+    S: 'Ŝ',
+    U: 'Û',
+    W: 'Ŵ',
+    Y: 'Ŷ',
+    a: 'â',
+    c: 'ĉ',
+    e: 'ê',
+    g: 'ĝ',
+    h: 'ĥ',
+    i: 'î',
+    j: 'ĵ',
+    o: 'ô',
+    s: 'ŝ',
+    u: 'û',
+    w: 'ŵ',
+    y: 'ŷ',
+  },
+  '˜': {
+    A: 'Ã',
+    I: 'Ĩ',
+    N: 'Ñ',
+    O: 'Õ',
+    U: 'Ũ',
+    Y: 'Ỹ',
+    a: 'ã',
+    i: 'ĩ',
+    n: 'ñ',
+    o: 'õ',
+    u: 'ũ',
+    y: 'ỹ',
+  },
+  '¯': {
+    A: 'Ā',
+    E: 'Ē',
+    I: 'Ī',
+    O: 'Ō',
+    U: 'Ū',
+    Y: 'Ȳ',
+    a: 'ā',
+    e: 'ē',
+    i: 'ī',
+    o: 'ō',
+    u: 'ū',
+    y: 'ȳ',
+  },
+  '¨': {
+    A: 'Ä',
+    E: 'Ë',
+    I: 'Ï',
+    O: 'Ö',
+    U: 'Ü',
+    W: 'Ẅ',
+    X: 'Ẍ',
+    Y: 'Ÿ',
+    a: 'ä',
+    e: 'ë',
+    i: 'ï',
+    o: 'ö',
+    u: 'ü',
+    w: 'ẅ',
+    x: 'ẍ',
+    y: 'ÿ',
+  },
+}
+const ACCENT_KEYS: {[T in string]: string} = {
+  'M-a': '`',
+  'M-c': '¸',
+  'M-e': '´',
+  'M-i': 'ˆ',
+  'M-n': '˜',
+  'M-o': '¯',
+  'M-s': '¸',
+  'M-u': '¨',
+}
+function accentChar(accent: string, char: string) {
+  return ACCENTS[accent]?.[char] ?? char
+}
+
+function isKeyAccent(event: KeyEvent) {
+  if (!event.meta || event.ctrl) {
+    return false
+  }
+
+  return ACCENT_KEYS[event.full] !== undefined
 }
