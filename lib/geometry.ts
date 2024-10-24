@@ -137,6 +137,20 @@ export class Size {
   }
 
   /**
+   * Assigns width
+   */
+  withWidth(value: number): Size {
+    return new Size(value, this.height)
+  }
+
+  /**
+   * Assigns height
+   */
+  withHeight(value: number): Size {
+    return new Size(this.width, value)
+  }
+
+  /**
    * Restricts size to a maximum size (size must be <= maxSize)
    */
 
@@ -201,12 +215,20 @@ export class Rect {
     return new Rect([this.origin.x, value], this.size)
   }
 
+  at(...value: PointArgs): Rect {
+    return new Rect(toXY(value), this.size)
+  }
+
   withWidth(value: number): Rect {
     return new Rect(this.origin, [value, this.size.height])
   }
 
   withHeight(value: number): Rect {
     return new Rect(this.origin, [this.size.width, value])
+  }
+
+  withSize(...value: SizeArgs): Rect {
+    return new Rect(this.origin, toWH(value))
   }
 
   copy() {
