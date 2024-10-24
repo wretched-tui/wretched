@@ -73,128 +73,164 @@ export class Progress extends View {
       background: controlStyle.foreground,
     })
     if (this.#direction === 'horizontal') {
-      const progressX = Math.round(
-        interpolate(this.#progress, this.#range, [
-          0,
-          viewport.contentSize.width - 1,
-        ]),
+      this.#renderHorizontal(
+        viewport,
+        percent,
+        percentStartPoint,
+        textStyle,
+        controlStyle,
+        altTextStyle,
       )
-
-      viewport.visibleRect.forEachPoint(pt => {
-        let char: string,
-          style = textStyle
-        if (
-          this.#showPercent &&
-          pt.x >= percentStartPoint.x &&
-          pt.x - percentStartPoint.x < percent.length &&
-          pt.y === percentStartPoint.y
-        ) {
-          char = percent[pt.x - percentStartPoint.x]
-          if (pt.x <= progressX) {
-            style = altTextStyle
-          } else {
-            style = textStyle
-          }
-        } else {
-          if (pt.x <= progressX && this.#progress > this.#range[0]) {
-            if (pt.y === 0 && viewport.contentSize.height > 1) {
-              char = '▄'
-            } else if (
-              pt.y === viewport.contentSize.height - 1 &&
-              viewport.contentSize.height > 1
-            ) {
-              char = '▀'
-            } else {
-              char = '█'
-            }
-            style = controlStyle
-          } else if (viewport.contentSize.height === 1) {
-            if (pt.x === 0) {
-              char = '╶'
-            } else if (pt.x === viewport.contentSize.width - 1) {
-              char = '╴'
-            } else {
-              char = '─'
-            }
-          } else if (pt.y === 0) {
-            if (pt.x === 0) {
-              char = '┌'
-            } else if (pt.x === viewport.contentSize.width - 1) {
-              char = '┐'
-            } else {
-              char = '─'
-            }
-          } else if (pt.y === viewport.contentSize.height - 1) {
-            if (pt.x === 0) {
-              char = '└'
-            } else if (pt.x === viewport.contentSize.width - 1) {
-              char = '┘'
-            } else {
-              char = '─'
-            }
-          } else if (pt.x === 0 || pt.x === viewport.contentSize.width - 1) {
-            char = '│'
-          } else {
-            char = ' '
-          }
-        }
-
-        viewport.write(char, pt, style)
-      })
     } else {
-      const progressY = Math.round(
-        interpolate(this.#progress, this.#range, [
-          viewport.contentSize.height - 1,
-          0,
-        ]),
+      this.#renderVertical(
+        viewport,
+        percent,
+        percentStartPoint,
+        textStyle,
+        controlStyle,
+        altTextStyle,
       )
-      viewport.visibleRect.forEachPoint(pt => {
-        let char: string,
+    }
+  }
+
+  #renderHorizontal(
+    viewport: Viewport,
+    percent: string,
+    percentStartPoint: Point,
+    textStyle: Style,
+    controlStyle: Style,
+    altTextStyle: Style,
+  ) {
+    const progressX = Math.round(
+      interpolate(this.#progress, this.#range, [
+        0,
+        viewport.contentSize.width - 1,
+      ]),
+    )
+
+    viewport.visibleRect.forEachPoint(pt => {
+      let char: string,
+        style = textStyle
+      if (
+        this.#showPercent &&
+        pt.x >= percentStartPoint.x &&
+        pt.x - percentStartPoint.x < percent.length &&
+        pt.y === percentStartPoint.y
+      ) {
+        char = percent[pt.x - percentStartPoint.x]
+        if (pt.x <= progressX) {
+          style = altTextStyle
+        } else {
           style = textStyle
-        if (pt.y >= progressY) {
-          if (pt.x === 0 && viewport.contentSize.width > 1) {
-            char = '▐'
+        }
+      } else {
+        if (pt.x <= progressX && this.#progress > this.#range[0]) {
+          if (pt.y === 0 && viewport.contentSize.height > 1) {
+            char = '▄'
           } else if (
-            pt.x === viewport.contentSize.width - 1 &&
-            viewport.contentSize.width > 1
+            pt.y === viewport.contentSize.height - 1 &&
+            viewport.contentSize.height > 1
           ) {
-            char = '▌'
+            char = '▀'
           } else {
             char = '█'
           }
           style = controlStyle
-        } else if (viewport.contentSize.width === 1) {
-          if (pt.y === 0) {
-            char = '╷'
-          } else if (pt.y === viewport.contentSize.height - 1) {
-            char = '╵'
+        } else if (viewport.contentSize.height === 1) {
+          if (pt.x === 0) {
+            char = '╶'
+          } else if (pt.x === viewport.contentSize.width - 1) {
+            char = '╴'
           } else {
-            char = '│'
+            char = '─'
           }
-        } else if (pt.x === 0) {
-          if (pt.y === 0) {
+        } else if (pt.y === 0) {
+          if (pt.x === 0) {
             char = '┌'
-          } else if (pt.y === viewport.contentSize.height - 1) {
-            char = '└'
-          } else {
-            char = '│'
-          }
-        } else if (pt.x === viewport.contentSize.width - 1) {
-          if (pt.y === 0) {
+          } else if (pt.x === viewport.contentSize.width - 1) {
             char = '┐'
-          } else if (pt.y === viewport.contentSize.height - 1) {
+          } else {
+            char = '─'
+          }
+        } else if (pt.y === viewport.contentSize.height - 1) {
+          if (pt.x === 0) {
+            char = '└'
+          } else if (pt.x === viewport.contentSize.width - 1) {
             char = '┘'
           } else {
-            char = '│'
+            char = '─'
           }
-        } else if (pt.y === 0 || pt.y === viewport.contentSize.height - 1) {
-          char = '─'
+        } else if (pt.x === 0 || pt.x === viewport.contentSize.width - 1) {
+          char = '│'
         } else {
           char = ' '
         }
+      }
 
-        viewport.write(char, pt, style)
-      })
-    }
+      viewport.write(char, pt, style)
+    })
+  }
+
+  #renderVertical(
+    viewport: Viewport,
+    percent: string,
+    percentStartPoint: Point,
+    textStyle: Style,
+    controlStyle: Style,
+    altTextStyle: Style,
+  ) {
+    const progressY = Math.round(
+      interpolate(this.#progress, this.#range, [
+        viewport.contentSize.height - 1,
+        0,
+      ]),
+    )
+    viewport.visibleRect.forEachPoint(pt => {
+      let char: string,
+        style = textStyle
+      if (pt.y >= progressY) {
+        if (pt.x === 0 && viewport.contentSize.width > 1) {
+          char = '▐'
+        } else if (
+          pt.x === viewport.contentSize.width - 1 &&
+          viewport.contentSize.width > 1
+        ) {
+          char = '▌'
+        } else {
+          char = '█'
+        }
+        style = controlStyle
+      } else if (viewport.contentSize.width === 1) {
+        if (pt.y === 0) {
+          char = '╷'
+        } else if (pt.y === viewport.contentSize.height - 1) {
+          char = '╵'
+        } else {
+          char = '│'
+        }
+      } else if (pt.x === 0) {
+        if (pt.y === 0) {
+          char = '┌'
+        } else if (pt.y === viewport.contentSize.height - 1) {
+          char = '└'
+        } else {
+          char = '│'
+        }
+      } else if (pt.x === viewport.contentSize.width - 1) {
+        if (pt.y === 0) {
+          char = '┐'
+        } else if (pt.y === viewport.contentSize.height - 1) {
+          char = '┘'
+        } else {
+          char = '│'
+        }
+      } else if (pt.y === 0 || pt.y === viewport.contentSize.height - 1) {
+        char = '─'
+      } else {
+        char = ' '
+      }
+
+      viewport.write(char, pt, style)
+    })
   }
 }
