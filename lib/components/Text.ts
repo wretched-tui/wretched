@@ -68,6 +68,19 @@ export class Text extends View {
     })
   }
 
+  get style() {
+    return this.#style
+  }
+
+  set style(value: Style | undefined) {
+    if (this.#style === value) {
+      return
+    }
+
+    this.#style = value
+    this.invalidateRender()
+  }
+
   update(props: Props) {
     this.#update(props)
     super.update(props)
