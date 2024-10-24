@@ -208,18 +208,18 @@ const boxes = [
 ]
 
 const digits1 = new Digits({
-  text: 'Sphinx of black quartz,\njudge my vow.\n123,456.7890',
+  text: 'Sphinx of black\nquartz, judge my vow.\n123,456.7890\n(1)[2]{3}\n+-*/ %#:!\n2^⁴',
 })
 
 const digits2 = new Digits({
   bold: true,
-  text: 'Sphinx of black quartz,\njudge my vow.\n123,456.7890',
+  text: 'How vexingly quick\ndaft zebras jump!\n123,456.7890\n(1)[2]{3}\n+-*/ %#:!\n2^⁴',
 })
 
 const scrollable = new Scrollable({
   child: Flex.down([digits1, digits2]),
-  width: 20,
-  height: 4,
+  width: 40,
+  height: 5,
 })
 
 const drawerView = Flex.down({
