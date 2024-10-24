@@ -8,6 +8,12 @@ import {
   Digits,
   Drawer,
   Dropdown,
+  H1,
+  H2,
+  H3,
+  H4,
+  H5,
+  H6,
   Flex,
   Input,
   Progress,
@@ -223,25 +229,32 @@ const drawerView = Flex.down({
 
 const contentView = Flex.right([
   Flex.down(
-    {
-      children: [
-        Flex.right([
-          Flex.down([primary1, Space.vertical(1), primary2]),
-          Flex.down([button1, Space.vertical(1), button2]),
-          Flex.down(checkboxes, {padding: 1}),
-          Flex.down(progress, {width: 40}),
-          slider0,
-          storybox,
+    [
+      Flex.right([
+        Flex.down([
+          Flex.right([
+            Flex.down([primary1, primary2], {gap: 1, debug: true}),
+            Flex.down([button1, button2], {gap: 1}),
+            Flex.down(checkboxes, {padding: 1}),
+          ]),
+          Flex.right([
+            Flex.down([H1('Header 1'), H4('Header 4')]),
+            Flex.down([H2('Header 2'), H5('Header 5')]),
+            Flex.down([H3('Header 3'), H6('Header 6')]),
+          ]),
         ]),
-        slider2,
-        slider3,
-        collapsible,
-        collapsibleText,
-        Flex.right(boxes, {height: 8}),
-        scrollable,
-        tree,
-      ],
-    },
+        Flex.down(progress, {width: 40}),
+        slider0,
+        storybox,
+      ]),
+      slider2,
+      slider3,
+      collapsible,
+      collapsibleText,
+      Flex.right(boxes, {height: 8}),
+      scrollable,
+      tree,
+    ],
     {flex: 1},
   ),
   Flex.down([['flex1', slider1], Space.vertical(1)]),
