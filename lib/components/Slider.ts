@@ -8,8 +8,8 @@ import {
   isMouseExit,
   isMouseMove,
   isMouseClicked,
-  isMousePressInside,
-  isMousePressOutside,
+  isMousePressStart,
+  isMousePressExit,
   isMousePressEnd,
 } from '../events'
 import type {Style} from '../Style'
@@ -234,10 +234,10 @@ export class Slider extends View {
     }
 
     if (pos < minSlider) {
-      if (isMousePressInside(event)) {
+      if (isMousePressStart(event)) {
         this.#isPressingDecrease = true
         this.#didStartPressOnButton = true
-      } else if (isMousePressOutside(event)) {
+      } else if (isMousePressExit(event)) {
         this.#isPressingDecrease = false
       }
 
@@ -245,10 +245,10 @@ export class Slider extends View {
         this.#value -= this.#step
       }
     } else if (pos > maxSlider) {
-      if (isMousePressInside(event)) {
+      if (isMousePressStart(event)) {
         this.#isPressingIncrease = true
         this.#didStartPressOnButton = true
-      } else if (isMousePressOutside(event)) {
+      } else if (isMousePressExit(event)) {
         this.#isPressingIncrease = false
       }
 

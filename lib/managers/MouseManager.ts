@@ -266,7 +266,7 @@ export class MouseManager {
       }
     } else {
       if (isInside && target.wasInside) {
-        this.#sendMouse(systemEvent, 'mouse.button.drag', target, system)
+        this.#sendMouse(systemEvent, 'mouse.button.dragInside', target, system)
       } else if (isInside) {
         this.#sendMouse(systemEvent, 'mouse.button.enter', target, system)
       } else if (target.wasInside) {

@@ -8,8 +8,8 @@ import {Rect, Point, Size} from '../geometry'
 import {
   type HotKey,
   type MouseEvent,
-  isMousePressInside,
-  isMousePressOutside,
+  isMousePressStart,
+  isMousePressExit,
   isMouseEnter,
   isMouseExit,
   isMouseClicked,
@@ -94,9 +94,9 @@ export class Checkbox extends Container {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressInside(event)) {
+    if (isMousePressStart(event)) {
       this.#isPressed = true
-    } else if (isMousePressOutside(event)) {
+    } else if (isMousePressExit(event)) {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {

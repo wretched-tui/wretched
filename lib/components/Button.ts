@@ -6,10 +6,6 @@ import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
 import {
   type MouseEvent,
-  isMousePressInside,
-  isMousePressOutside,
-  isMouseEnter,
-  isMouseExit,
   isMouseClicked,
   HotKey,
   KeyEvent,
@@ -18,6 +14,7 @@ import {
 import {childTheme} from '../UI'
 import type {View} from '../View'
 import {Alignment} from './types'
+import {System} from '../System'
 
 type Border = 'default' | 'arrows' | 'none'
 type BorderChars = [string, string]
@@ -36,8 +33,6 @@ export class Button extends Container {
   #textView?: Text = undefined
   #border: Border = 'default'
   #align: Alignment = 'center'
-  #isPressed = false
-  #isHover = false
 
   constructor(props: Props) {
     super(props)
@@ -56,7 +51,7 @@ export class Button extends Container {
   }
 
   childTheme(view: View) {
-    return childTheme(super.childTheme(view), this.#isPressed, this.#isHover)
+    return childTheme(super.childTheme(view), this.isPressed, this.isHover)
   }
 
   #update({text, border, align, hotKey, onClick}: Props) {
@@ -76,14 +71,6 @@ export class Button extends Container {
     return super.naturalSize(availableSize).grow(left + right, 0)
   }
 
-  get isHover() {
-    return this.#isHover
-  }
-
-  get isPressed() {
-    return this.#isPressed
-  }
-
   get text() {
     return this.#textView?.text
   }
@@ -99,21 +86,11 @@ export class Button extends Container {
     return [unicode.lineWidth(left), unicode.lineWidth(right)]
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMousePressInside(event)) {
-      this.#isPressed = true
-    } else if (isMousePressOutside(event)) {
-      this.#isPressed = false
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
-      if (isMouseClicked(event)) {
-        this.#onClick?.()
-      }
-    }
-
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
+    if (isMouseClicked(event)) {
+      this.#onClick?.()
     }
   }
 
@@ -133,12 +110,12 @@ export class Button extends Container {
     }
 
     const textStyle = this.theme.ui({
-      isPressed: this.#isPressed,
-      isHover: this.#isHover,
+      isPressed: this.isPressed,
+      isHover: this.isHover,
     })
     const topsStyle = this.theme.ui({
-      isPressed: this.#isPressed,
-      isHover: this.#isHover,
+      isPressed: this.isPressed,
+      isHover: this.isHover,
       isOrnament: true,
     })
 

@@ -6,8 +6,8 @@ import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 import {
   type MouseEvent,
-  isMousePressInside,
-  isMousePressOutside,
+  isMousePressStart,
+  isMousePressExit,
   isMouseClicked,
 } from '../events'
 
@@ -84,9 +84,9 @@ export class CollapsibleText extends View {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressInside(event)) {
+    if (isMousePressStart(event)) {
       this.#isPressed = true
-    } else if (isMousePressOutside(event)) {
+    } else if (isMousePressExit(event)) {
       this.#isPressed = false
 
       if (isMouseClicked(event)) {

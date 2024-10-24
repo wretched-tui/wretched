@@ -9,11 +9,11 @@ export type MouseMove =
   | 'exit' // mouse exiting
 export type MouseClick =
   | 'down' // mouse down, inside target area
-  | 'enter' // dragging from outside into area
-  | 'drag' // dragging inside
-  | 'up' // mouse released inside area
   | 'exit' // mouse dragged from inside to outside
+  | 'enter' // dragging from outside into area
+  | 'dragInside' // dragging inside
   | 'dragOutside' // mouse dragged outside
+  | 'up' // mouse released inside area
   | 'cancel' // mouse released outside
 export type MouseWheel = 'down' | 'up'
 
@@ -76,14 +76,25 @@ export function isMouseClicked(event: MouseEvent, inside?: Rect) {
   return inside.includes(new Point(event.position))
 }
 
-export function isMousePressInside(event: SystemMouseEvent | MouseEvent) {
+/**
+ * A mouse press event is started with a 'down' event, but can also begin again
+ * after the mouse is dragged outside the component ('exit' event), and then
+ * dragged back inside ('enter').
+ */
+export function isMousePressStart(event: SystemMouseEvent | MouseEvent) {
   return (
     event.name.startsWith('mouse.button.') &&
-    ['down', 'enter', 'drag'].some(suffix => event.name.endsWith(suffix))
+    ['down', 'enter'].some(suffix => event.name.endsWith(suffix))
   )
 }
 
-export function isMousePressOutside(event: SystemMouseEvent | MouseEvent) {
+/**
+ * Press-exit is an uncomfortable name, it refers to either ending the press event
+ * ('up', 'cancel') or dragging the mouse outside the component ('exit'). If the
+ * component has has a 'pressed' highlight effect, `isMousePressExit` should turn
+ * that effect off.
+ */
+export function isMousePressExit(event: SystemMouseEvent | MouseEvent) {
   return (
     event.name.startsWith('mouse.button.') &&
     ['up', 'exit', 'cancel'].some(suffix => event.name.endsWith(suffix))

@@ -6,14 +6,15 @@ import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {
   type MouseEvent,
-  isMousePressInside,
-  isMousePressOutside,
+  isMousePressStart,
+  isMousePressExit,
   isMouseEnter,
   isMouseExit,
   isMouseMove,
   isMouseClicked,
 } from '../events'
 import {Style} from '../Style'
+import {System} from '../System'
 
 type RenderFn<T> = (datum: T, path: string) => View
 type GetChildrenFn<T> = (datum: T, path: string) => T[]
@@ -184,8 +185,6 @@ export class Tree<T extends any> extends Container {
 class TreeChild extends Container {
   #pathData: PathData[] = []
   #hasChildren = false
-  #isPressed = false
-  #isHover = false
   #onToggle = () => {}
 
   constructor({pathData, onToggle, ...props}: ChildProps) {
@@ -196,32 +195,12 @@ class TreeChild extends Container {
     this.#onToggle = onToggle
   }
 
-  isPressed() {
-    return this.#isPressed
-  }
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
-  isHover() {
-    return this.#isHover
-  }
-
-  receiveMouse(event: MouseEvent) {
-    if (isMousePressInside(event)) {
-      this.#isPressed = true
-    } else if (isMousePressOutside(event)) {
-      this.#isPressed = false
-
-      if (isMouseClicked(event) && this.#hasChildren) {
-        this.#onToggle()
-        this.invalidateSize()
-      }
-    }
-
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
-    } else if (isMouseMove(event)) {
-      this.#isHover = event.name === 'mouse.move.in'
+    if (isMouseClicked(event) && this.#hasChildren) {
+      this.#onToggle()
+      this.invalidateSize()
     }
   }
 
@@ -256,7 +235,7 @@ class TreeChild extends Container {
     )
 
     let textStyle: Style
-    if (this.isPressed() || this.isHover()) {
+    if (this.isPressed || this.isHover) {
       textStyle = new Style({bold: true})
     } else {
       textStyle = Style.NONE
@@ -276,17 +255,17 @@ class TreeChild extends Container {
           }
 
           if (isExpanded) {
-            if (this.isHover()) {
+            if (this.isHover) {
               firstLine += '─╴▾'
-            } else if (this.isPressed()) {
+            } else if (this.isPressed) {
               firstLine += '━╸▾'
             } else {
               firstLine += '─╴▿'
             }
           } else {
-            if (this.isHover()) {
+            if (this.isHover) {
               firstLine += '─╴▸'
-            } else if (this.isPressed()) {
+            } else if (this.isPressed) {
               firstLine += '━╸▸'
             } else {
               firstLine += '─╴▹'

@@ -5,8 +5,8 @@ import {Rect, Point, Size, type Edge} from '../geometry'
 import {
   type MouseEvent,
   isMouseClicked,
-  isMousePressInside,
-  isMousePressOutside,
+  isMousePressStart,
+  isMousePressExit,
   isMouseEnter,
   isMouseExit,
 } from '../events'
@@ -173,9 +173,9 @@ export class Drawer extends Container {
   }
 
   receiveMouse(event: MouseEvent) {
-    if (isMousePressInside(event)) {
+    if (isMousePressStart(event)) {
       this.#isPressed = true
-    } else if (isMousePressOutside(event)) {
+    } else if (isMousePressExit(event)) {
       this.#isPressed = false
     }
 

@@ -5,7 +5,14 @@ import type {Purpose} from './Theme'
 import {Theme} from './Theme'
 import {Container} from './Container'
 import {System} from './System'
-import type {KeyEvent, MouseEvent} from './events'
+import {
+  isMouseEnter,
+  isMouseExit,
+  isMousePressStart,
+  isMousePressExit,
+  type KeyEvent,
+  type MouseEvent,
+} from './events'
 import {Point, Size, Rect} from './geometry'
 
 export type Dimension = number | 'fill' | 'natural'
@@ -69,6 +76,10 @@ export abstract class View {
   #isVisible: NonNullable<Props['isVisible']> = true
   padding: Edges | undefined
   flex: FlexSize = 'natural'
+
+  // mouse handling helpers
+  #isHover = false
+  #isPressed = false
 
   constructor(props: Props = {}) {
     this.#update(props)
@@ -168,6 +179,39 @@ export abstract class View {
 
   get children(): View[] {
     return []
+  }
+
+  get contentSize(): Size {
+    return this.#renderedContentSize
+  }
+
+  get isHover() {
+    return this.#isHover
+  }
+
+  get isPressed() {
+    return this.#isPressed
+  }
+
+  abstract naturalSize(availableSize: Size): Size
+  abstract render(viewport: Viewport): void
+
+  /**
+   * Called from a view when a property change could affect naturalSize
+   */
+  invalidateSize() {
+    this.#prevSizeCache = new Map()
+    if (this.#invalidateParent) {
+      this.parent?.invalidateSize()
+    }
+    this.invalidateRender()
+  }
+
+  /**
+   * Indicates that a rerender is needed (but size is not affected)
+   */
+  invalidateRender() {
+    this.#screen?.needsRender()
   }
 
   #toDimension(
@@ -326,10 +370,6 @@ export abstract class View {
     }
   }
 
-  get contentSize(): Size {
-    return this.#renderedContentSize
-  }
-
   #renderWrap(
     render: (viewport: Viewport) => void,
   ): (viewport: Viewport) => void {
@@ -370,27 +410,6 @@ export abstract class View {
       const rect = new Rect(origin, this.#renderedContentSize)
       viewport._render(this, rect, render)
     }
-  }
-
-  abstract naturalSize(availableSize: Size): Size
-  abstract render(viewport: Viewport): void
-
-  /**
-   * Called from a view when a property change could affect naturalSize
-   */
-  invalidateSize() {
-    this.#prevSizeCache = new Map()
-    if (this.#invalidateParent) {
-      this.parent?.invalidateSize()
-    }
-    this.invalidateRender()
-  }
-
-  /**
-   * Indicates that a rerender is needed (but size is not affected)
-   */
-  invalidateRender() {
-    this.#screen?.needsRender()
   }
 
   /**
@@ -445,7 +464,20 @@ export abstract class View {
   /**
    * To register for this event, call `viewport.registerMouse()`
    */
-  receiveMouse(event: MouseEvent, system: System) {}
+  receiveMouse(event: MouseEvent, system: System) {
+    if (isMousePressStart(event)) {
+      this.#isPressed = true
+    } else if (isMousePressExit(event)) {
+      this.#isPressed = false
+    }
+
+    if (isMouseEnter(event)) {
+      this.#isHover = true
+    } else if (isMouseExit(event)) {
+      this.#isHover = false
+    }
+  }
+
   /**
    * Receives the time-delta between previous and current render. Return 'true' if
    * this function causes the view to need a rerender.
