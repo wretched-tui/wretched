@@ -164,6 +164,12 @@ export class Slider extends View {
       return
     }
 
+    if (isMouseExit(event)) {
+      this.#isHoverSlider = false
+      this.#isHoverButtons = false
+      return
+    }
+
     const prev = this.#value
     let pos: number,
       isValid: boolean,
@@ -221,10 +227,7 @@ export class Slider extends View {
     const isHoverDecrease = pos >= 0 && pos < minSlider
     const isHoverIncrease = pos > maxSlider && pos < bigSize
 
-    if (isMouseExit(event)) {
-      this.#isHoverSlider = false
-      this.#isHoverButtons = false
-    } else if (isMouseMove(event)) {
+    if (isMouseMove(event)) {
       this.#isHoverSlider = pos >= minSlider && pos <= maxSlider
 
       this.#isHoverButtons = isHoverDecrease || isHoverIncrease
