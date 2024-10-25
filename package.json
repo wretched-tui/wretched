@@ -31,6 +31,7 @@
     "build": "yarn clean && yarn tsc && yarn cp-usr",
     "checksum": ". scripts/check.sh lib",
     "demo": "yarn checksum && cd demos/ && yarn demo",
+    "qdemo": "cd demos/ && yarn demo",
     "reset": "yarn checksum && cd demos/ && yarn demo reset"
   },
   "keywords": [
