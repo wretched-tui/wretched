@@ -143,7 +143,7 @@ export class Text extends View {
     }
 
     const lines: [string, number][] = this.#lines
-    let style: Style | undefined = this.#style || this.theme?.text()
+    const style: Style = this.theme.text().merge(this.#style)
 
     viewport.usingPen(style, pen => {
       const point = new Point(0, 0).mutableCopy()
@@ -158,8 +158,8 @@ export class Text extends View {
           this.#alignment === 'left'
             ? 0
             : this.#alignment === 'center'
-            ? ~~((viewport.contentSize.width - width) / 2)
-            : viewport.contentSize.width - width
+              ? ~~((viewport.contentSize.width - width) / 2)
+              : viewport.contentSize.width - width
         point.x = offsetX
         for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)
