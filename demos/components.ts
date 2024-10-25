@@ -1,5 +1,6 @@
 import {
   interceptConsoleLog,
+  Accordion,
   Box,
   Button,
   Checkbox,
@@ -234,7 +235,26 @@ const scrollable = new Scrollable({
 
 const drawerView = Flex.down({
   maxWidth: 40,
-  children: [new Text({text: 'Drawer'}), Separator.horizontal()],
+  children: [
+    new Text({text: 'Drawer'}),
+    Separator.horizontal(),
+    Accordion.create(
+      Array(10)
+        .fill(0)
+        .map((_, index) =>
+          Accordion.Section.create(
+            `title ${index + 1}`,
+            new Text({
+              text: Array(10)
+                .fill(`section ${index + 1}.`)
+                .map((line, index) => line + (index + 1))
+                .join('\n'),
+            }),
+          ),
+        ),
+      {multiple: true},
+    ),
+  ],
 })
 
 const contentView = Flex.right([

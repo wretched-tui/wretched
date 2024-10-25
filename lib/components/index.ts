@@ -1,3 +1,4 @@
+export {Accordion} from './Accordion'
 export * from './Box'
 export {Button} from './Button'
 export * from './Collapsible'
