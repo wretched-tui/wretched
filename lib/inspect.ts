@@ -51,24 +51,7 @@ export function inspect(
   const tab = '  '.repeat(recursionDepth)
   const innerTab = tab + '  '
 
-  if (
-    value instanceof Object &&
-    value.constructor !== Object &&
-    isEmpty(value)
-  ) {
-    return `${value.constructor.name}({})`
-  } else if (typeof value === 'string') {
-    return colorize.string(value, recursionDepth > 0)
-  } else if (
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    value === undefined ||
-    value === null
-  ) {
-    return colorize.format(value)
-  } else if (typeof value === 'function') {
-    return `function${value.name ? ` ${value.name}` : ''}() {…}`
-  } else if (Array.isArray(value)) {
+  if (Array.isArray(value)) {
     if (value.length === 0) {
       return '[]'
     }
@@ -96,6 +79,23 @@ export function inspect(
     }
 
     return newline ? `[\n${innerTab}${inner}\n${tab}]` : `[ ${inner} ]`
+  } else if (typeof value === 'string') {
+    return colorize.string(value, recursionDepth > 0)
+  } else if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value === undefined ||
+    value === null
+  ) {
+    return colorize.format(value)
+  } else if (typeof value === 'function') {
+    return `function${value.name ? ` ${value.name}` : ''}() {…}`
+  } else if (
+    value instanceof Object &&
+    value.constructor !== Object &&
+    isEmpty(value)
+  ) {
+    return `${value.constructor.name}({})`
   }
 
   const name =
