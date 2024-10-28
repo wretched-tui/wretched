@@ -26,9 +26,16 @@ export class Viewport {
    * For modals, this offset points to the Rect of the view that presented the modal
    */
   parentRect: Rect
+  // during render, `contentSize` is what you should use for laying out your
+  // rectangles. in most cases this is synonymous with "visible" area, but not
+  // always.
   declare contentSize: Size
-  declare contentRect: Rect
+  // `visibleRect` can be used to optimize drawing. `visibleRect.origin`
+  // represents the first visible point, taking clipping into account.
   declare visibleRect: Rect
+  // `contentRect` is a convenience property, useful for creating clipped inner
+  // regions. origin is always [0, 0] and size is contentSize.
+  declare contentRect: Rect
 
   constructor(screen: Screen, terminal: Terminal, contentSize: Size) {
     const rect = new Rect(Point.zero, contentSize)
@@ -109,7 +116,7 @@ export class Viewport {
     eventNames: MouseEventListenerName | MouseEventListenerName[],
     rect?: Rect,
   ) {
-    if (!this.#currentRender) {
+    if (!this.#currentRender || this.#currentRender.screen !== this.#screen) {
       return
     }
 
@@ -120,13 +127,14 @@ export class Viewport {
     }
     const maxX = rect.maxX()
     const maxY = rect.maxY()
+    const events = typeof eventNames === 'string' ? [eventNames] : eventNames
     for (let y = rect.minY(); y < maxY; ++y)
       for (let x = rect.minX(); x < maxX; ++x) {
         this.#screen.registerMouse(
           this.#currentRender,
           this.#offset,
           new Point(x, y),
-          typeof eventNames === 'string' ? [eventNames] : eventNames,
+          events,
         )
       }
   }
@@ -186,7 +194,13 @@ export class Viewport {
           this.#offset.y + to.y,
           style,
         )
-        if (this.#currentRender) {
+
+        if (
+          this.#currentRender &&
+          // if the currentRender wasn't added as a child to the screen's tree,
+          // we shouldn't perform this check
+          this.#currentRender.screen === this.#screen
+        ) {
           this.#screen.checkMouse(
             this.#currentRender,
             this.#offset.x + x,
@@ -261,6 +275,12 @@ export class Viewport {
     const contentWidth = Math.max(0, clip.size.width)
     const contentHeight = Math.max(0, clip.size.height)
 
+    // visibleRect.origin doesn't go negative - Math.max(0) prevents that.
+    // The subtraction of clip.origin.x only has an effect when the clipped
+    // origin is *negative*. In that case, the effect is that (0, 0) is outside the
+    // visible space, and so visibleRect.origin represents the first visiblePoint
+    // (in local coordinates). Basically - trust this math, it looks wrong, but I
+    // double checked it.
     const visibleMinX = Math.max(0, this.#visibleRect.origin.x - clip.origin.x)
     const visibleMinY = Math.max(0, this.#visibleRect.origin.y - clip.origin.y)
     const visibleMaxX = Math.min(

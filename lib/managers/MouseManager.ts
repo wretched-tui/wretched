@@ -31,6 +31,7 @@ export class MouseManager {
         this.#mousePosition.y,
       )
     }
+
     this.#mouseListeners = new Map()
   }
 

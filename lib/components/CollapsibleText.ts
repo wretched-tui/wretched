@@ -113,7 +113,7 @@ export class CollapsibleText extends View {
       )
       const point = new Point(0, 0).mutableCopy()
       let offsetX = 0
-      if (viewport.visibleRect.size.width < width || height > 1) {
+      if (viewport.contentSize.width < width || height > 1) {
         viewport.registerMouse('mouse.button.left')
         viewport.write(
           this.#isCollapsed ? '► ' : '▼ ',
