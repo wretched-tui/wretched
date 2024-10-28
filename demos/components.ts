@@ -23,6 +23,7 @@ import {
   Separator,
   Slider,
   Space,
+  Tabs,
   Text,
   Tree,
   type FontFamily,
@@ -35,9 +36,7 @@ import {inspect} from 'wretched'
 interceptConsoleLog()
 
 // Log,
-// Scrollable,
 // ScrollableList,
-// Space,
 
 const OBJ = {
   word: 'something',
@@ -187,36 +186,32 @@ const collapsibleText = new CollapsibleText({
   ),
 })
 
-const boxes = [
-  new Box({
-    flex: 1,
-  }),
-  new Box({
-    border: 'double',
-    flex: 1,
-  }),
-  new Box({
-    border: 'dotted',
-    flex: 1,
-  }),
-  new Box({
-    border: 'rounded',
-    flex: 1,
-  }),
-  new Box({
-    border: [
-      '\n╌\n─', //top
-      ' ╎│', // left
-      '┌╌┐\n└┐└\n ╎┌', // tl
-      '┌╌┐\n┘┌┘\n┐╎', // tr
-      ' ╎└\n └╌', // bl
-      '┘╎\n╌┘', // br
-      '─\n╌', // bottom
-      '│╎', // right
+const tabs = new Box({
+  height: 8,
+  highlight: true,
+  child: Tabs.create([
+    ['Single', new Box({flex: 1})],
+    ['Double', new Box({border: 'double', flex: 1})],
+    ['Dotted', new Box({border: 'dotted', flex: 1})],
+    ['Rounded', new Box({border: 'rounded', flex: 1})],
+    [
+      'Custom',
+      new Box({
+        border: [
+          '\n╌\n─', //top
+          ' ╎│', // left
+          '┌╌┐\n└┐└\n ╎┌', // tl
+          '┌╌┐\n┘┌┘\n┐╎', // tr
+          ' ╎└\n └╌', // bl
+          '┘╎\n╌┘', // br
+          '─\n╌', // bottom
+          '│╎', // right
+        ],
+        flex: 1,
+      }),
     ],
-    flex: 1,
-  }),
-]
+  ]),
+})
 
 const digits1 = new Digits({
   text: 'Sphinx of black\nquartz, judge my vow.\n123,456.7890\n(1)[2]{3}\n+-*/ %#:!\n2^⁴',
@@ -281,7 +276,7 @@ const contentView = Flex.right([
       slider3,
       collapsible,
       collapsibleText,
-      Flex.right(boxes, {height: 8}),
+      tabs,
       scrollable,
       tree,
     ],
