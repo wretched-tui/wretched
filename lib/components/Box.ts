@@ -58,7 +58,6 @@ export class Box extends Container {
   #borderChars: CalculatedBorderChars = BORDERS.single
   #borderSizes: BorderSizes = BORDER_SIZE_ZERO
   #highlight: boolean = false
-  #isHover = false
 
   constructor(props: Props) {
     super(props)
@@ -104,14 +103,6 @@ export class Box extends Container {
     )
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
-    }
-  }
-
   render(viewport: Viewport) {
     if (viewport.isEmpty) {
       return super.render(viewport)
@@ -150,7 +141,7 @@ export class Box extends Container {
     const topInnerY = this.#borderSizes.maxTop
     const bottomInnerY = this.#borderSizes.maxTop + innerHeight
 
-    const borderStyle = this.theme.text({isHover: this.#isHover})
+    const borderStyle = this.theme.text({isHover: this.isHover})
     const innerStyle = new Style({background: borderStyle.background})
     const innerOrigin = new Point(
       this.#borderSizes.maxLeft,
