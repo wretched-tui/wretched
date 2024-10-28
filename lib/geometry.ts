@@ -219,6 +219,15 @@ export class Rect {
     return new Rect(toXY(value), this.size)
   }
 
+  offset(point: Point): Rect
+  offset(_: {x: number; y: number}): Rect
+  offset(_: [number, number]): Rect
+  offset(x: number, y: number): Rect
+  offset(...args: PointArgs) {
+    const [x, y] = toXY(args)
+    return new Rect(this.origin.offset(x, y), this.size)
+  }
+
   withWidth(value: number): Rect {
     return new Rect(this.origin, [value, this.size.height])
   }
