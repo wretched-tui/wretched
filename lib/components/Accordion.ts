@@ -15,7 +15,7 @@ interface SectionProps extends ContainerProps {
   title?: string
   view: View
   isOpen?: boolean
-  onClick?: (section: AccordionSection, isOpen: boolean) => void
+  onClick?: (section: Section, isOpen: boolean) => void
 }
 
 // accordion = new Accordion()
@@ -28,20 +28,20 @@ interface SectionProps extends ContainerProps {
 //   Accordion.Section('title3', section3),
 // ])
 //
-// accordion.add(new AccordionSection()) // well behaved
+// accordion.add(new Section()) // well behaved
 // accordion.add(new View()) // undefined behaviour
 export class Accordion extends Container {
-  static Section: typeof AccordionSection
+  static Section: typeof Section
 
   #multiple = false
 
   static create(
-    sections: ([string, View] | AccordionSection)[],
+    sections: ([string, View] | Section)[],
     extraProps: Props = {},
   ): Accordion {
     const accordion = new Accordion(extraProps)
     for (const section of sections) {
-      if (section instanceof AccordionSection) {
+      if (section instanceof Section) {
         accordion.addSection(section)
       } else {
         const [title, view] = section as [string, View]
@@ -68,10 +68,10 @@ export class Accordion extends Container {
   }
 
   get sections() {
-    return this.children.filter(view => view instanceof AccordionSection)
+    return this.children.filter(view => view instanceof Section)
   }
 
-  #sectionDidChange(toggleSection: AccordionSection, isOpen: boolean) {
+  #sectionDidChange(toggleSection: Section, isOpen: boolean) {
     if (this.#multiple || !isOpen) {
       return
     }
@@ -86,16 +86,13 @@ export class Accordion extends Container {
   }
 
   addSection(title: string, view: View): void
-  addSection(section: AccordionSection): void
-  addSection(titleOrSection: string | AccordionSection, view?: View) {
-    let sectionView: AccordionSection
-    if (titleOrSection instanceof AccordionSection) {
+  addSection(section: Section): void
+  addSection(titleOrSection: string | Section, view?: View) {
+    let sectionView: Section
+    if (titleOrSection instanceof Section) {
       sectionView = titleOrSection
     } else {
-      sectionView = AccordionSection.create(
-        titleOrSection as string,
-        view as View,
-      )
+      sectionView = Section.create(titleOrSection as string, view as View)
     }
 
     const onClick = this.#sectionDidChange.bind(this)
@@ -120,16 +117,15 @@ export class Accordion extends Container {
   }
 
   render(viewport: Viewport) {
-    let remainingSize = viewport.contentSize
-
+    const remainingSize = viewport.contentSize.mutableCopy()
     let y = 0
     for (const section of this.sections) {
-      if (y >= viewport.visibleRect.maxY()) {
+      if (y >= viewport.contentSize.height) {
         break
       }
 
       const sectionSize = section.naturalSize(remainingSize)
-      remainingSize = remainingSize.shrink(0, sectionSize.height)
+      remainingSize.height -= sectionSize.height
       viewport.clipped(
         new Rect([0, y], [remainingSize.width, sectionSize.height]),
         inner => {
@@ -141,9 +137,9 @@ export class Accordion extends Container {
   }
 }
 
-class AccordionSection extends Container {
+class Section extends Container {
   #isOpen = false
-  onClick: ((section: AccordionSection, isOpen: boolean) => void) | undefined
+  onClick: ((section: Section, isOpen: boolean) => void) | undefined
 
   #currentViewHeight = 0
   #actualViewHeight = 0
@@ -151,15 +147,15 @@ class AccordionSection extends Container {
   #titleView: Text
   #view: View
 
+  declare title: string
+
   static create(
     title: string,
     view: View,
     extraProps: Omit<SectionProps, 'title' | 'view'> = {},
   ) {
-    return new AccordionSection({title, view, ...extraProps})
+    return new Section({title, view, ...extraProps})
   }
-
-  declare title: string
 
   constructor({title, view, isOpen, ...props}: SectionProps) {
     super(props)
@@ -203,7 +199,7 @@ class AccordionSection extends Container {
   }
 
   get titleStyle() {
-    return new Style({underline: true, bold: this.#isOpen})
+    return new Style({underline: true, bold: this.#isOpen || this.isHover})
   }
 
   open() {
@@ -252,9 +248,10 @@ class AccordionSection extends Container {
 
     if (isMouseClicked(event)) {
       this.#isOpen = !this.#isOpen
-      this.#titleView.style = this.titleStyle
       this.onClick?.(this, this.#isOpen)
     }
+
+    this.#titleView.style = this.titleStyle
   }
 
   receiveTick(dt: number): boolean {
@@ -366,7 +363,7 @@ class AccordionSection extends Container {
   }
 }
 
-Accordion.Section = AccordionSection
+Accordion.Section = Section
 
 const ARROWS = {
   open: '△',
