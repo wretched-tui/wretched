@@ -19,18 +19,18 @@ export class Header extends Container {
   #style: Style
   #border: Props['border'] = 'single'
 
-  constructor(props: Props) {
+  constructor({bold, dim, text, font, ...props}: Props) {
     super(props)
 
     this.#border = props.border
 
     this.#style = new Style({
-      bold: props.bold,
-      dim: props.dim,
+      bold: bold,
+      dim: dim,
     })
     this.#text = new Text({
-      text: props.text,
-      font: props.font,
+      text: text,
+      font: font,
       style: this.#style,
     })
 
