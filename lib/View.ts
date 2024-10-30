@@ -47,7 +47,7 @@ export interface Props {
   debug?: boolean
 }
 
-interface Edges {
+export interface Edges {
   top: number
   right: number
   bottom: number
