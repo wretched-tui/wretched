@@ -9,7 +9,7 @@ type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
 interface Props extends ViewProps {
   children?: ([FlexShorthand, View] | View)[]
   direction?: Direction
-  shrink?: boolean
+  fill?: boolean
   gap?: number
 }
 
@@ -30,7 +30,7 @@ function fromShorthand(
 export class Flex extends Container {
   #direction: Direction = 'topToBottom'
   #gap: number = 0
-  #shrink: boolean = false
+  #fill: boolean = false
   #sizes: Map<View, FlexSize> = new Map()
 
   static down(
@@ -65,9 +65,9 @@ export class Flex extends Container {
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
-  constructor({children, direction, shrink, gap, ...viewProps}: Props) {
+  constructor({children, direction, fill: shrink, gap, ...viewProps}: Props) {
     super(viewProps)
-    this.#update({direction, shrink, gap})
+    this.#update({direction, fill: shrink, gap})
     this.#updateChildren(children)
   }
 
@@ -97,9 +97,9 @@ export class Flex extends Container {
     }
   }
 
-  #update({direction, shrink, gap}: Props) {
+  #update({direction, fill, gap}: Props) {
     this.#direction = direction ?? 'topToBottom'
-    this.#shrink = shrink ?? false
+    this.#fill = fill ?? true
     this.#gap = gap ?? 0
   }
 
@@ -140,7 +140,7 @@ export class Flex extends Container {
       }
     }
 
-    if (hasFlex && !this.#shrink) {
+    if (hasFlex && this.#fill) {
       if (this.isVertical) {
         const height = Math.max(size.height, available.height)
         return new Size(size.width, height)

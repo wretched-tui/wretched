@@ -352,7 +352,7 @@ class DropdownSelector<T> extends Container {
     const button = this.#cellButton(choice, row)
 
     return Flex.right({
-      shrink: true,
+      fill: false,
       children: [
         ['flex1', button],
         new Separator({direction: 'vertical', border: 'single'}),
