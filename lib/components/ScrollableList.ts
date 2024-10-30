@@ -433,8 +433,10 @@ export class ScrollableList<T> extends Container {
   #scrollDownToNextRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset <= -height) {
-      const nextHeight = this.sizeForRow(nextRow + 1, this.contentSize.width)
-        ?.height
+      const nextHeight = this.sizeForRow(
+        nextRow + 1,
+        this.contentSize.width,
+      )?.height
       if (nextHeight === undefined) {
         nextOffset = -height
         break
@@ -450,8 +452,10 @@ export class ScrollableList<T> extends Container {
   #scrollUpToPrevRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset > 0) {
-      const nextHeight = this.sizeForRow(nextRow - 1, this.contentSize.width)
-        ?.height
+      const nextHeight = this.sizeForRow(
+        nextRow - 1,
+        this.contentSize.width,
+      )?.height
       if (nextHeight === undefined) {
         nextOffset = 0
         break

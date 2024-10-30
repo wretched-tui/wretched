@@ -47,7 +47,7 @@ export class TrackMouse extends Container {
         pen.replacePen(x === this.#position.x ? highlight : Style.NONE)
         const char =
           cx % 10 === 0
-            ? ['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][cx / 10] ?? 'X'
+            ? (['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][cx / 10] ?? 'X')
             : `${cx % 10}`
         viewport.write(char, new Point(x, 0))
       }
@@ -56,7 +56,7 @@ export class TrackMouse extends Container {
         pen.replacePen(y === this.#position.y ? highlight : Style.NONE)
         const char =
           cy % 10 === 0
-            ? ['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][cy / 10] ?? 'X'
+            ? (['0', '⠁', '⠉', '⠋', '⠛', '⠟', '⠿', '⡿', '⣿'][cy / 10] ?? 'X')
             : `${cy % 10}`
         viewport.write(char, new Point(0, y))
       }

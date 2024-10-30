@@ -118,8 +118,8 @@ export class Tabs extends Container {
         index === this.#selectedTab
           ? [start, stop + width, 0]
           : index > this.#selectedTab
-          ? [start, stop, 0]
-          : [start + width, stop + width, width],
+            ? [start, stop, 0]
+            : [start + width, stop + width, width],
       [0, 0, 0] as [number, number, number],
     )
     const dx = dt / 20
