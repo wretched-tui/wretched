@@ -22,6 +22,7 @@ export type BorderChars =
   | [string, string, string, string, string, string, string]
   // top, left, …corners…, bottom, right
   | [string, string, string, string, string, string, string, string]
+
 export type CalculatedBorderChars = [
   string,
   string,
@@ -89,9 +90,9 @@ export class Box extends Container {
     this.border = border ?? 'single'
   }
 
-  naturalSize(size: Size): Size {
+  naturalSize(available: Size): Size {
     const naturalSize = super.naturalSize(
-      size.shrink(
+      available.shrink(
         this.#borderSizes.maxLeft + this.#borderSizes.maxRight,
         this.#borderSizes.maxTop + this.#borderSizes.maxBottom,
       ),

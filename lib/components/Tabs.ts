@@ -73,8 +73,8 @@ export class Tabs extends Container {
     this.#selectedTab = index
   }
 
-  naturalSize(availableSize: Size) {
-    const remainingSize = availableSize.mutableCopy()
+  naturalSize(available: Size) {
+    const remainingSize = available.mutableCopy()
     const tabTitleSize = this.tabs.reduce((size, tab, index) => {
       const tabSize = tab.naturalSize(remainingSize).mutableCopy()
       size.width += tabSize.width
@@ -87,7 +87,7 @@ export class Tabs extends Container {
     tabTitleSize.height += TAB_SEPARATOR_HEIGHT
 
     const childSize = Size.zero.mutableCopy()
-    const availableChildSize = availableSize.shrink(0, tabTitleSize.height)
+    const availableChildSize = available.shrink(0, tabTitleSize.height)
     for (const child of this.tabs.map(tab => tab.view)) {
       childSize.width = Math.max(
         childSize.width,
@@ -118,8 +118,8 @@ export class Tabs extends Container {
         index === this.#selectedTab
           ? [start, stop + width, 0]
           : index > this.#selectedTab
-            ? [start, stop, 0]
-            : [start + width, stop + width, width],
+          ? [start, stop, 0]
+          : [start + width, stop + width, width],
       [0, 0, 0] as [number, number, number],
     )
     const dx = dt / 20
@@ -307,9 +307,9 @@ class Tab extends Container {
     return new Style({bold: this.isHover})
   }
 
-  naturalSize(availableSize: Size) {
+  naturalSize(available: Size) {
     return this.#titleView
-      .naturalSize(availableSize)
+      .naturalSize(available)
       .grow(TAB_TITLE_PAD, TAB_SEPARATOR_HEIGHT)
   }
 

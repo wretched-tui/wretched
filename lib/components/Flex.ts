@@ -103,9 +103,9 @@ export class Flex extends Container {
     this.#gap = gap ?? 0
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     const size = Size.zero.mutableCopy()
-    const remainingSize = availableSize.mutableCopy()
+    const remainingSize = available.mutableCopy()
     let hasFlex = false
     for (const child of this.children) {
       const childSize = child.naturalSize(remainingSize)
@@ -142,10 +142,10 @@ export class Flex extends Container {
 
     if (hasFlex && !this.#shrink) {
       if (this.isVertical) {
-        const height = Math.max(size.height, availableSize.height)
+        const height = Math.max(size.height, available.height)
         return new Size(size.width, height)
       } else {
-        const width = Math.max(size.width, availableSize.width)
+        const width = Math.max(size.width, available.width)
         return new Size(width, size.height)
       }
     }

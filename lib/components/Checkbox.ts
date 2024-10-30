@@ -89,8 +89,8 @@ export class Checkbox extends Container {
     return unicode.lineWidth(box)
   }
 
-  naturalSize(availableSize: Size): Size {
-    return super.naturalSize(availableSize).grow(this.#boxWidth(), 0)
+  naturalSize(available: Size): Size {
+    return super.naturalSize(available).grow(this.#boxWidth(), 0)
   }
 
   receiveMouse(event: MouseEvent) {

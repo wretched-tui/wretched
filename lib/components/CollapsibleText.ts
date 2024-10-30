@@ -45,7 +45,7 @@ export class CollapsibleText extends View {
     this.invalidateSize()
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     if (this.#lines.length === 0) {
       return Size.zero
     }
@@ -53,9 +53,9 @@ export class CollapsibleText extends View {
     if (this.#lines.length === 1) {
       const {width: lineWidth, height: lineHeight} = unicode.stringSize(
         this.#lines,
-        availableSize.width,
+        available.width,
       )
-      if (lineWidth <= availableSize.width && lineHeight === 1) {
+      if (lineWidth <= available.width && lineHeight === 1) {
         return new Size(lineWidth, 1)
       }
 
@@ -68,7 +68,7 @@ export class CollapsibleText extends View {
 
     if (this.#isCollapsed) {
       const lineWidth = unicode.lineWidth(this.#lines[0])
-      if (lineWidth <= availableSize.width) {
+      if (lineWidth <= available.width) {
         return new Size(lineWidth, 1)
       }
 
@@ -76,7 +76,7 @@ export class CollapsibleText extends View {
     }
 
     const stringSize = new Size(
-      unicode.stringSize(this.#lines, availableSize.width),
+      unicode.stringSize(this.#lines, available.width),
     ).mutableCopy()
     stringSize.width += 2
 

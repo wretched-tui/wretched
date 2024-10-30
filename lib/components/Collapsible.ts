@@ -79,12 +79,12 @@ export class Collapsible extends Container {
     }
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     let size: Size | undefined
     if (this.#isCollapsed) {
-      size = this.#collapsedView?.naturalSize(availableSize)
+      size = this.#collapsedView?.naturalSize(available)
     } else {
-      size = this.#expandedView?.naturalSize(availableSize)
+      size = this.#expandedView?.naturalSize(available)
     }
 
     return (size ?? Size.zero).grow(2, 0)

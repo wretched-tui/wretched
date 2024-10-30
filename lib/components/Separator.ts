@@ -51,11 +51,11 @@ export class Separator extends View {
     this.#border = border ?? 'single'
   }
 
-  naturalSize(size: Size): Size {
+  naturalSize(available: Size): Size {
     if (this.#direction === 'vertical') {
-      return new Size(1 + 2 * this.#padding, size.height)
+      return new Size(1 + 2 * this.#padding, available.height)
     } else {
-      return new Size(size.width, 1 + 2 * this.#padding)
+      return new Size(available.width, 1 + 2 * this.#padding)
     }
   }
 

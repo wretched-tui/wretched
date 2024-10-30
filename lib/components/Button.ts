@@ -66,9 +66,9 @@ export class Button extends Container {
     this.#onClick = onClick
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     const [left, right] = this.#borderSize()
-    return super.naturalSize(availableSize).grow(left + right, 0)
+    return super.naturalSize(available).grow(left + right, 0)
   }
 
   get text() {
@@ -140,8 +140,8 @@ export class Button extends Container {
         this.#align === 'center'
           ? Math.round((viewport.contentSize.width - naturalSize.width) / 2)
           : this.#align === 'left'
-            ? 1
-            : viewport.contentSize.width - naturalSize.width - 1,
+          ? 1
+          : viewport.contentSize.width - naturalSize.width - 1,
       offset = new Point(
         offsetLeft,
         Math.round((viewport.contentSize.height - naturalSize.height) / 2),

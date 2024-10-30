@@ -72,21 +72,17 @@ export class ScrollableList<T> extends Container {
 
   #update({}: Props<T>) {}
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     let {row, offset: y} = this.#contentOffset
     const scrollWidth = this.#showScrollbars ? 1 : 0
 
-    while (y < availableSize.height) {
+    while (y < available.height) {
       const view = this.viewForRow(row)
       if (!view) {
         break
       }
 
-      const rowSize = this.sizeForRow(
-        row,
-        availableSize.width - scrollWidth,
-        view,
-      )
+      const rowSize = this.sizeForRow(row, available.width - scrollWidth, view)
       // persist #maxWidth so that the largest row _remains_ the largest row even
       // after it scrolls out of the visible window
       this.#maxWidth = Math.max(this.#maxWidth, rowSize.width)
@@ -94,10 +90,7 @@ export class ScrollableList<T> extends Container {
       row += 1
     }
 
-    return new Size(
-      this.#maxWidth + scrollWidth,
-      Math.min(availableSize.height, y),
-    )
+    return new Size(this.#maxWidth + scrollWidth, Math.min(available.height, y))
   }
 
   /**
@@ -440,10 +433,8 @@ export class ScrollableList<T> extends Container {
   #scrollDownToNextRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset <= -height) {
-      const nextHeight = this.sizeForRow(
-        nextRow + 1,
-        this.contentSize.width,
-      )?.height
+      const nextHeight = this.sizeForRow(nextRow + 1, this.contentSize.width)
+        ?.height
       if (nextHeight === undefined) {
         nextOffset = -height
         break
@@ -459,10 +450,8 @@ export class ScrollableList<T> extends Container {
   #scrollUpToPrevRow(row: number, nextOffset: number, height: number) {
     let nextRow = row
     while (nextOffset > 0) {
-      const nextHeight = this.sizeForRow(
-        nextRow - 1,
-        this.contentSize.width,
-      )?.height
+      const nextHeight = this.sizeForRow(nextRow - 1, this.contentSize.width)
+        ?.height
       if (nextHeight === undefined) {
         nextOffset = 0
         break

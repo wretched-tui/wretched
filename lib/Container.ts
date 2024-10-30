@@ -53,11 +53,11 @@ export abstract class Container extends View {
     return this.#children
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     let width = 0
     let height = 0
     for (const child of this.#children) {
-      const naturalSize = child.naturalSize(availableSize)
+      const naturalSize = child.naturalSize(available)
       width = Math.max(width, naturalSize.width)
       height = Math.max(height, naturalSize.height)
     }

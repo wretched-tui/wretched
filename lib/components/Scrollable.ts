@@ -52,8 +52,8 @@ export class Scrollable extends Container {
     this.#scrollHeight = scrollHeight ?? 1
   }
 
-  naturalSize(availableSize: Size) {
-    const size = super.naturalSize(availableSize)
+  naturalSize(available: Size) {
+    const size = super.naturalSize(available)
     return size
   }
 

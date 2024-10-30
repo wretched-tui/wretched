@@ -7,10 +7,10 @@ export class Window extends Container {
     super(viewProps)
   }
 
-  naturalSize(size: Size): Size {
+  naturalSize(available: Size): Size {
     // even though we use the parent size no matter what, we do need to give child
     // views a chance to "resize" according to the available frame
-    super.naturalSize(size)
-    return size
+    super.naturalSize(available)
+    return available
   }
 }

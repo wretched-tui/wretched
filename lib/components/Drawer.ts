@@ -104,8 +104,8 @@ export class Drawer extends Container {
     }
   }
 
-  naturalSize(availableSize: Size): Size {
-    const [drawerSize, contentSize] = this.#saveDrawerSize(availableSize)
+  naturalSize(available: Size): Size {
+    const [drawerSize, contentSize] = this.#saveDrawerSize(available)
 
     switch (this.#location) {
       case 'top':
@@ -190,20 +190,17 @@ export class Drawer extends Container {
     }
   }
 
-  #saveDrawerSize(availableSize: Size) {
+  #saveDrawerSize(available: Size) {
     let remainingSize: Size
     let adjustSize: Size
     switch (this.#location) {
       case 'top':
       case 'bottom':
-        remainingSize = availableSize.shrink(
-          0,
-          DRAWER_BTN_SIZE.horizontal.height,
-        )
+        remainingSize = available.shrink(0, DRAWER_BTN_SIZE.horizontal.height)
         break
       case 'left':
       case 'right':
-        remainingSize = availableSize.shrink(DRAWER_BTN_SIZE.vertical.width, 0)
+        remainingSize = available.shrink(DRAWER_BTN_SIZE.vertical.width, 0)
         break
     }
 

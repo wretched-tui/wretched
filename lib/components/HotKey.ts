@@ -25,7 +25,7 @@ export class HotKey extends Container {
     this.#hotKey = hotKey
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(): Size {
     return Size.zero
   }
 

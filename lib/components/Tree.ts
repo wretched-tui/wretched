@@ -148,13 +148,13 @@ export class Tree<T extends any> extends Container {
     return this.#expanded.has(path)
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     let titleSize = Size.zero
     if (this.#titleView) {
-      titleSize = this.#titleView.naturalSize(availableSize)
+      titleSize = this.#titleView.naturalSize(available)
     }
 
-    const remainingSize = availableSize.shrink(0, titleSize.height)
+    const remainingSize = available.shrink(0, titleSize.height)
     const contentSize = this.#contentView.naturalSize(remainingSize)
     return new Size(
       Math.max(titleSize.width, contentSize.width),
@@ -209,8 +209,8 @@ class TreeChild extends Container {
     this.invalidateSize()
   }
 
-  naturalSize(availableSize: Size): Size {
-    const size = super.naturalSize(availableSize).mutableCopy()
+  naturalSize(available: Size): Size {
+    const size = super.naturalSize(available).mutableCopy()
     size.width += TREE_BULLET_WIDTH * this.#pathData.length
 
     return size

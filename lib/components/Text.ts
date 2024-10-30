@@ -122,11 +122,11 @@ export class Text extends View {
     this.invalidateSize()
   }
 
-  naturalSize(availableSize: Size): Size {
+  naturalSize(available: Size): Size {
     return this.#lines.reduce((size, [, width]) => {
       if (this.#wrap) {
-        const lineHeight = 1 + ~~(width / availableSize.width)
-        size.width = availableSize.width
+        const lineHeight = 1 + ~~(width / available.width)
+        size.width = available.width
         size.height += lineHeight
         return size
       }
@@ -158,8 +158,8 @@ export class Text extends View {
           this.#alignment === 'left'
             ? 0
             : this.#alignment === 'center'
-              ? ~~((viewport.contentSize.width - width) / 2)
-              : viewport.contentSize.width - width
+            ? ~~((viewport.contentSize.width - width) / 2)
+            : viewport.contentSize.width - width
         point.x = offsetX
         for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)

@@ -104,8 +104,8 @@ export class Accordion extends Container {
     this.add(sectionView)
   }
 
-  naturalSize(availableSize: Size): Size {
-    let remainingSize = availableSize
+  naturalSize(available: Size): Size {
+    let remainingSize = available
     return this.sections.reduce((size, section) => {
       const sectionSize = section.naturalSize(remainingSize)
       remainingSize = remainingSize.shrink(0, sectionSize.height)
@@ -220,11 +220,11 @@ class Section extends Container {
     this.onClick = onClick
   }
 
-  naturalSize(availableSize: Size) {
+  naturalSize(available: Size) {
     // 4 => left margin, right space/arrow/space
     // 1 => bottom separator
-    const collapsedSize = this.#titleView.naturalSize(availableSize).grow(4, 1)
-    const remainingSize = availableSize.shrink(0, collapsedSize.height)
+    const collapsedSize = this.#titleView.naturalSize(available).grow(4, 1)
+    const remainingSize = available.shrink(0, collapsedSize.height)
     // 1 => left margin (no right margin)
     const viewSize = this.#view.naturalSize(remainingSize).grow(1, 0)
     return this.#currentSize(collapsedSize, viewSize)
