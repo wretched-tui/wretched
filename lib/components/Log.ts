@@ -96,11 +96,11 @@ class LogLineView extends Container {
     if (lines.length > 1) {
       logView = new Collapsible({
         isCollapsed: false,
-        collapsedView: new Text({
+        collapsed: new Text({
           text: firstLine,
           wrap: false,
         }),
-        expandedView: new Text({
+        expanded: new Text({
           lines: lines,
           wrap: true,
         }),

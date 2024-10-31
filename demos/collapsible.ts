@@ -16,7 +16,7 @@ const OBJ = {
 demo(
   new Collapsible({
     isCollapsed: false,
-    collapsedView: new Text({text: inspect(OBJ, false)}),
-    expandedView: new Text({text: inspect(OBJ, true)}),
+    collapsed: new Text({text: inspect(OBJ, false)}),
+    expanded: new Text({text: inspect(OBJ, true)}),
   }),
 )

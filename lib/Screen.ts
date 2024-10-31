@@ -23,7 +23,9 @@ import {TickManager} from './managers/TickManager'
 import {Window} from './components/Window'
 import {System, UnboundSystem} from './System'
 
-type ViewConstructor = (program: BlessedProgram) => View | Promise<View>
+type ViewConstructor<T extends View> = (
+  program: BlessedProgram,
+) => T | Promise<T>
 
 export class Screen {
   #program: SGRTerminal
@@ -54,23 +56,25 @@ export class Screen {
     process.exit(0)
   }
 
-  static async start(
-    viewConstructor: View | ViewConstructor,
+  static async start(): Promise<[Screen, BlessedProgram, Window]>
+
+  static async start<T extends View>(
+    viewConstructor: T | ViewConstructor<T>,
     opts: {
       quitChar?: 'c' | 'q' | '' | undefined | false
     },
-  ): Promise<[Screen, BlessedProgram, View]>
+  ): Promise<[Screen, BlessedProgram, T]>
 
-  static async start(
-    viewConstructor: View | ViewConstructor,
-  ): Promise<[Screen, BlessedProgram, View]>
+  static async start<T extends View>(
+    viewConstructor: T | ViewConstructor<T>,
+  ): Promise<[Screen, BlessedProgram, T]>
 
-  static async start(
-    viewConstructor: View | ViewConstructor = new Window(),
+  static async start<T extends View = Window>(
+    viewConstructor: T | ViewConstructor<T> = new Window() as unknown as T,
     opts: {
       quitChar?: 'c' | 'q' | '' | undefined | false
     } = {quitChar: 'c'},
-  ): Promise<[Screen, BlessedProgram, View]> {
+  ): Promise<[Screen, BlessedProgram, T]> {
     const program = blessedProgram({
       useBuffer: true,
       tput: true,

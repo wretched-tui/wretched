@@ -175,8 +175,8 @@ const tree = new Tree({
 
 const collapsible = new Collapsible({
   isCollapsed: true,
-  collapsedView: new Text({text: inspect1}),
-  expandedView: new Text({text: inspect2}),
+  collapsed: new Text({text: inspect1}),
+  expanded: new Text({text: inspect2}),
 })
 
 const collapsibleText = new CollapsibleText({

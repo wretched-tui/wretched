@@ -15,8 +15,8 @@ import {
 
 interface StyleProps {
   isCollapsed?: boolean
-  collapsedView?: View
-  expandedView?: View
+  collapsed?: View
+  expanded?: View
 }
 
 type Props = StyleProps & ContainerProps
@@ -47,16 +47,28 @@ export class Collapsible extends Container {
   }
 
   add(child: View, at?: number) {
-    if (this.children.length === 0) {
-      this.#collapsedView = child
-    } else if (this.children.length === 1) {
-      this.#expandedView = child
-    }
-
     super.add(child, at)
+    this.#collapsedView = this.children[0]
+    this.#expandedView = this.children[1]
   }
 
-  #update({isCollapsed, collapsedView, expandedView}: Props) {
+  removeChild(remove: View | number) {
+    super.removeChild(remove)
+    this.#collapsedView = this.children[0]
+    this.#expandedView = this.children[1]
+  }
+
+  removeAllChildren() {
+    this.#collapsedView = undefined
+    this.#expandedView = undefined
+    super.removeAllChildren()
+  }
+
+  #update({
+    isCollapsed,
+    collapsed: collapsedView,
+    expanded: expandedView,
+  }: Props) {
     this.#isCollapsed = isCollapsed ?? true
 
     // edge case: expandedView is being assigned, but not collapsedView
@@ -67,14 +79,12 @@ export class Collapsible extends Container {
     if (collapsedView && collapsedView !== this.#collapsedView) {
       this.#collapsedView?.removeFromParent()
 
-      this.#collapsedView = collapsedView
       this.add(collapsedView, 0)
     }
 
     if (expandedView && expandedView !== this.#expandedView) {
       this.#expandedView?.removeFromParent()
 
-      this.#expandedView = expandedView
       this.add(expandedView, 1)
     }
   }
