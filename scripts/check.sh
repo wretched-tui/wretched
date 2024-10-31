@@ -1,7 +1,7 @@
 function checksum() {
-  find $1 -type f '(' -name '*.ts' -or -name '*.js' ')' -exec sha1sum "{}" \; | \
+  find $1 -type f '(' -name '*.ts' -or -name '*.js' ')' -exec shasum "{}" \; | \
     ssed 'sort/(lib.*)' 1 join | \
-    sha1sum | \
+    shasum | \
     ssed 1
 }
 

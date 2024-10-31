@@ -3,7 +3,7 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
-    "build": "yarn clean && yarn tsc && yarn cp-usr",
+    "build": "yarn clean && yarn tsc",
     "checksum": ". ../scripts/check.sh .",
     "demo": "yarn checksum && cd dist && node --enable-source-maps --",
     "clean": "rm -rf dist/",

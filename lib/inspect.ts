@@ -27,6 +27,7 @@ export function inspect(
     if (visited.has(value)) {
       return red('[Circular]')
     } else {
+      visited = new Set(visited)
       visited.add(value)
     }
   }
