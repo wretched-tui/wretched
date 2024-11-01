@@ -65,8 +65,6 @@ export class Box extends Container {
   constructor(props: Props) {
     super(props)
 
-    this.#update(props)
-
     Object.defineProperty(this, 'border', {
       enumerable: true,
       get: () => this.#border,
@@ -75,6 +73,8 @@ export class Box extends Container {
         ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
       },
     })
+
+    this.#update(props)
   }
 
   update(props: Props) {
