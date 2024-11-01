@@ -69,7 +69,6 @@ export class Box extends Container {
 
     Object.defineProperty(this, 'border', {
       enumerable: true,
-      writable: true,
       get: () => this.#border,
       set: (value: Border | BorderChars) => {
         this.#border = value
