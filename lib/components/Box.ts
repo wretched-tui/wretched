@@ -60,6 +60,8 @@ export class Box extends Container {
   #borderSizes: BorderSizes = BORDER_SIZE_ZERO
   #highlight: boolean = false
 
+  declare border: Border | BorderChars
+
   constructor(props: Props) {
     super(props)
 
@@ -68,16 +70,12 @@ export class Box extends Container {
     Object.defineProperty(this, 'border', {
       enumerable: true,
       writable: true,
+      get: () => this.#border,
+      set: (value: Border | BorderChars) => {
+        this.#border = value
+        ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
+      },
     })
-  }
-
-  get border() {
-    return this.#border
-  }
-
-  set border(value: Border | BorderChars) {
-    this.#border = value
-    ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
   }
 
   update(props: Props) {
