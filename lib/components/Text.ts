@@ -7,6 +7,7 @@ import {Style} from '../Style'
 import {Point, Size} from '../geometry'
 import {Alignment, FontFamily} from './types'
 import {FONTS} from './fonts'
+import {define} from '../util'
 
 interface TextProps {
   text?: string
@@ -41,37 +42,35 @@ export class Text extends View {
   #wrap: StyleProps['wrap'] = DEFAULTS.wrap
   #font: FontFamily = DEFAULTS.font
 
-  declare text: string
-  declare font: FontFamily
-
   constructor(props: Props = {}) {
     super(props)
 
     this.#update(props)
 
-    Object.defineProperty(this, 'text', {
-      enumerable: true,
-      get: () => this.#text,
-      set: (value: string) => {
-        if (this.#text === value) {
-          return
-        }
+    define(this, 'text', {enumerable: true})
+    define(this, 'font', {enumerable: true})
+  }
 
-        this.#updateLines(value, value.split('\n'), this.#font)
-      },
-    })
+  get text() {
+    return this.#text
+  }
+  set text(value: string) {
+    if (this.#text === value) {
+      return
+    }
 
-    Object.defineProperty(this, 'font', {
-      enumerable: true,
-      get: () => this.#font,
-      set: (value: FontFamily) => {
-        if (this.#font === value) {
-          return
-        }
+    this.#updateLines(value, value.split('\n'), this.#font)
+  }
 
-        this.#updateLines(this.#text, undefined, value)
-      },
-    })
+  get font() {
+    return this.#font
+  }
+  set font(value: FontFamily) {
+    if (this.#font === value) {
+      return
+    }
+
+    this.#updateLines(this.#text, undefined, value)
   }
 
   get style() {

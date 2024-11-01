@@ -6,6 +6,7 @@ import {Viewport} from '../Viewport'
 import {System} from '../System'
 import {type MouseEvent, isMouseClicked} from '../events'
 import {Style} from '../Style'
+import {define} from '../util'
 
 interface Props extends ContainerProps {
   multiple?: boolean
@@ -147,8 +148,6 @@ class Section extends Container {
   #titleView: Text
   #view: View
 
-  declare title: string
-
   static create(
     title: string,
     view: View,
@@ -173,15 +172,14 @@ class Section extends Container {
     this.add(this.#titleView)
     this.add(view)
 
-    Object.defineProperty(this, 'title', {
-      enumerable: true,
-      get() {
-        return this.#titleView.text
-      },
-      set(value: string) {
-        this.#titleView.text = value
-      },
-    })
+    define(this, 'title', {enumerable: true})
+  }
+
+  get title() {
+    return this.#titleView.text
+  }
+  set title(value: string) {
+    this.#titleView.text = value
   }
 
   get isOpen() {

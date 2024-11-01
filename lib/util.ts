@@ -49,3 +49,18 @@ export function centerPad(str: string, length: number): string {
   const right = ' '.repeat(~~((length - width) / 2 + 0.5))
   return left.concat(str, right)
 }
+
+export function define(
+  object: any,
+  property: string,
+  attributes: PropertyDescriptor,
+) {
+  const descriptor = Object.getOwnPropertyDescriptor(
+    object.constructor.prototype,
+    property,
+  )
+  if (descriptor) {
+    const modified_descriptor = Object.assign(descriptor, attributes)
+    Object.defineProperty(object, property, modified_descriptor)
+  }
+}

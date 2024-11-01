@@ -6,6 +6,7 @@ import {View} from '../View'
 import {Viewport} from '../Viewport'
 import {System} from '../System'
 import {isMouseClicked, type MouseEvent} from '../events'
+import {define} from '../util'
 
 interface Props extends ContainerProps {}
 
@@ -271,8 +272,6 @@ class Tab extends Container {
   view: View
   onClick: ((tab: Tab) => void) | undefined
 
-  declare title: string
-
   static create(
     title: string,
     view: View,
@@ -292,15 +291,14 @@ class Tab extends Container {
     })
     this.add(this.#titleView)
 
-    Object.defineProperty(this, 'title', {
-      enumerable: true,
-      get() {
-        return this.#titleView.text
-      },
-      set(value: string) {
-        this.#titleView.text = value
-      },
-    })
+    define(this, 'title', {enumerable: true})
+  }
+
+  get title() {
+    return this.#titleView.text
+  }
+  set title(value: string) {
+    this.#titleView.text = value
   }
 
   get titleStyle() {

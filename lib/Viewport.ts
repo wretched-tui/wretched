@@ -7,6 +7,7 @@ import {Rect, Point, Size} from './geometry'
 import {Screen} from './Screen'
 import {View} from './View'
 import type {HotKey, MouseEventListenerName} from './events'
+import {define} from './util'
 
 /**
  * Defines a region (contentSize) in which to draw, and a subset (visibleRect) that
@@ -26,16 +27,6 @@ export class Viewport {
    * For modals, this offset points to the Rect of the view that presented the modal
    */
   parentRect: Rect
-  // during render, `contentSize` is what you should use for laying out your
-  // rectangles. in most cases this is synonymous with "visible" area, but not
-  // always.
-  declare contentSize: Size
-  // `visibleRect` can be used to optimize drawing. `visibleRect.origin`
-  // represents the first visible point, taking clipping into account.
-  declare visibleRect: Rect
-  // `contentRect` is a convenience property, useful for creating clipped inner
-  // regions. origin is always [0, 0] and size is contentSize.
-  declare contentRect: Rect
 
   constructor(screen: Screen, terminal: Terminal, contentSize: Size) {
     const rect = new Rect(Point.zero, contentSize)
@@ -48,26 +39,34 @@ export class Viewport {
     this.#style = Style.NONE
 
     // control visibility of props for inspect(viewport)
-    Object.defineProperties(this, {
-      contentSize: {
-        enumerable: true,
-        get: () => {
-          return this.#contentSize
-        },
-      },
-      contentRect: {
-        enumerable: false,
-        get: () => {
-          return new Rect(Point.zero, this.#contentSize)
-        },
-      },
-      visibleRect: {
-        enumerable: true,
-        get: () => {
-          return this.#visibleRect
-        },
-      },
-    })
+    define(this, 'contentSize', {enumerable: true})
+    define(this, 'contentRect', {enumerable: true})
+    define(this, 'visibleRect', {enumerable: true})
+  }
+
+  /**
+   * during render, `contentSize` is what you should use for laying out your
+   * rectangles. in most cases this is synonymous with "visible" area, but not
+   * always.
+   */
+  get contentSize() {
+    return this.#contentSize
+  }
+
+  /*
+   * `visibleRect` can be used to optimize drawing. `visibleRect.origin`
+   * represents the first visible point, taking clipping into account.
+   */
+  get visibleRect(): Rect {
+    return this.#visibleRect
+  }
+
+  /*
+   * `contentRect` is a convenience property, useful for creating clipped inner
+   * regions. origin is always [0, 0] and size is contentSize.
+   */
+  get contentRect(): Rect {
+    return new Rect(Point.zero, this.#contentSize)
   }
 
   get isEmpty(): boolean {

@@ -12,6 +12,7 @@ import {
 } from '../events'
 import type {Style} from '../Style'
 import {Theme} from '../Theme'
+import {define} from '../util'
 
 interface Props extends ViewProps {
   location?: Edge
@@ -41,7 +42,6 @@ export class Drawer extends Container {
   #currentDx = 0
   #location: Edge = 'left'
   #onToggle: Props['onToggle']
-  declare location: Edge
 
   constructor({contentView, drawerView, ...props}: ConstructorProps) {
     super(props)
@@ -51,14 +51,15 @@ export class Drawer extends Container {
 
     this.#update(props)
 
-    Object.defineProperty(this, 'location', {
-      enumerable: true,
-      get: () => this.#location,
-      set: (value: Edge) => {
-        this.#location = value
-        this.invalidateSize()
-      },
-    })
+    define(this, 'location', {enumerable: true})
+  }
+
+  get location() {
+    return this.#location
+  }
+  set location(value: Edge) {
+    this.#location = value
+    this.invalidateSize()
   }
 
   update(props: Props) {

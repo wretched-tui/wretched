@@ -5,6 +5,7 @@ import {type Props as ContainerProps, Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {Style} from '../Style'
 import {type MouseEvent, isMouseEnter, isMouseExit} from '../events'
+import {define} from '../util'
 
 export type Border =
   | 'single'
@@ -60,21 +61,20 @@ export class Box extends Container {
   #borderSizes: BorderSizes = BORDER_SIZE_ZERO
   #highlight: boolean = false
 
-  declare border: Border | BorderChars
-
   constructor(props: Props) {
     super(props)
 
-    Object.defineProperty(this, 'border', {
-      enumerable: true,
-      get: () => this.#border,
-      set: (value: Border | BorderChars) => {
-        this.#border = value
-        ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
-      },
-    })
+    define(this, 'border', {enumerable: true})
 
     this.#update(props)
+  }
+
+  get border() {
+    return this.#border
+  }
+  set border(value: Border | BorderChars) {
+    this.#border = value
+    ;[this.#borderChars, this.#borderSizes] = calculateBorder(value)
   }
 
   update(props: Props) {

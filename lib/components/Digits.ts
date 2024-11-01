@@ -5,6 +5,7 @@ import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Style} from '../Style'
 import {Point, Size} from '../geometry'
+import {define} from '../util'
 
 interface Props extends ViewProps {
   text: string
@@ -84,20 +85,20 @@ export class Digits extends View {
   #digits: Digit[] = []
   #bold: boolean = false
   #style: Props['style']
-  declare text: string
 
   constructor(props: Props) {
     super(props)
 
     this.#update(props)
 
-    Object.defineProperty(this, 'text', {
-      enumerable: true,
-      get: () => this.#text,
-      set: (value: string) => {
-        this.#updateNumber(value)
-      },
-    })
+    define(this, 'text', {enumerable: true})
+  }
+
+  get text() {
+    return this.#text
+  }
+  set text(value: string) {
+    this.#updateNumber(value)
   }
 
   update(props: Props) {
