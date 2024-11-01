@@ -27,13 +27,19 @@ interface StyleProps {
 
 type Props = Partial<StyleProps> & (TextProps | LinesProps) & ViewProps
 
+const DEFAULTS = {
+  alignment: 'left',
+  wrap: false,
+  font: 'default',
+} as const
+
 export class Text extends View {
   #style: StyleProps['style']
   #text: string = ''
   #lines: [string, number][] = []
-  #alignment: StyleProps['alignment'] = 'left'
-  #wrap: StyleProps['wrap'] = false
-  #font: FontFamily = 'default'
+  #alignment: StyleProps['alignment'] = DEFAULTS.alignment
+  #wrap: StyleProps['wrap'] = DEFAULTS.wrap
+  #font: FontFamily = DEFAULTS.font
 
   declare text: string
   declare font: FontFamily
@@ -88,8 +94,8 @@ export class Text extends View {
 
   #update({text, lines, style, alignment, wrap, font}: Props) {
     this.#style = style
-    this.#alignment = alignment ?? 'left'
-    this.#wrap = wrap ?? false
+    this.#alignment = alignment ?? DEFAULTS.alignment
+    this.#wrap = wrap ?? DEFAULTS.wrap
     this.#updateLines(text, lines, font)
   }
 
@@ -98,7 +104,7 @@ export class Text extends View {
     lines: string[] | undefined,
     font: FontFamily | undefined,
   ) {
-    this.#font = font ?? 'default'
+    this.#font = font ?? DEFAULTS.font
     const fontMap = font && FONTS[font]
 
     if (text !== undefined) {
