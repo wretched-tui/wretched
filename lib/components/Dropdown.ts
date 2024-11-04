@@ -259,7 +259,7 @@ class DropdownSelector<T> extends Container {
       items: this.#choices.map(([, choice]) => choice),
       cellForItem: (choice, row) => this.cellForItem(choice, row),
     })
-    const content = new Flex({direction: 'topToBottom', children: []})
+    const content = new Flex({direction: 'down', children: []})
 
     if (multiple) {
       content.add(this.#checkbox)

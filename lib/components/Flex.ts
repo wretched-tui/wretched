@@ -3,11 +3,13 @@ import {type Props as ViewProps, View, parseFlexShorthand} from '../View'
 import type {FlexShorthand, FlexSize} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
+import {define} from '../util'
 
-type Direction = 'leftToRight' | 'rightToLeft' | 'topToBottom' | 'bottomToTop'
+type Direction = 'right' | 'left' | 'down' | 'up'
 
 interface Props extends ViewProps {
   children?: ([FlexShorthand, View] | View)[]
+  child?: [FlexShorthand, View] | View
   direction?: Direction
   fill?: boolean
   gap?: number
@@ -28,7 +30,7 @@ function fromShorthand(
 }
 
 export class Flex extends Container {
-  #direction: Direction = 'topToBottom'
+  #direction: Direction = 'down'
   #gap: number = 0
   #fill: boolean = false
   #sizes: Map<View, FlexSize> = new Map()
@@ -37,7 +39,7 @@ export class Flex extends Container {
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
-    const direction: Direction = 'topToBottom'
+    const direction: Direction = 'down'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
@@ -45,7 +47,7 @@ export class Flex extends Container {
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
-    const direction: Direction = 'bottomToTop'
+    const direction: Direction = 'up'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
@@ -53,7 +55,7 @@ export class Flex extends Container {
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
-    const direction: Direction = 'leftToRight'
+    const direction: Direction = 'right'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
@@ -61,24 +63,69 @@ export class Flex extends Container {
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
   ): Flex {
-    const direction: Direction = 'rightToLeft'
+    const direction: Direction = 'left'
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
-  constructor({children, direction, fill: shrink, gap, ...viewProps}: Props) {
+  constructor({
+    children,
+    child,
+    direction,
+    fill: shrink,
+    gap,
+    ...viewProps
+  }: Props) {
     super(viewProps)
+
+    define(this, 'direction', {enumerable: true})
+    define(this, 'gap', {enumerable: true})
+
     this.#update({direction, fill: shrink, gap})
-    this.#updateChildren(children)
+    this.#updateChildren(children, child)
   }
 
-  update({children, ...props}: Props) {
+  get direction() {
+    return this.#direction
+  }
+
+  set direction(value: Direction) {
+    this.#direction = value
+    this.invalidateSize()
+  }
+
+  get gap() {
+    return this.#gap
+  }
+
+  set gap(value: number) {
+    this.#gap = value
+    this.invalidateSize()
+  }
+
+  update({children, child, ...props}: Props) {
     this.#update(props)
-    this.#updateChildren(children)
+    this.#updateChildren(children, child)
     super.update(props)
   }
 
-  #updateChildren(children: Props['children']) {
-    if (children) {
+  #updateChildren(children: Props['children'], child: Props['child']) {
+    // this logic comes from Container
+    if (child !== undefined) {
+      children = (children ?? []).concat([child])
+    }
+
+    if (children === undefined) {
+      return
+    }
+
+    if (children.length) {
+      const childrenSet = new Set(children)
+      for (const child of this.children) {
+        if (!childrenSet.has(child)) {
+          this.removeChild(child)
+        }
+      }
+
       for (const info of children) {
         let flexSize: FlexShorthand, child: View
         if (info instanceof View) {
@@ -98,7 +145,7 @@ export class Flex extends Container {
   }
 
   #update({direction, fill, gap}: Props) {
-    this.#direction = direction ?? 'topToBottom'
+    this.#direction = direction ?? 'down'
     this.#fill = fill ?? true
     this.#gap = gap ?? 0
   }
@@ -164,9 +211,7 @@ export class Flex extends Container {
   }
 
   get isVertical() {
-    return (
-      this.#direction === 'topToBottom' || this.#direction === 'bottomToTop'
-    )
+    return this.#direction === 'down' || this.#direction === 'up'
   }
 
   render(viewport: Viewport) {
@@ -218,14 +263,14 @@ export class Flex extends Container {
 
     let origin: MutablePoint
     switch (this.#direction) {
-      case 'leftToRight':
-      case 'topToBottom':
+      case 'right':
+      case 'down':
         origin = Point.zero.mutableCopy()
         break
-      case 'rightToLeft':
+      case 'left':
         origin = new Point(viewport.contentSize.width, 0)
         break
-      case 'bottomToTop':
+      case 'up':
         origin = new Point(0, viewport.contentSize.height)
         break
     }
@@ -272,16 +317,16 @@ export class Flex extends Container {
         }
       }
 
-      if (this.#direction === 'rightToLeft') {
+      if (this.#direction === 'left') {
         origin.x -= childSize.width
-      } else if (this.#direction === 'bottomToTop') {
+      } else if (this.#direction === 'up') {
         origin.y -= childSize.height
       }
 
       if (!isFirst) {
-        if (this.#direction === 'leftToRight') {
+        if (this.#direction === 'right') {
           origin.x += this.#gap
-        } else if (this.#direction === 'topToBottom') {
+        } else if (this.#direction === 'down') {
           origin.y += this.#gap
         }
       }
@@ -291,16 +336,16 @@ export class Flex extends Container {
       })
 
       if (!isFirst) {
-        if (this.#direction === 'rightToLeft') {
+        if (this.#direction === 'left') {
           origin.x -= this.#gap
-        } else if (this.#direction === 'bottomToTop') {
+        } else if (this.#direction === 'up') {
           origin.y -= this.#gap
         }
       }
 
-      if (this.#direction === 'leftToRight') {
+      if (this.#direction === 'right') {
         origin.x += childSize.width
-      } else if (this.#direction === 'topToBottom') {
+      } else if (this.#direction === 'down') {
         origin.y += childSize.height
       }
 
