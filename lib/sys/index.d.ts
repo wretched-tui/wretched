@@ -635,10 +635,11 @@ export const unicode: {
   /**
    * Returns the number of *cells* that the first line of the string takes up.
    */
-  lineWidth(text: string): number
+  lineWidth(text: string | string[]): number
   /**
-   * Return the width and height of the entire string. Width is the maximum length of
-   * all the lines, and height is the number of lines, assuming no lines wrap.
+   * Return the cell width and height of the entire string. Width is the maximum
+   * length of all the lines, and height is the number of lines, assuming no lines
+   * wrap.
    */
   stringSize(text: string | string[]): {width: number; height: number}
   /**

@@ -40,6 +40,7 @@ export class Text extends View {
   #lines: [string, number][] = []
   #alignment: StyleProps['alignment'] = DEFAULTS.alignment
   #wrap: StyleProps['wrap'] = DEFAULTS.wrap
+  #wrappedLines?: [number, [string, number][]]
   #font: FontFamily = DEFAULTS.font
 
   constructor(props: Props = {}) {
@@ -123,6 +124,7 @@ export class Text extends View {
 
       return [line, unicode.lineWidth(line)]
     })
+    this.#wrappedLines = undefined
 
     this.invalidateSize()
   }
@@ -147,18 +149,28 @@ export class Text extends View {
       return
     }
 
-    const lines: [string, number][] = this.#lines
+    let lines: [string, number][]
+    if (this.#wrap) {
+      lines = this.#wrapLines(viewport.contentSize.width, this.#lines)
+      // cache for future render
+      this.#wrappedLines = [viewport.contentSize.width, lines]
+    } else {
+      lines = this.#lines
+    }
     const style: Style = this.theme.text().merge(this.#style)
 
     viewport.usingPen(style, pen => {
       const point = new Point(0, 0).mutableCopy()
-      for (const [line, width] of lines) {
+      for (let [line, width] of lines) {
         if (!line.length) {
           point.y += 1
           continue
         }
 
         let didWrap = false
+        if (this.#wrap) {
+          width = Math.min(width, viewport.contentSize.width)
+        }
         const offsetX =
           this.#alignment === 'left'
             ? 0
@@ -200,5 +212,97 @@ export class Text extends View {
         point.y += 1
       }
     })
+  }
+
+  #wrapLines(
+    contentWidth: number,
+    lines: [string, number][],
+  ): [string, number][] {
+    if (contentWidth === 0) {
+      return []
+    }
+
+    if (
+      this.#wrap &&
+      this.#wrappedLines &&
+      this.#wrappedLines[0] === contentWidth
+    ) {
+      return this.#wrappedLines[1]
+    }
+
+    const wrapped = lines.flatMap(([line, width]): [string, number][] => {
+      if (width <= contentWidth) {
+        return [[line, width]]
+      }
+
+      const lines: [string, number][] = []
+      let currentLine: string[] = []
+      let currentWidth = 0
+      const STOP = null
+
+      function pushTrimmed(line: string) {
+        const trimmed = line.replace(/\s+$/, '')
+        lines.push([trimmed, unicode.lineWidth(trimmed)])
+      }
+
+      for (let [wordChars] of [...unicode.words(line), [STOP]]) {
+        const wordWidth = wordChars ? unicode.lineWidth(wordChars) : 0
+        if (
+          (!currentWidth || currentWidth + wordWidth <= contentWidth) &&
+          wordChars !== STOP
+        ) {
+          // there's enough room on the line (and it's not the sentinel STOP)
+          // or the line is empty
+          currentLine.push(...wordChars)
+          currentWidth += wordWidth
+        } else {
+          if (currentWidth <= contentWidth) {
+            pushTrimmed(currentLine.join(''))
+            currentLine = []
+            currentWidth = 0
+          } else {
+            // if currentLine is _already_ longer than contentWidth, wrap it, leaving the
+            // remainder on currentLine
+            do {
+              let buffer = '',
+                bufferWidth = 0
+              for (let [index, char] of currentLine.entries()) {
+                const charWidth = unicode.charWidth(char)
+                if (bufferWidth + charWidth > contentWidth) {
+                  pushTrimmed(buffer)
+
+                  // scan past whitespace
+                  while (currentLine[index]?.match(/^\s+$/)) {
+                    index += 1
+                  }
+                  currentLine = currentLine.slice(index)
+                  currentWidth = unicode.lineWidth(currentLine)
+                  break
+                }
+
+                buffer += char
+                bufferWidth += charWidth
+              }
+            } while (currentWidth > contentWidth)
+          }
+
+          if (wordChars) {
+            // remove preceding whitespace if currentLine is empty
+            if (currentLine.length === 0) {
+              while (wordChars.length && wordChars[0].match(/^\s+$/)) {
+                wordChars = wordChars.slice(1)
+              }
+            }
+            currentLine.push(...wordChars)
+            currentWidth = unicode.lineWidth(currentLine)
+          }
+        }
+      }
+
+      return lines
+    })
+
+    this.#wrappedLines = [contentWidth, wrapped]
+    return wrapped
   }
 }
