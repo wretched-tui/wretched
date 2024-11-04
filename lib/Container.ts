@@ -2,6 +2,7 @@ import {Size} from './geometry'
 import type {Viewport} from './Viewport'
 import {type Props as ViewProps, View} from './View'
 import {Screen} from './Screen'
+import {define} from './util'
 
 export interface Props extends ViewProps {
   child?: View
@@ -14,11 +15,17 @@ export abstract class Container extends View {
   constructor({child, children, ...viewProps}: Props = {}) {
     super(viewProps)
 
+    define(this, 'children', {enumerable: true})
+
     if (child) {
       this.add(child)
     } else if (children) {
       this.addAll(children)
     }
+  }
+
+  get children() {
+    return this.#children
   }
 
   update(props: Props) {
@@ -27,30 +34,29 @@ export abstract class Container extends View {
   }
 
   #update({child, children}: Props) {
-    if (child) {
-      children = [child]
+    // Flex recreates this logic
+    if (child !== undefined) {
+      children = (children ?? []).concat([child])
     }
 
-    if (children !== undefined) {
-      if (children.length) {
-        const childrenSet = new Set(children)
-        for (const child of this.#children) {
-          if (!childrenSet.has(child)) {
-            this.#removeChild(child)
-          }
-        }
+    if (children === undefined) {
+      return
+    }
 
-        for (const child of children) {
-          this.add(child)
+    if (children.length) {
+      const childrenSet = new Set(children)
+      for (const child of this.#children) {
+        if (!childrenSet.has(child)) {
+          this.#removeChild(child)
         }
-      } else {
-        this.removeAllChildren()
       }
-    }
-  }
 
-  get children() {
-    return this.#children
+      for (const child of children) {
+        this.add(child)
+      }
+    } else {
+      this.removeAllChildren()
+    }
   }
 
   naturalSize(available: Size): Size {

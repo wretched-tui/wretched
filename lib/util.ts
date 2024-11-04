@@ -50,17 +50,20 @@ export function centerPad(str: string, length: number): string {
   return left.concat(str, right)
 }
 
-export function define(
-  object: any,
-  property: string,
+export function define<T extends object>(
+  object: T,
+  property: keyof T,
   attributes: PropertyDescriptor,
 ) {
-  const descriptor = Object.getOwnPropertyDescriptor(
-    object.constructor.prototype,
-    property,
-  )
-  if (descriptor) {
-    const modified_descriptor = Object.assign(descriptor, attributes)
-    Object.defineProperty(object, property, modified_descriptor)
-  }
+  let kls = object.constructor
+  do {
+    const descriptor = Object.getOwnPropertyDescriptor(kls.prototype, property)
+    if (descriptor) {
+      const modified_descriptor = Object.assign(descriptor, attributes)
+      Object.defineProperty(object, property, modified_descriptor)
+      return
+    } else {
+      kls = Object.getPrototypeOf(kls)
+    }
+  } while (kls && kls !== Object.prototype)
 }

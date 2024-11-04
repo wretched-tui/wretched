@@ -4,7 +4,6 @@ import type {Viewport} from '../Viewport'
 import {type Props as ContainerProps, Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {Style} from '../Style'
-import {type MouseEvent, isMouseEnter, isMouseExit} from '../events'
 import {define} from '../util'
 
 export type Border =
@@ -154,9 +153,7 @@ export class Box extends Container {
 
     viewport.clipped(
       new Rect(innerOrigin, [innerMiddleWidth, innerHeight]),
-      inside => {
-        super.render(inside)
-      },
+      inside => super.render(inside),
     )
 
     viewport.usingPen(borderStyle, () => {

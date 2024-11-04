@@ -654,14 +654,6 @@ export const unicode: {
    */
   printableChars(text: string): string[]
   /**
-   * Returns the grapheme at a specific index (inefficient algorithm, btw)
-   */
-  charAt(text: string, at: number): string
-  /**
-   * Returns number of graphemes (inefficient algorithm, btw)
-   */
-  charCount(text: string): number
-  /**
    * @param input String or array of graphemes
    * @returns [graphemes, offset][] Array of tuples. Each tuple is an array of graphemes and the offset
    */

@@ -8,7 +8,7 @@ import {Point, Size} from '../geometry'
 import {define} from '../util'
 
 interface Props extends ViewProps {
-  text: string
+  text: string | number
   style?: Style
   bold?: boolean
 }
@@ -109,7 +109,7 @@ export class Digits extends View {
   #update({text, style, bold}: Props) {
     this.#style = style
     this.#bold = bold ?? false
-    this.#updateNumber(text)
+    this.#updateNumber(String(text))
   }
 
   #updateNumber(value: string) {
