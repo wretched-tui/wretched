@@ -131,7 +131,7 @@ export class CollapsibleText extends View {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            pen.replacePen(Style.fromSGR(char))
+            pen.mergePen(Style.fromSGR(char))
             continue
           }
 

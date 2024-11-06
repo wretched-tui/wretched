@@ -331,12 +331,20 @@ class Pen {
     this.#stack = []
   }
 
+  /**
+   * When scanning text, picking up SGR codes, you should use 'mergePen', because SGR
+   * codes are expected to push/pop onto the existing "stack" of styles.
+   */
   mergePen(style: Style) {
     const current = this.#stack[0] ?? this.#initial
     style = current.merge(style)
     this.replacePen(style)
   }
 
+  /**
+   * replacePen is better when you need to control the drawing style, but you will
+   * assign the entire desired style.
+   */
   replacePen(style: Style) {
     this.#stack[0] = style
     this.#setter(style)

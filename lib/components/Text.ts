@@ -157,8 +157,8 @@ export class Text extends View {
     } else {
       lines = this.#lines
     }
-    const style: Style = this.theme.text().merge(this.#style)
 
+    const style: Style = this.theme.text().merge(this.#style)
     viewport.usingPen(style, pen => {
       const point = new Point(0, 0).mutableCopy()
       for (let [line, width] of lines) {
@@ -182,7 +182,7 @@ export class Text extends View {
           const width = unicode.charWidth(char)
           if (width === 0) {
             // track the current style regardless of wether we are printing
-            pen.replacePen(Style.fromSGR(char))
+            pen.mergePen(Style.fromSGR(char))
             continue
           }
 
@@ -206,7 +206,7 @@ export class Text extends View {
 
           point.x += width
           // do not early exit when point.x >= maxX. 'line' may contain ANSI codes that
-          // need to be picked up by replacePen.
+          // need to be picked up by mergePen.
         }
 
         point.y += 1
