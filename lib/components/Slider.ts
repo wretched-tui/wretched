@@ -82,12 +82,10 @@ export class Slider extends View {
   #contentSize?: Size = Size.zero
   #isPressingDecrease = false
   #isPressingIncrease = false
-  /**
-   * If true, no slider drag events should trigger
-   */
-  #didStartPressOnButton = false
+  #buttonTracking: 'off' | 'pressing' | 'dragging' = 'off'
   #isHoverSlider = false
-  #isHoverButtons = false
+  #isHoverDecrease = false
+  #isHoverIncrease = false
   #onChange?: (value: number) => void
 
   constructor(props: Props) {
@@ -105,14 +103,30 @@ export class Slider extends View {
     this.#border = border ?? false
     this.#buttons = buttons ?? false
     this.#range = range ?? [0, 1]
-    this.#value = value ?? Math.min(...this.#range)
     this.#step = step ? Math.max(step, 1) : 1
     this.#onChange = onChange
+    this.#value = value ?? this.#range[0]
   }
 
-  naturalSize(available: Size) {
+  get value() {
+    return this.#value
+  }
+  set value(value: number) {
+    this.#value = value
+    if (value !== this.#value) {
+      this.#value = value
+      this.invalidateRender()
+    }
+  }
+
+  naturalSize() {
+    // try to have enough room for every value
+    const min = Math.max(
+      MIN,
+      -~((this.#range[1] - this.#range[0]) / this.#step),
+    )
     if (this.#direction === 'horizontal') {
-      const minWidth = MIN + 2 * (this.#buttons ? 3 : this.#border ? 1 : 0)
+      const minWidth = min + 2 * (this.#buttons ? 3 : this.#border ? 1 : 0)
       if (this.#border) {
         //╭─┬──
         //│◃│█╶
@@ -128,7 +142,7 @@ export class Slider extends View {
       }
     } else {
       const minHeight =
-        MIN +
+        min +
         2 *
           (this.#buttons && this.#border
             ? 3
@@ -141,12 +155,12 @@ export class Slider extends View {
         // ├─┤ ╭─╮
         // │█│ │█│
         // │╷│ │╷│
-        return new Size(3, MIN)
+        return new Size(3, minHeight)
       } else {
         // ▵
         // █   █
         // ╷   ╷
-        return new Size(1, MIN)
+        return new Size(1, minHeight)
       }
     }
   }
@@ -156,36 +170,22 @@ export class Slider extends View {
       return
     }
 
-    if (isMouseExit(event)) {
-      this.#isHoverSlider = false
-      this.#isHoverButtons = false
-      return
-    }
-
     const prev = this.#value
     let pos: number,
-      isValid: boolean,
       // the beginning of the slider area
       minSlider = 0,
       // the smaller dimension, ie the height of the horizontal slider
-      smallSize = this.#border ? 3 : 1,
       // the bigger dimension, ie the width of the horizontal slider
       bigSize: number,
       // the end of the slider area
       maxSlider: number
 
     if (this.#direction === 'horizontal') {
-      isValid = event.position.y <= smallSize
       pos = event.position.x
       bigSize = this.#contentSize.width
     } else {
-      isValid = event.position.x <= smallSize
       pos = event.position.y
       bigSize = this.#contentSize.height
-    }
-
-    if (!isValid) {
-      return
     }
 
     maxSlider = bigSize - 1
@@ -218,64 +218,85 @@ export class Slider extends View {
 
     const isHoverDecrease = pos >= 0 && pos < minSlider
     const isHoverIncrease = pos > maxSlider && pos < bigSize
+    const isMouseDown =
+      event.name === 'mouse.button.down' || this.#buttonTracking === 'pressing'
+    const isDragging =
+      (!isMouseDown && isMouseDragging(event)) ||
+      this.#buttonTracking === 'dragging'
+    let shouldUpdate = false
 
-    if (isMouseMove(event)) {
+    if (isDragging) {
+      this.#isHoverSlider = true
+      this.#isHoverDecrease = false
+      this.#isHoverIncrease = false
+    } else if (isMouseExit(event)) {
+      this.#isHoverSlider = false
+      this.#isHoverDecrease = false
+      this.#isHoverIncrease = false
+    } else {
       this.#isHoverSlider = pos >= minSlider && pos <= maxSlider
-
-      this.#isHoverButtons = isHoverDecrease || isHoverIncrease
+      this.#isHoverDecrease = isHoverDecrease
+      this.#isHoverIncrease = isHoverIncrease
     }
 
-    if (pos < minSlider) {
+    if (isMouseDown && pos < minSlider) {
       if (isMousePressStart(event)) {
         this.#isPressingDecrease = true
-        this.#didStartPressOnButton = true
+        this.#buttonTracking = 'pressing'
       } else if (isMousePressExit(event)) {
         this.#isPressingDecrease = false
       }
 
       if (isMouseClicked(event) && pos < minSlider) {
-        this.#value -= this.#step
+        this.#value = prev > this.#range[1] ? this.#range[1] : prev - this.#step
+        this.#buttonTracking = 'off'
+        shouldUpdate = true
       }
-    } else if (pos > maxSlider) {
+    } else if (isMouseDown && pos > maxSlider) {
       if (isMousePressStart(event)) {
         this.#isPressingIncrease = true
-        this.#didStartPressOnButton = true
+        this.#buttonTracking = 'pressing'
       } else if (isMousePressExit(event)) {
         this.#isPressingIncrease = false
       }
 
       if (isMouseClicked(event) && pos > maxSlider) {
-        this.#value += this.#step
+        this.#value = prev > this.#range[1] ? this.#range[1] : prev + this.#step
+        this.#buttonTracking = 'off'
+        shouldUpdate = true
       }
-    } else if (!this.#didStartPressOnButton) {
-      if (isMouseDragging(event)) {
-        this.#value = interpolate(pos, [minSlider, maxSlider], this.#range)
+    } else if (isMousePressEnd(event)) {
+      this.#buttonTracking = 'off'
+    } else if (isMouseDown || isDragging) {
+      this.#buttonTracking = 'dragging'
+      this.#value = interpolate(pos, [minSlider, maxSlider], this.#range, true)
+      shouldUpdate = true
 
-        if (~~this.#step === this.#step) {
-          this.#value =
-            Math.round((this.#value - this.#range[0]) / this.#step) * this.#step
-        }
+      // if step is an even number, value should be an even number
+      // this should be a _setting_ not automatic like this
+      if (~~this.#step === this.#step) {
+        this.#value =
+          Math.round((this.#value - this.#range[0]) / this.#step) * this.#step
       }
     }
 
-    if (isMousePressEnd(event)) {
-      this.#didStartPressOnButton = false
-    }
+    if (shouldUpdate) {
+      this.#value = Math.min(
+        this.#range[1],
+        Math.max(this.#range[0], this.#value),
+      )
 
-    this.#value = Math.min(
-      this.#range[1],
-      Math.max(this.#range[0], this.#value),
-    )
-
-    if (this.#value !== prev) {
-      this.#onChange?.(this.#value)
+      if (this.#value !== prev) {
+        this.#onChange?.(this.#value)
+      }
     }
   }
 
   #renderHorizontal(
     viewport: Viewport,
     sliderStyle: Style,
-    buttonStyle: Style,
+    decreaseButtonStyle: Style,
+    increaseButtonStyle: Style,
   ) {
     const hasBorder = this.#border && viewport.contentSize.height >= 3
     const height = hasBorder ? 3 : 1
@@ -288,13 +309,18 @@ export class Slider extends View {
       [marginX, 0],
       [viewport.visibleRect.size.width - 2 * marginX, height],
     )
+    viewport.registerMouse(['mouse.move', 'mouse.button.left'], outerRect)
 
     if (this.#buttons) {
-      const left = this.#isHoverButtons ? '◂' : '◃'
-      const right = this.#isHoverButtons ? '▸' : '▹'
+      const left = this.#isHoverDecrease ? '◂' : '◃'
+      const right = this.#isHoverIncrease ? '▸' : '▹'
       ;(hasBorder ? ['╭─┬', `│${left}│`, '╰─┴'] : [`[${left}]`]).forEach(
         (line, offsetY) => {
-          viewport.write(line, Point.zero.offset(0, offsetY), buttonStyle)
+          viewport.write(
+            line,
+            Point.zero.offset(0, offsetY),
+            decreaseButtonStyle,
+          )
         },
       )
       ;(hasBorder ? ['┬─╮', `│${right}│`, '┴─╯'] : [`[${right}]`]).forEach(
@@ -305,7 +331,7 @@ export class Slider extends View {
               viewport.contentSize.width - line.length,
               offsetY,
             ),
-            buttonStyle,
+            increaseButtonStyle,
           )
         },
       )
@@ -325,24 +351,17 @@ export class Slider extends View {
     const min = innerRect.minX(),
       max = innerRect.maxX()
     const position = Math.round(
-      interpolate(this.#value, this.#range, [min, max - 1]),
+      interpolate(this.#value, this.#range, [min, max - 1], true),
     )
-
-    viewport.registerMouse(['mouse.move', 'mouse.button.left'], outerRect)
 
     innerRect.forEachPoint(pt => {
       let char: string
       if (height === 1 || pt.y === 1) {
         if (pt.x === position) {
           char = '█'
-        } else if (
-          (pt.x === min && position === min + 1) ||
-          (pt.x === max && position === max - 1)
-        ) {
-          char = '∙'
-        } else if (pt.x === min || pt.x === position + 1) {
+        } else if (pt.x === position + 1) {
           char = '╶'
-        } else if (pt.x === max || pt.x === position - 1) {
+        } else if (pt.x === position - 1) {
           char = '╴'
         } else {
           char = '─'
@@ -355,7 +374,12 @@ export class Slider extends View {
     })
   }
 
-  #renderVertical(viewport: Viewport, sliderStyle: Style, buttonStyle: Style) {
+  #renderVertical(
+    viewport: Viewport,
+    sliderStyle: Style,
+    decreaseButtonStyle: Style,
+    increaseButtonStyle: Style,
+  ) {
     const hasBorder = this.#border && viewport.contentSize.width >= 3
     const width = hasBorder ? 3 : 1
     const marginY =
@@ -368,13 +392,18 @@ export class Slider extends View {
       [0, marginY],
       [width, viewport.visibleRect.size.height - 2 * marginY],
     )
+    viewport.registerMouse(['mouse.move', 'mouse.button.left'], outerRect)
 
     if (this.#buttons) {
-      const up = this.#isHoverButtons ? '▴' : '▵'
-      const down = this.#isHoverButtons ? '▾' : '▿'
+      const up = this.#isHoverDecrease ? '▴' : '▵'
+      const down = this.#isHoverIncrease ? '▾' : '▿'
       ;(hasBorder ? ['╭─╮', `│${up}│`, '├─┤'] : [up]).forEach(
         (line, offsetY) => {
-          viewport.write(line, Point.zero.offset(0, offsetY), buttonStyle)
+          viewport.write(
+            line,
+            Point.zero.offset(0, offsetY),
+            decreaseButtonStyle,
+          )
         },
       )
       ;(hasBorder ? ['╰─╯', `│${down}│`, '├─┤'] : [down]).forEach(
@@ -382,7 +411,7 @@ export class Slider extends View {
           viewport.write(
             line,
             Point.zero.offset(0, viewport.contentSize.height - offsetY - 1),
-            buttonStyle,
+            increaseButtonStyle,
           )
         },
       )
@@ -398,10 +427,9 @@ export class Slider extends View {
     const min = innerRect.minY(),
       max = innerRect.maxY()
     const position = Math.round(
-      interpolate(this.#value, this.#range, [min, max - 1]),
+      interpolate(this.#value, this.#range, [min, max - 1], true),
     )
 
-    viewport.registerMouse(['mouse.move', 'mouse.button.left'], outerRect)
     innerRect.forEachPoint(pt => {
       let char: string
       if (width === 1 || pt.x === 1) {
@@ -436,15 +464,29 @@ export class Slider extends View {
 
     const pt = Point.zero.mutableCopy()
     const sliderStyle = this.theme.ui({isHover: this.#isHoverSlider})
-    const buttonStyle = this.theme.ui({
-      isPressed: this.#isPressingIncrease || this.#isPressingDecrease,
-      isHover: this.#isHoverButtons,
+    const decreaseButtonStyle = this.theme.ui({
+      isPressed: this.#isPressingDecrease,
+      isHover: this.#isHoverDecrease,
+    })
+    const increaseButtonStyle = this.theme.ui({
+      isPressed: this.#isPressingIncrease,
+      isHover: this.#isHoverIncrease,
     })
 
     if (this.#direction === 'horizontal') {
-      this.#renderHorizontal(viewport, sliderStyle, buttonStyle)
+      this.#renderHorizontal(
+        viewport,
+        sliderStyle,
+        decreaseButtonStyle,
+        increaseButtonStyle,
+      )
     } else {
-      this.#renderVertical(viewport, sliderStyle, buttonStyle)
+      this.#renderVertical(
+        viewport,
+        sliderStyle,
+        decreaseButtonStyle,
+        increaseButtonStyle,
+      )
     }
   }
 }

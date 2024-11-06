@@ -20,15 +20,15 @@ import {System} from '../System'
 
 interface StyleProps {
   text?: string
-  isChecked: boolean
-  onChange?: (isChecked: boolean) => void
+  value: boolean
+  onChange?: (value: boolean) => void
   hotKey?: HotKey
 }
 
 type Props = StyleProps & ContainerProps
 
 export class Checkbox extends Container {
-  isChecked: boolean = false
+  #value: boolean = false
   #hotKey?: HotKey
   #onChange: StyleProps['onChange']
   #textView: Text
@@ -43,6 +43,17 @@ export class Checkbox extends Container {
     this.#update(props)
   }
 
+  get value() {
+    return this.#value
+  }
+  set value(value: boolean) {
+    if (value === this.#value) {
+      return
+    }
+    this.#value = value
+    this.invalidateRender()
+  }
+
   childTheme(view: View) {
     return childTheme(super.childTheme(view), this.isPressed, this.isHover)
   }
@@ -52,10 +63,10 @@ export class Checkbox extends Container {
     super.update(props)
   }
 
-  #update({text, hotKey, isChecked, onChange}: Props) {
+  #update({text, hotKey, value, onChange}: Props) {
     const styledText = hotKey ? styleTextForHotKey(text ?? '', hotKey) : text
     this.#textView.text = styledText ?? ''
-    this.isChecked = isChecked
+    this.#value = value
     this.#hotKey = hotKey
     this.#onChange = onChange
   }
@@ -80,8 +91,8 @@ export class Checkbox extends Container {
     super.receiveMouse(event, system)
 
     if (isMouseClicked(event)) {
-      this.isChecked = !this.isChecked
-      this.#onChange?.(this.isChecked)
+      this.#value = !this.#value
+      this.#onChange?.(this.#value)
     }
   }
 
@@ -108,7 +119,7 @@ export class Checkbox extends Container {
       Math.round((viewport.contentSize.height - naturalSize.height) / 2),
     )
 
-    const box = this.boxChars()[this.isChecked ? 'checked' : 'unchecked']
+    const box = this.boxChars()[this.#value ? 'checked' : 'unchecked']
     viewport.write(box, Point.zero, uiStyle)
     viewport.clipped(new Rect(offset, naturalSize), uiStyle, inside => {
       super.render(inside)

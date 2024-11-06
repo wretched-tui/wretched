@@ -324,12 +324,19 @@ export function interpolate(
   x: number,
   [x0, x1]: [number, number],
   [y0, y1]: [number, number],
+  clamp?: boolean,
 ): number {
   if (x0 === x1) {
     return y0
   }
 
-  return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0)
+  let ret = y0 + ((x - x0) * (y1 - y0)) / (x1 - x0)
+  if (clamp) {
+    const min = Math.min(y0, y1)
+    const max = Math.max(y0, y1)
+    ret = Math.min(max, Math.max(min, ret))
+  }
+  return ret
 }
 
 export type Mutable<T extends Point | Size | Rect> = T extends Point

@@ -9,14 +9,14 @@ interface Props extends ViewProps {
   direction?: Direction
   min?: number
   max?: number
-  progress?: number
+  value?: number
   showPercent?: boolean
 }
 
 export class Progress extends View {
   #direction: Direction = 'horizontal'
   #range: [number, number] = [0, 100]
-  #progress: number = 0
+  #value: number = 0
   #showPercent: boolean = false
 
   constructor(props: Props) {
@@ -29,19 +29,22 @@ export class Progress extends View {
     super.update(props)
   }
 
-  #update({direction, min, max, progress, showPercent}: Props) {
+  #update({direction, min, max, value, showPercent}: Props) {
     this.#direction = direction ?? 'horizontal'
     this.#range = [min ?? 0, max ?? 100]
-    this.#progress = progress ?? Math.min(...this.#range)
     this.#showPercent = showPercent ?? false
+    this.#value = value ?? this.#range[0]
   }
 
-  get progress() {
-    return this.#progress
+  get value() {
+    return this.#value
   }
-  set progress(progress: number) {
-    this.#progress = progress
-    this.invalidateRender()
+  set value(value: number) {
+    this.#value = value
+    if (value !== this.#value) {
+      this.#value = value
+      this.invalidateRender()
+    }
   }
 
   naturalSize(available: Size) {
@@ -54,12 +57,11 @@ export class Progress extends View {
     }
 
     const pt = Point.zero.mutableCopy()
-    const percent = this.#showPercent
-      ? `${Math.round(
-          (100 * (this.#progress - this.#range[0])) /
-            (this.#range[1] - this.#range[0]),
-        )}%`
-      : ''
+    let percent: string = ''
+    if (this.#showPercent) {
+      const percentNum = interpolate(this.#value, this.#range, [0, 100], true)
+      percent = `${Math.round(percentNum)}%`
+    }
     const percentStartPoint = new Point(
       ~~((viewport.contentSize.width - percent.length) / 2),
       viewport.contentSize.height <= 1 ? 0 : 1,
@@ -102,10 +104,12 @@ export class Progress extends View {
     altTextStyle: Style,
   ) {
     const progressX = Math.round(
-      interpolate(this.#progress, this.#range, [
-        0,
-        viewport.contentSize.width - 1,
-      ]),
+      interpolate(
+        this.#value,
+        this.#range,
+        [0, viewport.contentSize.width - 1],
+        true,
+      ),
     )
 
     viewport.visibleRect.forEachPoint(pt => {
@@ -124,7 +128,9 @@ export class Progress extends View {
           style = textStyle
         }
       } else {
-        if (pt.x <= progressX && this.#progress > this.#range[0]) {
+        const min = Math.min(...this.#range)
+
+        if (pt.x <= progressX && this.#value > min) {
           if (pt.y === 0 && viewport.contentSize.height > 1) {
             char = '▄'
           } else if (
@@ -173,17 +179,19 @@ export class Progress extends View {
 
   #renderVertical(
     viewport: Viewport,
-    percent: string,
-    percentStartPoint: Point,
+    _percent: string,
+    _percentStartPoint: Point,
     textStyle: Style,
     controlStyle: Style,
-    altTextStyle: Style,
+    _altTextStyle: Style,
   ) {
     const progressY = Math.round(
-      interpolate(this.#progress, this.#range, [
-        viewport.contentSize.height - 1,
-        0,
-      ]),
+      interpolate(
+        this.#value,
+        this.#range,
+        [viewport.contentSize.height - 1, 0],
+        true,
+      ),
     )
     viewport.visibleRect.forEachPoint(pt => {
       let char: string,
