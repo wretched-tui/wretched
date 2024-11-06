@@ -32,7 +32,7 @@ function fromShorthand(
 export class Flex extends Container {
   #direction: Direction = 'down'
   #gap: number = 0
-  #fill: boolean = false
+  #fill: boolean = true
   #sizes: Map<View, FlexSize> = new Map()
 
   static down(
@@ -67,20 +67,13 @@ export class Flex extends Container {
     return new Flex(fromShorthand(props, direction, extraProps))
   }
 
-  constructor({
-    children,
-    child,
-    direction,
-    fill: shrink,
-    gap,
-    ...viewProps
-  }: Props) {
+  constructor({children, child, direction, fill, gap, ...viewProps}: Props) {
     super(viewProps)
 
     define(this, 'direction', {enumerable: true})
     define(this, 'gap', {enumerable: true})
 
-    this.#update({direction, fill: shrink, gap})
+    this.#update({direction, fill, gap})
     this.#updateChildren(children, child)
   }
 

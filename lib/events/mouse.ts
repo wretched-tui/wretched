@@ -108,10 +108,15 @@ export function isMousePressEnd(event: SystemMouseEvent | MouseEvent) {
   )
 }
 
+/**
+ * Dragging events (dragInside, dragOutside), but *also* mouse.button.down
+ */
 export function isMouseDragging(event: SystemMouseEvent | MouseEvent) {
   return (
     event.name.startsWith('mouse.button.') &&
-    ['.up', '.cancel'].every(suffix => !event.name.endsWith(suffix))
+    ['.up', '.cancel', '.enter', '.exit'].every(
+      suffix => !event.name.endsWith(suffix),
+    )
   )
 }
 

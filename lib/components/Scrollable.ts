@@ -54,7 +54,7 @@ export class Scrollable extends Container {
 
   naturalSize(available: Size) {
     const size = super.naturalSize(available)
-    return size
+    return size.withHeight(available.height)
   }
 
   #maxOffsetX() {
