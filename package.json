@@ -25,7 +25,7 @@
   "scripts": {
     "prepublishOnly": "yarn build && rm -rf dist/demos/",
     "postpublishOnly": "yarn run gittag",
-    "gittag": "git tag $(node -e 'console.log(require(\"./package\").version)')",
+    "gittag": "git tag $(node -e 'process.stdout.write(require(\"./package\").version)')",
     "clean": "rm -rf dist/",
     "cp-usr": "mkdir -p dist/sys/usr/ && cp lib/sys/usr/* dist/sys/usr/",
     "build": "yarn clean && yarn tsc && yarn cp-usr",

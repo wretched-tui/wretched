@@ -22,7 +22,7 @@ class Keys extends View {
   }
 
   receiveKey(event: KeyEvent) {
-    console.log({event})
+    console.info({event})
   }
 
   render(viewport: Viewport) {
@@ -40,7 +40,7 @@ class Mouse extends View {
   }
 
   receiveKey(event: KeyEvent) {
-    console.log({event})
+    console.info({event})
   }
 
   render(viewport: Viewport) {
