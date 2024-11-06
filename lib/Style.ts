@@ -172,25 +172,25 @@ export class Style {
       }
     }
 
-    let style = new Style()
+    let styles: Partial<Style> = {}
     for (const code of ansiCodes) {
       if ((match = code.match(/^38;5;(\d+)$/))) {
-        style.foreground = {sgr: match[1]}
+        styles.foreground = {sgr: match[1]}
         continue
       } else if ((match = code.match(/^48;5;(\d+)$/))) {
-        style.background = {sgr: match[1]}
+        styles.background = {sgr: match[1]}
         continue
       } else if ((match = code.match(/^38;2;([\d;]+)$/))) {
         const [r, g, b] = match[1]
           .split(';')
           .map(i => Math.max(0, Math.min(255, parseInt(i, 10))))
-        style.foreground = [r, g, b]
+        styles.foreground = [r, g, b]
         continue
       } else if ((match = code.match(/^48;2;([\d;]+)$/))) {
         const [r, g, b] = match[1]
           .split(';')
           .map(i => Math.max(0, Math.min(255, parseInt(i, 10))))
-        style.background = [r, g, b]
+        styles.background = [r, g, b]
         continue
       }
 
@@ -199,157 +199,157 @@ export class Style {
         case '0':
           break
         case '1':
-          style.bold = true
+          styles.bold = true
           break
         case '2':
-          style.dim = true
+          styles.dim = true
           break
         case '22':
-          style.bold = false
-          style.dim = false
+          styles.bold = false
+          styles.dim = false
           break
         case '3':
-          style.italic = true
+          styles.italic = true
           break
         case '23':
-          style.italic = false
+          styles.italic = false
           break
         case '4':
-          style.underline = true
+          styles.underline = true
           break
         case '24':
-          style.underline = false
+          styles.underline = false
           break
         case '5':
-          style.blink = true
+          styles.blink = true
           break
         case '25':
-          style.blink = false
+          styles.blink = false
           break
         case '7':
-          style.inverse = true
+          styles.inverse = true
           break
         case '27':
-          style.inverse = false
+          styles.inverse = false
           break
         case '8':
-          style.invisible = true
+          styles.invisible = true
           break
         case '28':
-          style.invisible = false
+          styles.invisible = false
           break
         case '9':
-          style.strikeout = true
+          styles.strikeout = true
           break
         case '29':
-          style.strikeout = false
+          styles.strikeout = false
           break
         case '30':
-          style.foreground = 'black'
+          styles.foreground = 'black'
           break
         case '31':
-          style.foreground = 'red'
+          styles.foreground = 'red'
           break
         case '32':
-          style.foreground = 'green'
+          styles.foreground = 'green'
           break
         case '33':
-          style.foreground = 'yellow'
+          styles.foreground = 'yellow'
           break
         case '34':
-          style.foreground = 'blue'
+          styles.foreground = 'blue'
           break
         case '35':
-          style.foreground = 'magenta'
+          styles.foreground = 'magenta'
           break
         case '36':
-          style.foreground = 'cyan'
+          styles.foreground = 'cyan'
           break
         case '37':
-          style.foreground = 'white'
+          styles.foreground = 'white'
           break
         case '39':
-          style.foreground = 'default'
+          styles.foreground = 'default'
           break
         case '90':
-          style.foreground = 'gray'
+          styles.foreground = 'gray'
           break
         case '91':
-          style.foreground = 'brightRed'
+          styles.foreground = 'brightRed'
           break
         case '92':
-          style.foreground = 'brightGreen'
+          styles.foreground = 'brightGreen'
           break
         case '93':
-          style.foreground = 'brightYellow'
+          styles.foreground = 'brightYellow'
           break
         case '94':
-          style.foreground = 'brightBlue'
+          styles.foreground = 'brightBlue'
           break
         case '95':
-          style.foreground = 'brightMagenta'
+          styles.foreground = 'brightMagenta'
           break
         case '96':
-          style.foreground = 'brightCyan'
+          styles.foreground = 'brightCyan'
           break
         case '97':
-          style.foreground = 'brightWhite'
+          styles.foreground = 'brightWhite'
           break
         case '40':
-          style.background = 'black'
+          styles.background = 'black'
           break
         case '41':
-          style.background = 'red'
+          styles.background = 'red'
           break
         case '42':
-          style.background = 'green'
+          styles.background = 'green'
           break
         case '43':
-          style.background = 'yellow'
+          styles.background = 'yellow'
           break
         case '44':
-          style.background = 'blue'
+          styles.background = 'blue'
           break
         case '45':
-          style.background = 'magenta'
+          styles.background = 'magenta'
           break
         case '46':
-          style.background = 'cyan'
+          styles.background = 'cyan'
           break
         case '47':
-          style.background = 'white'
+          styles.background = 'white'
           break
         case '49':
-          style.background = 'default'
+          styles.background = 'default'
           break
         case '100':
-          style.background = 'gray'
+          styles.background = 'gray'
           break
         case '101':
-          style.background = 'brightRed'
+          styles.background = 'brightRed'
           break
         case '102':
-          style.background = 'brightGreen'
+          styles.background = 'brightGreen'
           break
         case '103':
-          style.background = 'brightYellow'
+          styles.background = 'brightYellow'
           break
         case '104':
-          style.background = 'brightBlue'
+          styles.background = 'brightBlue'
           break
         case '105':
-          style.background = 'brightMagenta'
+          styles.background = 'brightMagenta'
           break
         case '106':
-          style.background = 'brightCyan'
+          styles.background = 'brightCyan'
           break
         case '107':
-          style.background = 'brightWhite'
+          styles.background = 'brightWhite'
           break
       }
     }
 
-    return style
+    return new Style(styles)
   }
 
   /**
