@@ -129,11 +129,11 @@ export abstract class Container extends View {
   }
 
   #removeChild(child: View) {
-    child.parent = null
+    child.parent = undefined
     child.didMoveFrom(this)
 
     // takes care of didUnmount
-    child.moveToScreen(null)
+    child.moveToScreen(undefined)
   }
 
   removeAllChildren() {
@@ -164,7 +164,7 @@ export abstract class Container extends View {
     }
   }
 
-  moveToScreen(screen: Screen | null) {
+  moveToScreen(screen: Screen | undefined) {
     super.moveToScreen(screen)
 
     for (const child of this.#children) {

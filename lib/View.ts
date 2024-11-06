@@ -55,10 +55,10 @@ export interface Edges {
 }
 
 export abstract class View {
-  parent: Container | null = null
+  parent: Container | undefined = undefined
   debug: boolean = false
 
-  #screen: Screen | null = null
+  #screen: Screen | undefined = undefined
   #theme: Theme | undefined
   #prevSizeCache: Map<string, Size> = new Map()
   #viewportContentSize: Size = Size.zero
@@ -173,7 +173,7 @@ export abstract class View {
     this.invalidateSize()
   }
 
-  get screen(): Screen | null {
+  get screen(): Screen | undefined {
     return this.#screen
   }
 
@@ -436,7 +436,7 @@ export abstract class View {
     this.parent.removeChild(this)
   }
 
-  moveToScreen(screen: Screen | null) {
+  moveToScreen(screen: Screen | undefined) {
     if (this.#screen === screen) {
       return
     }

@@ -9,6 +9,9 @@ export function debug(value?: boolean): boolean {
   return (_debug = value ?? _debug)
 }
 
+/**
+ * Left pads (with spaces) according to terminal width
+ */
 export function leftPad(str: string, length: number): string {
   const lines = str.split('\n')
   if (lines.length > 1) {
@@ -22,6 +25,9 @@ export function leftPad(str: string, length: number): string {
   return ' '.repeat(length - width).concat(str)
 }
 
+/**
+ * Right pads (with spaces) according to terminal width
+ */
 export function rightPad(str: string, length: number): string {
   const lines = str.split('\n')
   if (lines.length > 1) {
@@ -35,6 +41,9 @@ export function rightPad(str: string, length: number): string {
   return str.concat(' '.repeat(length - width))
 }
 
+/**
+ * Center pads (with spaces) according to terminal width
+ */
 export function centerPad(str: string, length: number): string {
   const lines = str.split('\n')
   if (lines.length > 1) {
@@ -50,6 +59,10 @@ export function centerPad(str: string, length: number): string {
   return left.concat(str, right)
 }
 
+/**
+ * Used to add {enumerable: true} to defined properties on Components, so they
+ * are picked up by inspect().
+ */
 export function define<T extends object>(
   object: T,
   property: keyof T,

@@ -177,7 +177,7 @@ export class Screen {
 
   exit() {
     this.#tickManager.stop()
-    this.rootView.moveToScreen(null)
+    this.rootView.moveToScreen(undefined)
 
     this.#onExit?.()
     flushLogs()

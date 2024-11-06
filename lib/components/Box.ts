@@ -139,6 +139,7 @@ export class Box extends Container {
     const bottomInnerY = this.#borderSizes.maxTop + innerHeight
 
     const borderStyle = this.theme.text({isHover: this.isHover})
+
     const innerStyle = new Style({background: borderStyle.background})
     const innerOrigin = new Point(
       this.#borderSizes.maxLeft,
@@ -219,7 +220,7 @@ export class Box extends Container {
 function calculateBorder(
   border: Border | BorderChars,
 ): [CalculatedBorderChars, BorderSizes] {
-  let chars: CalculatedBorderChars, sizes: BorderSizes
+  let chars: CalculatedBorderChars
   if (typeof border === 'string') {
     chars = BORDERS[border]
   } else if (border.length === 8) {
@@ -231,13 +232,13 @@ function calculateBorder(
   }
 
   // TLTL\n| TOP TOP\n|TRTR\n
-  // TL    | TOP      |TR
+  // TL   2| TOP     0|TR  3
   // ------+----------+----
   // LEFT\n|          |RIGHT\n
-  // LEFT  |          |RIGHT
+  // LEFT 1|          |RIGHT 7
   // ------+----------+----
   // BLBL\n| BOTTOM\n |BRBR\n
-  // BL    | BOTTOM   |BR
+  // BL  5 | BOTTOM  6|BR  4
 
   const topLeft = borderSize(chars[2])
   const topMiddle = borderSize(chars[0])

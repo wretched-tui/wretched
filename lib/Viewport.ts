@@ -242,6 +242,7 @@ export class Viewport {
     } else {
       args[0](pen)
     }
+
     this.#style = prevStyle
   }
 
