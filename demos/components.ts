@@ -68,31 +68,64 @@ const button2 = new Button({
   text: 'Default',
 })
 
-const checkboxes = [1, 2, 3, 4].map(
-  num => new Checkbox({text: `Choice ${num}`, isChecked: false}),
-)
-
+const progress0 = new Progress({value: 0, showPercent: true})
+const progress1 = new Progress({theme: 'blue', value: 15, showPercent: true})
+const progress2 = new Progress({theme: 'orange', value: 46, showPercent: true})
+const progress3 = new Progress({
+  theme: 'red',
+  height: 2,
+  value: 55,
+  showPercent: true,
+})
+const progress4 = new Progress({
+  theme: 'green',
+  height: 3,
+  value: 75,
+  showPercent: true,
+})
+const progress5 = new Progress({
+  theme: 'plain',
+  height: 4,
+  value: 100,
+  showPercent: true,
+})
 const progress = [
-  new Progress({progress: 0, showPercent: true}),
-  new Progress({theme: 'blue', progress: 15, showPercent: true}),
-  new Progress({theme: 'orange', progress: 46, showPercent: true}),
-  new Progress({theme: 'red', height: 2, progress: 55, showPercent: true}),
-  new Progress({theme: 'green', height: 3, progress: 75, showPercent: true}),
-  new Progress({theme: 'plain', height: 4, progress: 100, showPercent: true}),
+  progress0,
+  progress1,
+  progress2,
+  progress3,
+  progress4,
+  progress5,
 ]
+
+const checkboxes = [1, 2, 3, 4].map(
+  (num, index) =>
+    new Checkbox({
+      text: `Choice ${num}`,
+      value: true,
+      onChange: value => (progress[index].isVisible = value),
+    }),
+)
 
 const slider0 = new Slider({
   width: 1,
+  height: 'shrink',
   direction: 'vertical',
-  range: [0, 255],
-  value: ~~(Math.random() * 255),
+  range: [0, 100],
+  value: progress0.value,
   buttons: true,
   step: 1,
+  onChange: value => {
+    progress0.value = value
+  },
 })
 const slider1 = new Slider({
   direction: 'vertical',
-  range: [0, 255],
-  value: ~~(Math.random() * 255),
+  range: [0, 100],
+  value: progress1.value,
+  onChange: value => {
+    progress1.value = value
+  },
   buttons: true,
   step: 1,
   border: true,
@@ -101,15 +134,21 @@ const slider1 = new Slider({
 const slider2 = new Slider({
   height: 1,
   direction: 'horizontal',
-  range: [0, 255],
-  value: ~~(Math.random() * 255),
+  range: [0, 100],
+  value: progress2.value,
+  onChange: value => {
+    progress2.value = value
+  },
   buttons: true,
   step: 1,
 })
 const slider3 = new Slider({
   direction: 'horizontal',
-  range: [0, 255],
-  value: ~~(Math.random() * 255),
+  range: [0, 100],
+  value: progress3.value,
+  onChange: value => {
+    progress3.value = value
+  },
   buttons: true,
   step: 1,
   border: true,
@@ -137,7 +176,7 @@ const storyInput = new Input({
 
 const wrapCheckbox = new Checkbox({
   text: `Wrap lines?`,
-  isChecked: true,
+  value: true,
   onChange(value) {
     storyInput.wrap = value
   },

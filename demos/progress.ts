@@ -9,7 +9,7 @@ progressViews.push(
     direction: 'horizontal',
     width: 'fill',
     height: 5,
-    progress: 0,
+    value: 0,
     theme: 'cancel',
   }),
 )
@@ -19,7 +19,7 @@ progressViews.push(
     direction: 'horizontal',
     width: 'fill',
     height: 1,
-    progress: 0,
+    value: 0,
     theme: 'primary',
   }),
 )
@@ -29,7 +29,7 @@ progressViews.push(
     direction: 'horizontal',
     width: 'fill',
     height: 2,
-    progress: 0,
+    value: 0,
     theme: 'secondary',
   }),
 )
@@ -39,7 +39,7 @@ progressViews.push(
     direction: 'vertical',
     width: 5,
     height: 20,
-    progress: 0,
+    value: 0,
     theme: 'proceed',
   }),
 )
@@ -49,7 +49,7 @@ progressViews.push(
     direction: 'vertical',
     width: 1,
     height: 20,
-    progress: 0,
+    value: 0,
     theme: 'selected',
   }),
 )
@@ -59,7 +59,7 @@ progressViews.push(
     direction: 'vertical',
     width: 2,
     height: 20,
-    progress: 0,
+    value: 0,
   }),
 )
 
@@ -91,7 +91,7 @@ class Timer {
         this.delta = 1
       }
       for (const progress of progressViews) {
-        progress.progress = this.value
+        progress.value = this.value
       }
     }, 10)
   }
