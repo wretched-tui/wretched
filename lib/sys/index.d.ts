@@ -320,7 +320,7 @@ export class BlessedProgram extends EventEmitter {
   charAttributes(param: string, val?: boolean): boolean
   charAttributes(param: string[], val?: boolean): boolean
 
-  style(attr: string): string
+  style(attr: string | string[], enabled?: boolean): string
   text(text: string, attr: string): string
   setForeground(color: string, val?: boolean): boolean
   fg(color: string, val?: boolean): boolean
