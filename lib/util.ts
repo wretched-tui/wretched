@@ -68,9 +68,9 @@ export function define<T extends object>(
   property: keyof T,
   attributes: PropertyDescriptor,
 ) {
-  let kls = object.constructor
+  let kls = object
   do {
-    const descriptor = Object.getOwnPropertyDescriptor(kls.prototype, property)
+    const descriptor = Object.getOwnPropertyDescriptor(kls, property)
     if (descriptor) {
       const modified_descriptor = Object.assign(descriptor, attributes)
       Object.defineProperty(object, property, modified_descriptor)

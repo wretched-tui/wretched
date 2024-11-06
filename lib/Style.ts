@@ -2,6 +2,7 @@ import {program, colors} from './sys'
 
 import type {Color} from './Color'
 import {colorToSGR} from './Color'
+import {define} from './util'
 
 type Nullable<T> = {[K in keyof T]?: null | undefined | T[K]}
 
@@ -54,6 +55,17 @@ export class Style {
     this.invisible = invisible
     this.foreground = foreground
     this.background = background
+
+    define(this, 'underline', {enumerable: this.underline !== undefined})
+    define(this, 'inverse', {enumerable: this.inverse !== undefined})
+    define(this, 'bold', {enumerable: this.bold !== undefined})
+    define(this, 'dim', {enumerable: this.dim !== undefined})
+    define(this, 'italic', {enumerable: this.italic !== undefined})
+    define(this, 'strikeout', {enumerable: this.strikeout !== undefined})
+    define(this, 'blink', {enumerable: this.blink !== undefined})
+    define(this, 'invisible', {enumerable: this.invisible !== undefined})
+    define(this, 'foreground', {enumerable: this.foreground !== undefined})
+    define(this, 'background', {enumerable: this.background !== undefined})
   }
 
   invert(): Style {
