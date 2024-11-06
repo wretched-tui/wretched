@@ -1,4 +1,4 @@
-import {Box, Flex, Input, Space, interceptConsoleLog} from 'wretched'
+import {Box, Stack, Input, Space, interceptConsoleLog} from 'wretched'
 
 import {demo} from './demo'
 
@@ -47,13 +47,13 @@ elit...`,
 })
 
 function box(input: Input) {
-  return Flex.right({
+  return Stack.right({
     children: [new Box({border: 'single', child: input}), new Space()],
   })
 }
 
 demo(
-  Flex.down({
+  Stack.down({
     children: [
       //
       box(singleLine),

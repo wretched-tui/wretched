@@ -1,4 +1,4 @@
-import {Button, Flex, Progress, Text} from 'wretched'
+import {Button, Stack, Progress, Text} from 'wretched'
 
 import {demo} from './demo'
 
@@ -117,9 +117,9 @@ const button = new Button({
 })
 
 demo(
-  Flex.down([
+  Stack.down([
     ...progressViews.slice(0, 3),
-    Flex.right(progressViews.slice(3)),
+    Stack.right(progressViews.slice(3)),
     button,
   ]),
 )

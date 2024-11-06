@@ -1,4 +1,4 @@
-import {Button, ConsoleLog, Dropdown, Flex, Separator, Space} from 'wretched'
+import {Button, ConsoleLog, Dropdown, Stack, Separator, Space} from 'wretched'
 
 import {demo} from './demo'
 
@@ -67,7 +67,7 @@ const button = new Button({
 })
 
 demo(
-  Flex.down({
+  Stack.down({
     children: [
       new Dropdown({
         theme: 'primary',

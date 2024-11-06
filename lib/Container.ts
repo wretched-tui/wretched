@@ -34,7 +34,7 @@ export abstract class Container extends View {
   }
 
   #update({child, children}: Props) {
-    // Flex recreates this logic
+    // Stack recreates this logic
     if (child !== undefined) {
       children = (children ?? []).concat([child])
     }

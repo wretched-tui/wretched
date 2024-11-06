@@ -1,5 +1,5 @@
 import {colors} from 'wretched'
-import {Digits, Flex, Input, Slider, Space, Text} from 'wretched'
+import {Digits, Stack, Input, Slider, Space, Text} from 'wretched'
 import type {Color} from 'wretched'
 
 import {demo} from './demo'
@@ -80,21 +80,21 @@ const update = () => {
 update()
 
 demo(
-  Flex.right({
+  Stack.right({
     children: [
       [
         'flex1',
-        Flex.down({
+        Stack.down({
           children: [
             ['flex1', swatch],
-            Flex.right([rgbText1, ansiText]),
+            Stack.right([rgbText1, ansiText]),
             rgbText2,
           ],
         }),
       ],
       [
         'flex1',
-        Flex.right({
+        Stack.right({
           children: [
             new Slider({
               direction: 'vertical',

@@ -15,7 +15,7 @@ import {
   H4,
   H5,
   H6,
-  Flex,
+  Stack,
   Input,
   Progress,
   Scrollable,
@@ -193,8 +193,8 @@ const fontSelect = new Dropdown({
   selected: 'default',
 })
 
-const storybox = Flex.down([
-  Flex.right([wrapCheckbox, Space.horizontal(1), fontSelect]),
+const storybox = Stack.down([
+  Stack.right([wrapCheckbox, Space.horizontal(1), fontSelect]),
   titleInput,
   storyInput,
   Space.vertical(1),
@@ -262,12 +262,12 @@ const digits2 = new Digits({
 })
 
 const scrollable = new Scrollable({
-  child: Flex.down([digits1, digits2]),
+  child: Stack.down([digits1, digits2]),
   width: 40,
   height: 5,
 })
 
-const drawerView = Flex.down({
+const drawerView = Stack.down({
   maxWidth: 40,
   children: [
     new Text({text: 'Drawer'}),
@@ -291,23 +291,23 @@ const drawerView = Flex.down({
   ],
 })
 
-const contentView = Flex.right([
-  Flex.down(
+const contentView = Stack.right([
+  Stack.down(
     [
-      Flex.right([
-        Flex.down([
-          Flex.right([
-            Flex.down([primary1, primary2], {gap: 1, debug: true}),
-            Flex.down([button1, button2], {gap: 1}),
-            Flex.down(checkboxes, {padding: 1}),
+      Stack.right([
+        Stack.down([
+          Stack.right([
+            Stack.down([primary1, primary2], {gap: 1, debug: true}),
+            Stack.down([button1, button2], {gap: 1}),
+            Stack.down(checkboxes, {padding: 1}),
           ]),
-          Flex.right([
-            Flex.down([H1('Header 1'), H4('Header 4')]),
-            Flex.down([H2('Header 2'), H5('Header 5')]),
-            Flex.down([H3('Header 3'), H6('Header 6')]),
+          Stack.right([
+            Stack.down([H1('Header 1'), H4('Header 4')]),
+            Stack.down([H2('Header 2'), H5('Header 5')]),
+            Stack.down([H3('Header 3'), H6('Header 6')]),
           ]),
         ]),
-        Flex.down(progress, {width: 40}),
+        Stack.down(progress, {width: 40}),
         slider0,
         storybox,
       ]),
@@ -321,7 +321,7 @@ const contentView = Flex.right([
     ],
     {flex: 1},
   ),
-  Flex.down([['flex1', slider1], Space.vertical(1)]),
+  Stack.down([['flex1', slider1], Space.vertical(1)]),
 ])
 
 demo(

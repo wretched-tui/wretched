@@ -29,7 +29,7 @@ function fromShorthand(
   }
 }
 
-export class Flex extends Container {
+export class Stack extends Container {
   #direction: Direction = 'down'
   #gap: number = 0
   #fill: boolean = true
@@ -38,33 +38,33 @@ export class Flex extends Container {
   static down(
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
-  ): Flex {
+  ): Stack {
     const direction: Direction = 'down'
-    return new Flex(fromShorthand(props, direction, extraProps))
+    return new Stack(fromShorthand(props, direction, extraProps))
   }
 
   static up(
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
-  ): Flex {
+  ): Stack {
     const direction: Direction = 'up'
-    return new Flex(fromShorthand(props, direction, extraProps))
+    return new Stack(fromShorthand(props, direction, extraProps))
   }
 
   static right(
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
-  ): Flex {
+  ): Stack {
     const direction: Direction = 'right'
-    return new Flex(fromShorthand(props, direction, extraProps))
+    return new Stack(fromShorthand(props, direction, extraProps))
   }
 
   static left(
     props: ShorthandProps = {},
     extraProps: Omit<Props, 'children' | 'direction'> = {},
-  ): Flex {
+  ): Stack {
     const direction: Direction = 'left'
-    return new Flex(fromShorthand(props, direction, extraProps))
+    return new Stack(fromShorthand(props, direction, extraProps))
   }
 
   constructor({children, child, direction, fill, gap, ...viewProps}: Props) {

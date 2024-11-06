@@ -8,7 +8,7 @@ import {Container} from '../Container'
 import {Text} from './Text'
 import {ScrollableList} from './ScrollableList'
 import {Collapsible} from './Collapsible'
-import {Flex} from './Flex'
+import {Stack} from './Stack'
 
 export class Log extends Container {
   #logs: LogLine[] = []
@@ -113,7 +113,7 @@ class LogLineView extends Container {
     }
 
     this.add(
-      Flex.right({
+      Stack.right({
         gap: 1,
         children: [
           new Text({

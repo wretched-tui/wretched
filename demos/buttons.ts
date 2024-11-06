@@ -1,9 +1,9 @@
-import {Button, Flex, Separator, Space} from 'wretched'
+import {Button, Stack, Separator, Space} from 'wretched'
 
 import {demo} from './demo'
 
 demo(
-  Flex.down({
+  Stack.down({
     children: [
       new Separator({
         direction: 'horizontal',
@@ -12,7 +12,7 @@ demo(
       }),
 
       ['flex1', new Space()],
-      Flex.right({
+      Stack.right({
         children: Array(8)
           .fill(0)
           .map((_, index): ['flex1', Button] => [

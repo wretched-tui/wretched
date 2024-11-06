@@ -41,7 +41,7 @@ export interface Props {
   maxHeight?: number
   padding?: number | Partial<Edges>
   isVisible?: boolean
-  // only used as a child of <Flex> views
+  // only used as a child of <Stack> views
   flex?: FlexShorthand
   // use this however you want
   debug?: boolean

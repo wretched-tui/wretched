@@ -1,10 +1,10 @@
-import {Scrollable, Flex, Text} from 'wretched'
+import {Scrollable, Stack, Text} from 'wretched'
 
 import {demo} from './demo'
 
 demo(
   new Scrollable({
-    child: Flex.down({
+    child: Stack.down({
       children: Array(100)
         .fill(0)
         .map(

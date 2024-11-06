@@ -9,7 +9,7 @@ import {
   Box,
   Button,
   Checkbox,
-  Flex,
+  Stack,
   ScrollableList,
   Separator,
   Text,
@@ -259,7 +259,7 @@ class DropdownSelector<T> extends Container {
       items: this.#choices.map(([, choice]) => choice),
       cellForItem: (choice, row) => this.cellForItem(choice, row),
     })
-    const content = new Flex({direction: 'down', children: []})
+    const content = new Stack({direction: 'down', children: []})
 
     if (multiple) {
       content.add(this.#checkbox)
@@ -351,7 +351,7 @@ class DropdownSelector<T> extends Container {
   cellForItem(choice: T, row: number): View {
     const button = this.#cellButton(choice, row)
 
-    return Flex.right({
+    return Stack.right({
       fill: false,
       children: [
         ['flex1', button],

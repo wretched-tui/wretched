@@ -1,6 +1,6 @@
 import {
   ConsoleLog,
-  Flex,
+  Stack,
   KeyEvent,
   Size,
   View,
@@ -49,7 +49,7 @@ class Mouse extends View {
 }
 
 demo(
-  Flex.down([
+  Stack.down([
     new Keys(),
     // new Mouse(),
     new ConsoleLog({flex: 1}),

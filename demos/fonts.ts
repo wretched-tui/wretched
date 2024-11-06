@@ -3,7 +3,7 @@ import {
   FontFamilies,
   Text,
   Dropdown,
-  Flex,
+  Stack,
   Space,
   Button,
 } from 'wretched'
@@ -30,7 +30,7 @@ const dropdown = new Dropdown({
   selected: 'default',
 })
 
-const buttons = Flex.right({
+const buttons = Stack.right({
   children: FontFamilies.map(
     f =>
       new Button({
@@ -45,7 +45,7 @@ const buttons = Flex.right({
 })
 
 demo(
-  Flex.down({
+  Stack.down({
     children: [
       new Space({height: 1}),
       dropdown,

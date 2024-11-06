@@ -3,7 +3,7 @@ import {
   Screen,
   TrackMouse,
   ConsoleLog,
-  Flex,
+  Stack,
   Window,
   iTerm2,
   interceptConsoleLog,
@@ -29,7 +29,7 @@ export async function demo(
 
       return new Window({
         child: new TrackMouse({
-          content: Flex.down({
+          content: Stack.down({
             children: showConsoleLog
               ? [
                   ['flex1', demoContent],

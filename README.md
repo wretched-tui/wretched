@@ -53,6 +53,6 @@ Then came [blessed](https://github.com/chjj/blessed), and it was really amazing!
 
 Fast-forward a few years and Flexbox and React and declarative UI showed up, and blessed didn't notice or care by then.
 
-And now comes `wretched`. I stripped down _blessed_ to only the tput/program/events/colors/unicode parts, and reimplemented React components and Flow and Flex layouts.
+And now comes `wretched`. I stripped down _blessed_ to only the tput/program/events/colors/unicode parts, and reimplemented React components and Stack layouts.
 
 It's got way less "stuff" in it than _blessed_... but then again blessed had a truly mind-blowing amount of "stuff" to it.

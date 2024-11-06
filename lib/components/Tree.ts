@@ -1,7 +1,7 @@
 import type {Viewport} from '../Viewport'
 
 import {type Props as ViewProps, View} from '../View'
-import {Flex} from './Flex'
+import {Stack} from './Stack'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
 import {
@@ -48,7 +48,7 @@ export class Tree<T extends any> extends Container {
   #expanded: Set<Path> = new Set()
   #itemViews: Map<Path, TreeChild> = new Map()
   #viewPaths: Map<TreeChild, Path> = new Map()
-  #contentView = Flex.down()
+  #contentView = Stack.down()
 
   constructor(props: Props<T>) {
     super(props)
