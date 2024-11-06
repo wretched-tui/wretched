@@ -1,4 +1,4 @@
-import {program, colors} from './sys'
+import {program} from './sys'
 
 import type {Color} from './Color'
 import {colorToSGR} from './Color'

@@ -332,8 +332,19 @@ class Pen {
   }
 
   /**
-   * When scanning text, picking up SGR codes, you should use 'mergePen', because SGR
-   * codes are expected to push/pop onto the existing "stack" of styles.
+   * Used in Text drawing components - the component usually defines a starting
+   * style (`viewport.usingPen(style, pen => {})`), and as it prints characters
+   * (`char of unicode.printableChars(line)`) it will detect 0-width SGR codes
+   * (`unicode.charWidth(char) === 0`). These codes can be used to create a `Style`
+   * object (`Style.fromSGR(char)`).
+   *
+   * SGR codes do support turn-on/turn-off, but this doesn't work well when, say, the
+   * default style already has certain features turned on. For instance, if the
+   * string specifies one region to be bold, but the entire Text component is meant
+   * to be bold, the behaviour of "turn-off-bold" is actually incorrect here.
+   *
+   * This is why the `fromSGR` method accepts the default style - it can be compared
+   * with the SGR state to determine what to do.
    */
   mergePen(style: Style) {
     const current = this.#stack[0] ?? this.#initial
