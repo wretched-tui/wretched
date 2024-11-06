@@ -7,6 +7,7 @@ import {Style} from '../Style'
 import {define} from '../util'
 
 export type Border =
+  | 'none'
   | 'single'
   | 'bold'
   | 'double'
@@ -294,6 +295,7 @@ function borderSize(str: string) {
 }
 
 const BORDERS: Record<Border, CalculatedBorderChars> = {
+  none: ['', '', '', '', '', '', '', ''],
   single: ['─', '│', '┌', '┐', '└', '┘', '─', '│'],
   bold: ['━', '┃', '┏', '┓', '┗', '┛', '━', '┃'],
   double: ['═', '║', '╔', '╗', '╚', '╝', '═', '║'],
