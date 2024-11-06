@@ -15,7 +15,7 @@ import {
 } from './events'
 import {Point, Size, Rect} from './geometry'
 
-export type Dimension = number | 'fill' | 'natural'
+export type Dimension = number | 'fill' | 'shrink' | 'natural'
 export type FlexSize = 'natural' | number
 export type FlexShorthand = FlexSize | `flex${number}`
 
@@ -193,6 +193,14 @@ export abstract class View {
     return this.#isPressed
   }
 
+  get width() {
+    return this.#width
+  }
+
+  get height() {
+    return this.#height
+  }
+
   abstract naturalSize(available: Size): Size
   abstract render(viewport: Viewport): void
 
@@ -218,9 +226,12 @@ export abstract class View {
     dim: Dimension,
     available: number,
     natural: () => number,
+    prefer: 'shrink' | 'grow',
   ): number {
     if (dim === 'fill') {
       return available
+    } else if (dim === 'shrink') {
+      return prefer === 'shrink' ? 0 : available
     } else if (dim === 'natural') {
       return natural()
     }
@@ -243,11 +254,13 @@ export abstract class View {
           this.#width,
           available.width,
           () => calcSize().width,
+          prefer,
         ),
         height = this.#toDimension(
           this.#height,
           available.height,
           () => calcSize().height,
+          prefer,
         )
       return new Size(width, height).mutableCopy()
     }
@@ -259,6 +272,7 @@ export abstract class View {
         this.#width,
         available.width,
         () => calcSize().width,
+        prefer,
       )
     } else {
       if (this.#minWidth !== undefined) {
@@ -275,6 +289,7 @@ export abstract class View {
         this.#height,
         available.height,
         () => calcSize().height,
+        prefer,
       )
     } else {
       if (this.#minHeight !== undefined) {
