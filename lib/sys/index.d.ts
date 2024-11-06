@@ -660,7 +660,8 @@ export const unicode: {
    */
   words(input: string | string[]): [string[], number][]
   /**
-   * The current locale. Uses `process.env.LANG`, defaults to 'en'.
+   * The current locale. Uses `process.env.LANG`,
+   * @default 'en'
    */
   locale: string
 }
