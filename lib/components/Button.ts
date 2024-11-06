@@ -10,6 +10,7 @@ import {
   HotKey,
   KeyEvent,
   styleTextForHotKey,
+  toHotKeyDef,
 } from '../events'
 import {childTheme} from '../UI'
 import type {View} from '../View'
@@ -30,17 +31,15 @@ export interface Props extends ContainerProps {
 export class Button extends Container {
   #hotKey?: HotKey
   #onClick?: Props['onClick']
-  #textView?: Text = undefined
+  #textView: Text
   #border: Border = 'default'
   #align: Alignment = 'center'
 
   constructor(props: Props) {
     super(props)
 
-    if (this.#textView === undefined) {
-      this.#textView = new Text({alignment: 'center'})
-      this.add(this.#textView)
-    }
+    this.#textView = new Text({alignment: 'center'})
+    this.add(this.#textView)
 
     this.#update(props)
   }
@@ -55,11 +54,8 @@ export class Button extends Container {
   }
 
   #update({text, border, align, hotKey, onClick}: Props) {
-    if (this.#textView && text !== undefined) {
-      const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
-      this.#textView.text = styledText
-    }
-
+    const styledText = hotKey ? styleTextForHotKey(text ?? '', hotKey) : text
+    this.#textView.text = styledText ?? ''
     this.#align = align ?? 'center'
     this.#border = border ?? 'default'
     this.#hotKey = hotKey
@@ -72,13 +68,14 @@ export class Button extends Container {
   }
 
   get text() {
-    return this.#textView?.text
+    return this.#textView.text
   }
   set text(value: string | undefined) {
-    if (this.#textView) {
-      this.#textView.text = value ?? ''
-      this.invalidateSize()
-    }
+    const styledText = this.#hotKey
+      ? styleTextForHotKey(value ?? '', this.#hotKey)
+      : (value ?? '')
+    this.#textView.text = styledText
+    this.invalidateSize()
   }
 
   #borderSize(): [number, number] {
@@ -106,7 +103,7 @@ export class Button extends Container {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     if (this.#hotKey) {
-      viewport.registerHotKey(this.#hotKey)
+      viewport.registerHotKey(toHotKeyDef(this.#hotKey))
     }
 
     const textStyle = this.theme.ui({

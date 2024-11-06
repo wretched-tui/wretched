@@ -6,7 +6,7 @@ import {Style} from './Style'
 import {Rect, Point, Size} from './geometry'
 import {Screen} from './Screen'
 import {View} from './View'
-import type {HotKey, MouseEventListenerName} from './events'
+import type {HotKeyDef, MouseEventListenerName} from './events'
 import {define} from './util'
 
 /**
@@ -89,7 +89,7 @@ export class Viewport {
     )
   }
 
-  registerHotKey(key: HotKey) {
+  registerHotKey(key: HotKeyDef) {
     if (!this.#currentRender) {
       return
     }

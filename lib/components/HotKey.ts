@@ -1,14 +1,14 @@
 import type {Viewport} from '../Viewport'
 import {type Props as ContainerProps, Container} from '../Container'
 import {Size} from '../geometry'
-import {HotKey as HotKeyEvent} from '../events'
+import {HotKey as HotKeyProp, toHotKeyDef} from '../events'
 
 export interface Props extends ContainerProps {
-  hotKey: HotKeyEvent
+  hotKey: HotKeyProp
 }
 
 export class HotKey extends Container {
-  #hotKey: HotKeyEvent = {char: ''}
+  #hotKey: HotKeyProp = {char: ''}
 
   constructor(props: Props) {
     super(props)
@@ -34,6 +34,6 @@ export class HotKey extends Container {
       return super.render(viewport)
     }
 
-    viewport.registerHotKey(this.#hotKey)
+    viewport.registerHotKey(toHotKeyDef(this.#hotKey))
   }
 }

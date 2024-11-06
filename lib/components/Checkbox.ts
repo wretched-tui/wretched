@@ -16,6 +16,7 @@ import {
   styleTextForHotKey,
 } from '../events'
 import {childTheme} from '../UI'
+import {System} from '../System'
 
 interface StyleProps {
   text?: string
@@ -30,31 +31,20 @@ export class Checkbox extends Container {
   isChecked: boolean = false
   #hotKey?: HotKey
   #onChange: StyleProps['onChange']
-  #textView?: Text
+  #textView: Text
   #contentView?: View
-  #isPressed = false
-  #isHover = false
 
   constructor(props: Props) {
     super(props)
 
-    if (this.#textView === undefined) {
-      this.add(new Text({alignment: 'center'}))
-    }
+    this.#textView = new Text({alignment: 'center'})
+    this.add(this.#textView)
 
     this.#update(props)
   }
 
   childTheme(view: View) {
-    return childTheme(super.childTheme(view), this.#isPressed, this.#isHover)
-  }
-
-  add(child: View, at?: number) {
-    if (this.#textView === undefined && child instanceof Text) {
-      this.#textView = child
-    }
-
-    super.add(child, at)
+    return childTheme(super.childTheme(view), this.isPressed, this.isHover)
   }
 
   update(props: Props) {
@@ -63,11 +53,8 @@ export class Checkbox extends Container {
   }
 
   #update({text, hotKey, isChecked, onChange}: Props) {
-    if (this.#textView && text !== undefined) {
-      const styledText = hotKey ? styleTextForHotKey(text, hotKey) : text
-      this.#textView.text = styledText
-    }
-
+    const styledText = hotKey ? styleTextForHotKey(text ?? '', hotKey) : text
+    this.#textView.text = styledText ?? ''
     this.isChecked = isChecked
     this.#hotKey = hotKey
     this.#onChange = onChange
@@ -78,37 +65,23 @@ export class Checkbox extends Container {
   }
 
   set text(value: string | undefined) {
-    if (this.#textView) {
-      this.#textView.text = value ?? ''
-      this.invalidateSize()
-    }
-  }
-
-  #boxWidth(): number {
-    const box = BOX.checkbox.unchecked
-    return unicode.lineWidth(box)
+    const styledText = this.#hotKey
+      ? styleTextForHotKey(value ?? '', this.#hotKey)
+      : value
+    this.#textView.text = styledText ?? ''
+    this.invalidateSize()
   }
 
   naturalSize(available: Size): Size {
-    return super.naturalSize(available).grow(this.#boxWidth(), 0)
+    return super.naturalSize(available).grow(BOX_WIDTH, 0)
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMousePressStart(event)) {
-      this.#isPressed = true
-    } else if (isMousePressExit(event)) {
-      this.#isPressed = false
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
-      if (isMouseClicked(event)) {
-        this.isChecked = !this.isChecked
-        this.#onChange?.(this.isChecked)
-      }
-    }
-
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
+    if (isMouseClicked(event)) {
+      this.isChecked = !this.isChecked
+      this.#onChange?.(this.isChecked)
     }
   }
 
@@ -120,13 +93,13 @@ export class Checkbox extends Container {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     const uiStyle = this.theme.ui({
-      isPressed: this.#isPressed,
-      isHover: this.#isHover,
+      isPressed: this.isPressed,
+      isHover: this.isHover,
     })
 
     viewport.paint(uiStyle)
 
-    const boxWidth = this.#boxWidth()
+    const boxWidth = BOX_WIDTH
     const naturalSize = super.naturalSize(
       viewport.contentSize.shrink(boxWidth, 0),
     )
@@ -166,3 +139,5 @@ const BOX: Record<
     checked: '⦿ ',
   },
 }
+
+const BOX_WIDTH = unicode.lineWidth(BOX.checkbox.unchecked)

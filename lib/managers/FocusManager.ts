@@ -1,12 +1,12 @@
 import {View} from '../View'
-import {match, type HotKey, type KeyEvent} from '../events'
+import {match, type HotKeyDef, type KeyEvent} from '../events'
 
 export class FocusManager {
   #didCommit = false
   #currentFocus: View | undefined
   #prevFocus: View | undefined
   #focusRing: View[] = []
-  #hotKeys: [View, HotKey][] = []
+  #hotKeys: [View, HotKeyDef][] = []
 
   /**
    * If the previous focus-view is not mounted, we can clear out the current
@@ -62,7 +62,7 @@ export class FocusManager {
     }
   }
 
-  registerHotKey(view: View, key: HotKey) {
+  registerHotKey(view: View, key: HotKeyDef) {
     if (this.#didCommit) {
       return
     }

@@ -2,11 +2,28 @@ import {underline} from '../ansi'
 import type {KeyEvent as WretchedKeyEvent} from '../sys'
 
 export type KeyEvent = WretchedKeyEvent & {type: 'key'}
-export type HotKey = {
+export type HotKeyDef = {
   char: string
   ctrl?: boolean
   meta?: boolean
   shift?: boolean
+}
+export type HotKey = string | HotKeyDef
+
+export function toHotKeyDef(hotKey: HotKey) {
+  if (typeof hotKey !== 'string') {
+    return hotKey
+  }
+
+  // hotkey string supports:
+  // C- control
+  // M- meta
+  // S- shift
+  const ctrl = hotKey.includes('C-')
+  const meta = hotKey.includes('M-')
+  const shift = hotKey.includes('S-')
+  const char = hotKey.replace(/^([CMS]-)*/, '').toLowerCase()
+  return {char, ctrl, meta, shift}
 }
 
 export function isKeyPrintable(event: KeyEvent) {
@@ -56,7 +73,7 @@ export function isKeyPrintable(event: KeyEvent) {
   return true
 }
 
-export const match = (key: HotKey, event: KeyEvent) => {
+export const match = (key: HotKeyDef, event: KeyEvent) => {
   if ((key.ctrl ?? false) !== event.ctrl) {
     return false
   }
@@ -70,7 +87,8 @@ export const match = (key: HotKey, event: KeyEvent) => {
   return key.char === event.name
 }
 
-export const styleTextForHotKey = (text: string, key: HotKey) => {
+export const styleTextForHotKey = (text: string, key_: HotKey) => {
+  const key = toHotKeyDef(key_)
   const alt = '⌥'
   const shift = '⇧'
   const ctrl = '⌃'

@@ -9,7 +9,7 @@ import {Viewport} from './Viewport'
 import {flushLogs} from './log'
 import {Buffer} from './Buffer'
 import type {
-  HotKey,
+  HotKeyDef,
   KeyEvent,
   MouseEventListenerName,
   SystemEvent,
@@ -220,7 +220,7 @@ export class Screen {
     return this.#focusManager.registerFocus(view)
   }
 
-  registerHotKey(view: View, key: HotKey) {
+  registerHotKey(view: View, key: HotKeyDef) {
     return this.#focusManager.registerHotKey(view, key)
   }
 
