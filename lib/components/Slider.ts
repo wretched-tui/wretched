@@ -63,7 +63,7 @@ type Props = ViewProps &
     /**
      * Current position of the slider, should be within the range
      */
-    position?: number
+    value?: number
     onChange?: (value: number) => void
   }
 
@@ -100,20 +100,12 @@ export class Slider extends View {
     super.update(props)
   }
 
-  #update({
-    direction,
-    border,
-    buttons,
-    range,
-    position,
-    step,
-    onChange,
-  }: Props) {
+  #update({direction, border, buttons, range, value, step, onChange}: Props) {
     this.#direction = direction ?? 'horizontal'
     this.#border = border ?? false
     this.#buttons = buttons ?? false
     this.#range = range ?? [0, 1]
-    this.#value = position ?? Math.min(...this.#range)
+    this.#value = value ?? Math.min(...this.#range)
     this.#step = step ? Math.max(step, 1) : 1
     this.#onChange = onChange
   }

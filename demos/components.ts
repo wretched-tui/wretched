@@ -85,14 +85,14 @@ const slider0 = new Slider({
   width: 1,
   direction: 'vertical',
   range: [0, 255],
-  position: ~~(Math.random() * 255),
+  value: ~~(Math.random() * 255),
   buttons: true,
   step: 1,
 })
 const slider1 = new Slider({
   direction: 'vertical',
   range: [0, 255],
-  position: ~~(Math.random() * 255),
+  value: ~~(Math.random() * 255),
   buttons: true,
   step: 1,
   border: true,
@@ -102,14 +102,14 @@ const slider2 = new Slider({
   height: 1,
   direction: 'horizontal',
   range: [0, 255],
-  position: ~~(Math.random() * 255),
+  value: ~~(Math.random() * 255),
   buttons: true,
   step: 1,
 })
 const slider3 = new Slider({
   direction: 'horizontal',
   range: [0, 255],
-  position: ~~(Math.random() * 255),
+  value: ~~(Math.random() * 255),
   buttons: true,
   step: 1,
   border: true,
