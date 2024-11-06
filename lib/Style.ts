@@ -355,68 +355,88 @@ export class Style {
   /**
    * @param prevStyle Used by the buffer to reset foreground/background colors and attrs
    */
-  toSGR(prevStyle: Style): string {
+  toSGR(prevStyle: Style, text?: string): string {
     const {global: globalProgram} = program
     if (!globalProgram) {
       return ''
     }
 
     const parts: string[] = []
+    const undo: string[] = []
     if (this.underline && !prevStyle.underline) {
       parts.push('underline')
+      if (text) undo.push('!underline')
     } else if (!this.underline && prevStyle.underline) {
       parts.push('!underline')
+      if (text) undo.push('underline')
     }
 
     if (this.bold && !prevStyle.bold) {
       parts.push('bold')
+      if (text) undo.push('!bold')
     } else if (!this.bold && prevStyle.bold) {
       parts.push('!bold')
+      if (text) undo.push('bold')
     }
 
     if (this.dim && !prevStyle.dim) {
       parts.push('dim')
+      if (text) undo.push('!dim')
     } else if (!this.dim && prevStyle.dim) {
       parts.push('!dim')
+      if (text) undo.push('dim')
     }
 
     if (this.italic && !prevStyle.italic) {
       parts.push('italic')
+      if (text) undo.push('!italic')
     } else if (!this.italic && prevStyle.italic) {
       parts.push('!italic')
+      if (text) undo.push('italic')
     }
 
     if (this.strikeout && !prevStyle.strikeout) {
       parts.push('strikeout')
+      if (text) undo.push('!strikeout')
     } else if (!this.strikeout && prevStyle.strikeout) {
       parts.push('!strikeout')
+      if (text) undo.push('strikeout')
     }
 
     if (this.inverse && !prevStyle.inverse) {
       parts.push('inverse')
+      if (text) undo.push('!inverse')
     } else if (!this.inverse && prevStyle.inverse) {
       parts.push('!inverse')
+      if (text) undo.push('inverse')
     }
 
     if (this.foreground) {
       parts.push(colorToSGR(this.foreground, 'fg'))
+      if (text) undo.push(colorToSGR(prevStyle.foreground ?? 'default', 'fg'))
     } else if (prevStyle.foreground && prevStyle.foreground !== 'default') {
       parts.push(colorToSGR('default', 'fg'))
+      if (text) undo.push(colorToSGR(prevStyle.foreground, 'fg'))
     }
 
     if (this.background) {
       parts.push(colorToSGR(this.background, 'bg'))
+      if (text) undo.push(colorToSGR(prevStyle.background ?? 'default', 'bg'))
     } else if (prevStyle.background && prevStyle.background !== 'default') {
       parts.push(colorToSGR('default', 'bg'))
+      if (text) undo.push(colorToSGR(prevStyle.background, 'bg'))
     }
 
-    if (
-      (this.bold && parts.includes('!dim')) ||
-      (this.dim && parts.includes('!bold'))
-    ) {
-      return globalProgram.style('') + this.toSGR(Style.NONE)
-    } else if (parts.length) {
-      return globalProgram.style(parts.join(';'))
+    // put '!' flags in front
+    parts.sort()
+    undo.sort()
+
+    if (text !== undefined) {
+      return globalProgram.style(parts) + text + globalProgram.style(undo)
+    }
+
+    if (parts.length) {
+      return globalProgram.style(parts)
     } else {
       return ''
     }
