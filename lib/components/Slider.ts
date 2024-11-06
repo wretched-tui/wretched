@@ -259,7 +259,7 @@ export class Slider extends View {
       if (isMouseDragging(event)) {
         this.#value = interpolate(pos, [minSlider, maxSlider], this.#range)
 
-        if (this.#step > 1) {
+        if (~~this.#step === this.#step) {
           this.#value =
             Math.round((this.#value - this.#range[0]) / this.#step) * this.#step
         }
