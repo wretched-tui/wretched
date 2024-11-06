@@ -63,6 +63,9 @@ export abstract class Container extends View {
     let width = 0
     let height = 0
     for (const child of this.#children) {
+      if (!child.isVisible) {
+        continue
+      }
       const naturalSize = child.naturalSize(available)
       width = Math.max(width, naturalSize.width)
       height = Math.max(height, naturalSize.height)
@@ -76,6 +79,9 @@ export abstract class Container extends View {
 
   renderChildren(viewport: Viewport) {
     for (const child of this.#children) {
+      if (!child.isVisible) {
+        continue
+      }
       child.render(viewport)
     }
   }
