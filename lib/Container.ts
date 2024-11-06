@@ -144,29 +144,21 @@ export abstract class Container extends View {
 
   removeAllChildren() {
     for (const child of this.#children) {
-      this.#removeChild(child)
+      this.removeChild(child)
     }
-
-    this.#children = []
   }
 
-  removeChild(remove: View | number) {
-    if (typeof remove === 'number') {
-      if (remove >= 0 && remove < this.#children.length) {
-        const child = this.#children[remove]
-        this.#children.splice(remove, 1)
+  removeChild(remove: View) {
+    if (remove.parent !== this) {
+      return
+    }
 
-        this.#removeChild(child)
-      }
-    } else {
-      if (remove.parent !== this) {
-        return
-      }
+    const index = this.#children.indexOf(remove)
+    if (~index && index >= 0 && index < this.#children.length) {
+      const child = this.#children[index]
+      this.#children.splice(index, 1)
 
-      const index = this.#children.indexOf(remove)
-      if (~index) {
-        this.removeChild(index)
-      }
+      this.#removeChild(child)
     }
   }
 

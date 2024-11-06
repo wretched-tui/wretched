@@ -52,16 +52,10 @@ export class Collapsible extends Container {
     this.#expandedView = this.children[1]
   }
 
-  removeChild(remove: View | number) {
+  removeChild(remove: View) {
     super.removeChild(remove)
     this.#collapsedView = this.children[0]
     this.#expandedView = this.children[1]
-  }
-
-  removeAllChildren() {
-    this.#collapsedView = undefined
-    this.#expandedView = undefined
-    super.removeAllChildren()
   }
 
   #update({
