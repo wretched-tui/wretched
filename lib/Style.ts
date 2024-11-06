@@ -48,7 +48,8 @@ export class Style {
     this.underline = underline
     this.inverse = inverse
     this.bold = bold
-    this.dim = dim
+    // bold and dim are mutually exclusive - bold has precedence
+    this.dim = bold ? undefined : dim
     this.italic = italic
     this.strikeout = strikeout
     this.blink = blink
@@ -83,8 +84,9 @@ export class Style {
     return new Style({
       underline: style.underline ?? this.underline,
       inverse: style.inverse ?? this.inverse,
-      bold: style.bold ?? this.bold,
-      dim: style.dim ?? this.dim,
+      // only one of bold or dim
+      bold: style.bold ?? (style.dim ? undefined : this.bold),
+      dim: style.dim ?? (style.bold ? undefined : this.dim),
       italic: style.italic ?? this.italic,
       strikeout: style.strikeout ?? this.strikeout,
       blink: style.blink ?? this.blink,
