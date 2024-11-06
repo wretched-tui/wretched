@@ -8,11 +8,16 @@ import {System} from '../System'
 import {isMouseClicked, type MouseEvent} from '../events'
 import {define} from '../util'
 
-interface Props extends ContainerProps {}
+interface Props extends ContainerProps {
+  /**
+   * Draw a border around the content.
+   * @default true
+   */
+  border?: boolean
+}
 
 interface TabProps extends ContainerProps {
   title?: string
-  view: View
 }
 
 // tabs = new Tabs()
@@ -21,16 +26,20 @@ interface TabProps extends ContainerProps {
 //
 // tabs.add()
 export class Tabs extends Container {
-  static Tab: typeof Tab
+  static Section: typeof Section
   #selectedTab = 0
   #separatorLocation: [number, number] | undefined
   #separatorWidths: number[] = []
+  #border: boolean = false
 
-  static create(tabs: ([string, View] | Tab)[], extraProps: Props = {}): Tabs {
+  static create(
+    tabs: ([string, View] | Section)[],
+    extraProps: Props = {},
+  ): Tabs {
     const tabsView = new Tabs(extraProps)
     tabsView.debug = true
     for (const tab of tabs) {
-      if (tab instanceof Tab) {
+      if (tab instanceof Section) {
         tabsView.addTab(tab)
       } else {
         const [title, view] = tab as [string, View]
@@ -43,30 +52,57 @@ export class Tabs extends Container {
 
   constructor(props: Props = {}) {
     super(props)
+    this.#update(props)
   }
 
   get tabs() {
-    return this.children.filter(view => view instanceof Tab)
+    return this.children.filter(view => view instanceof Section)
+  }
+  get tabTitles() {
+    return this.children.filter(view => view instanceof TabTitle)
   }
 
-  addTab(tab: Tab): void
-  addTab(title: string, view: View): void
-  addTab(titleOrTab: string | Tab, view?: View) {
-    let tabView: Tab
-    if (titleOrTab instanceof Tab) {
+  update(props: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({border}: Props) {
+    this.#border = border ?? true
+  }
+
+  addTab(tab: Section): void
+  addTab(title: string, child: View): void
+  addTab(titleOrTab: string | Section, child?: View) {
+    let tabView: Section
+    if (titleOrTab instanceof Section) {
       tabView = titleOrTab
     } else {
-      tabView = Tab.create(titleOrTab as string, view as View)
+      tabView = Section.create(titleOrTab as string, child as View)
     }
 
-    tabView.onClick = tab => this.#selected(tab)
-
     this.add(tabView)
-    this.add(tabView.view)
   }
 
-  #selected(tab: Tab) {
-    const index = this.tabs.indexOf(tab)
+  add(child: View, at?: number) {
+    if (child instanceof Section) {
+      child.titleView.onClick = tab => this.#selected(tab)
+      super.add(child.titleView)
+    }
+    super.add(child, at)
+  }
+
+  removeChild(child: View) {
+    if (child instanceof Section && child.titleView) {
+      super.removeChild(child.titleView)
+    }
+
+    super.removeChild(child)
+  }
+
+  #selected(tab: TabTitle) {
+    const tabTitles = this.tabTitles
+    const index = tabTitles.indexOf(tab)
     if (index === -1) {
       return
     }
@@ -76,7 +112,7 @@ export class Tabs extends Container {
 
   naturalSize(available: Size) {
     const remainingSize = available.mutableCopy()
-    const tabTitleSize = this.tabs.reduce((size, tab, index) => {
+    const tabTitleSize = this.tabTitles.reduce((size, tab, index) => {
       const tabSize = tab.naturalSize(remainingSize).mutableCopy()
       size.width += tabSize.width
       size.height = Math.max(size.height, tabSize.height)
@@ -89,20 +125,15 @@ export class Tabs extends Container {
 
     const childSize = Size.zero.mutableCopy()
     const availableChildSize = available.shrink(0, tabTitleSize.height)
-    for (const child of this.tabs.map(tab => tab.view)) {
-      childSize.width = Math.max(
-        childSize.width,
-        child.naturalSize(availableChildSize).width,
-      )
-      childSize.height = Math.max(
-        childSize.height,
-        child.naturalSize(availableChildSize).height,
-      )
+    for (const tab of this.tabs) {
+      const tabSize = tab.naturalSize(availableChildSize)
+      childSize.width = Math.max(childSize.width, tabSize.width)
+      childSize.height = Math.max(childSize.height, tabSize.height)
     }
 
     return new Size(
-      Math.max(tabTitleSize.width, childSize.width),
-      tabTitleSize.height + childSize.height,
+      Math.max(tabTitleSize.width, childSize.width) + (this.#border ? 3 : 0),
+      tabTitleSize.height + childSize.height + (this.#border ? 1 : 0),
     )
   }
 
@@ -164,12 +195,12 @@ export class Tabs extends Container {
     viewport.registerTick()
 
     const remainingSize = viewport.contentSize.mutableCopy()
-    const tabInfo: [Rect, Tab][] = []
+    const tabInfo: [Rect, TabTitle][] = []
     const separatorWidths: number[] = []
-    let x = 0,
+    let x = this.#border ? 2 : 0,
       tabHeight = 0
-    this.tabs.forEach((tab, index) => {
-      const tabRect = Rect.zero.withSize(tab.naturalSize(remainingSize)).atX(x)
+    this.tabTitles.forEach((tab, index) => {
+      const tabRect = new Rect(new Point(x, 0), tab.naturalSize(remainingSize))
       tabInfo.push([tabRect, tab])
       remainingSize.width -= tabRect.size.width
 
@@ -189,8 +220,7 @@ export class Tabs extends Container {
       separatorWidths.push(tabRect.size.width)
     })
 
-    this.#selectedTab =
-      this.#selectedTab >= separatorWidths.length ? 0 : this.#selectedTab
+    this.#selectedTab = Math.min(separatorWidths.length - 1, this.#selectedTab)
     this.#separatorWidths = separatorWidths
     if (this.#separatorLocation) {
       this.#renderSeparator(
@@ -198,6 +228,17 @@ export class Tabs extends Container {
         tabHeight,
         separatorWidths,
         this.#separatorLocation,
+      )
+    }
+
+    if (this.#border) {
+      const borderRect = viewport.contentRect.inset(
+        tabHeight + TAB_SEPARATOR_HEIGHT - 1,
+        0,
+        0,
+      )
+      viewport.clipped(borderRect, inner =>
+        this.#renderBorder(inner, this.#separatorWidths),
       )
     }
 
@@ -209,14 +250,40 @@ export class Tabs extends Container {
     if (selectedTab) {
       const childRect = viewport.contentRect.inset(
         tabHeight + TAB_SEPARATOR_HEIGHT,
-        0,
-        0,
-        0,
+        this.#border ? 1 : 0,
+        this.#border ? 1 : 0,
       )
       viewport.clipped(childRect, inner => {
-        selectedTab.view.render(inner)
+        selectedTab.render(inner)
       })
     }
+  }
+
+  #renderBorder(viewport: Viewport, separatorWidths: number[]) {
+    const totalWidth = separatorWidths.reduce((a, b) => a + b, 2)
+    for (let x = viewport.contentSize.width - 2; x > 0; x--) {
+      if (x === totalWidth) {
+        viewport.write('╶', new Point(x, 0))
+      } else if (x > totalWidth) {
+        viewport.write('─', new Point(x, 0))
+      }
+
+      viewport.write('─', new Point(x, viewport.contentSize.height - 1))
+    }
+    for (let y = viewport.contentSize.height - 2; y > 0; y--) {
+      viewport.write('│', new Point(0, y))
+      viewport.write('│', new Point(viewport.contentSize.width - 1, y))
+    }
+    viewport.write('┌╴', new Point(0, 0))
+    viewport.write('┐', new Point(viewport.contentSize.width - 1, 0))
+    viewport.write('└', new Point(0, viewport.contentSize.height - 1))
+    viewport.write(
+      '┘',
+      new Point(
+        viewport.contentSize.width - 1,
+        viewport.contentSize.height - 1,
+      ),
+    )
   }
 
   #renderSeparator(
@@ -225,14 +292,14 @@ export class Tabs extends Container {
     separatorWidths: number[],
     separatorLocation: [number, number],
   ) {
-    const [separatorStart, separatorStop] = [
-      ~~separatorLocation[0],
-      ~~separatorLocation[1],
-    ]
     // separatorLocation is rounded down in this function
-    let xLeft = 0,
+    let xLeft = this.#border ? 2 : 0,
       xRight = 0,
       didDrawSeparator = false
+    const [separatorStart, separatorStop] = [
+      ~~separatorLocation[0] + xLeft,
+      ~~separatorLocation[1] + xLeft,
+    ]
 
     separatorWidths.forEach((separatorWidth, index) => {
       const tab = this.tabs.at(index)
@@ -267,38 +334,25 @@ export class Tabs extends Container {
   }
 }
 
-class Tab extends Container {
-  #titleView: Text
-  view: View
-  onClick: ((tab: Tab) => void) | undefined
+class TabTitle extends Container {
+  #textView: Text
+  onClick: ((tab: TabTitle) => void) | undefined
 
-  static create(
-    title: string,
-    view: View,
-    extraProps: Omit<TabProps, 'title' | 'view'> = {},
-  ) {
-    return new Tab({title, view, ...extraProps})
-  }
+  constructor(title: string) {
+    super({})
 
-  constructor({title, view, ...props}: TabProps) {
-    super(props)
-
-    this.view = view
-
-    this.#titleView = new Text({
+    this.#textView = new Text({
       text: title ?? '',
       style: this.titleStyle,
     })
-    this.add(this.#titleView)
-
-    define(this, 'title', {enumerable: true})
+    this.add(this.#textView)
   }
 
   get title() {
-    return this.#titleView.text
+    return this.#textView.text
   }
   set title(value: string) {
-    this.#titleView.text = value
+    this.#textView.text = value
   }
 
   get titleStyle() {
@@ -306,7 +360,7 @@ class Tab extends Container {
   }
 
   naturalSize(available: Size) {
-    return this.#titleView
+    return this.#textView
       .naturalSize(available)
       .grow(TAB_TITLE_PAD, TAB_SEPARATOR_HEIGHT)
   }
@@ -318,7 +372,7 @@ class Tab extends Container {
       this.onClick?.(this)
     }
 
-    this.#titleView.style = this.titleStyle
+    this.#textView.style = this.titleStyle
   }
 
   render(viewport: Viewport) {
@@ -327,9 +381,40 @@ class Tab extends Container {
     viewport.clipped(
       new Rect([1, 0], viewport.contentSize.shrink(TAB_TITLE_PAD, 0)),
       inner => {
-        this.#titleView.render(inner)
+        this.#textView.render(inner)
       },
     )
+  }
+}
+
+class Section extends Container {
+  #titleView: TabTitle = new TabTitle('')
+
+  static create(
+    title: string,
+    child: View,
+    extraProps: Omit<TabProps, 'title' | 'view'> = {},
+  ) {
+    return new Section({title, child, ...extraProps})
+  }
+
+  constructor({title, ...props}: TabProps) {
+    super(props)
+
+    this.#titleView.title = title ?? ''
+
+    define(this, 'title', {enumerable: true})
+  }
+
+  get titleView() {
+    return this.#titleView
+  }
+
+  get title() {
+    return this.#titleView.title
+  }
+  set title(value: string) {
+    this.#titleView.title = value
   }
 }
 
@@ -357,19 +442,7 @@ function dashes(w: number, isHover: boolean) {
   return (isHover ? '━' : '─').repeat(w)
 }
 
+Tabs.Section = Section
+
 const TAB_TITLE_PAD = 2
 const TAB_SEPARATOR_HEIGHT = 1
-
-/*
- 𝐓𝐚𝐛1  Tab2  Tab3
-━━━━━━╶───────────
-━━━━━━╶───────────
-━━━━━━━━━╶────────
- Tab1  𝐓𝐚𝐛2  Tab3
-━━━━━━━━━━━╶──────
-─────╴━━━━━━╶─────
- Tab1  𝐓𝐚𝐛2  Tab3
-─────╴━━━━━━╶─────
- Tab1  Tab2  𝐓𝐚𝐛3
-───────────╴━━━━━━
-*/

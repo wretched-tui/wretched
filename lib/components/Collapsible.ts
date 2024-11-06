@@ -48,14 +48,14 @@ export class Collapsible extends Container {
 
   add(child: View, at?: number) {
     super.add(child, at)
-    this.#collapsedView = this.children[0]
-    this.#expandedView = this.children[1]
+    this.#collapsedView = this.children.at(0)
+    this.#expandedView = this.children.at(1)
   }
 
-  removeChild(remove: View) {
-    super.removeChild(remove)
-    this.#collapsedView = this.children[0]
-    this.#expandedView = this.children[1]
+  removeChild(child: View) {
+    super.removeChild(child)
+    this.#collapsedView = this.children.at(0)
+    this.#expandedView = this.children.at(1)
   }
 
   #update({

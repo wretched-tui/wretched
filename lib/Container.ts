@@ -148,12 +148,12 @@ export abstract class Container extends View {
     }
   }
 
-  removeChild(remove: View) {
-    if (remove.parent !== this) {
+  removeChild(child: View) {
+    if (child.parent !== this) {
       return
     }
 
-    const index = this.#children.indexOf(remove)
+    const index = this.#children.indexOf(child)
     if (~index && index >= 0 && index < this.#children.length) {
       const child = this.#children[index]
       this.#children.splice(index, 1)
