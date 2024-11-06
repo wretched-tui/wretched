@@ -158,10 +158,10 @@ export class Text extends View {
       lines = this.#lines
     }
 
-    const style: Style = this.theme.text().merge(this.#style)
-    viewport.usingPen(style, pen => {
+    const startingStyle: Style = this.theme.text().merge(this.#style)
+    viewport.usingPen(startingStyle, pen => {
       const point = new Point(0, 0).mutableCopy()
-      for (let [line, width] of lines) {
+      for (let [line, lineWidth] of lines) {
         if (!line.length) {
           point.y += 1
           continue
@@ -169,20 +169,20 @@ export class Text extends View {
 
         let didWrap = false
         if (this.#wrap) {
-          width = Math.min(width, viewport.contentSize.width)
+          lineWidth = Math.min(lineWidth, viewport.contentSize.width)
         }
         const offsetX =
           this.#alignment === 'left'
             ? 0
             : this.#alignment === 'center'
-              ? ~~((viewport.contentSize.width - width) / 2)
-              : viewport.contentSize.width - width
+              ? ~~((viewport.contentSize.width - lineWidth) / 2)
+              : viewport.contentSize.width - lineWidth
         point.x = offsetX
         for (const char of unicode.printableChars(line)) {
-          const width = unicode.charWidth(char)
-          if (width === 0) {
+          const charWidth = unicode.charWidth(char)
+          if (charWidth === 0) {
             // track the current style regardless of wether we are printing
-            pen.mergePen(Style.fromSGR(char))
+            pen.mergePen(Style.fromSGR(char, startingStyle))
             continue
           }
 
@@ -199,12 +199,12 @@ export class Text extends View {
 
           if (
             point.x >= viewport.visibleRect.minX() &&
-            point.x + width - 1 < viewport.visibleRect.maxX()
+            point.x + charWidth - 1 < viewport.visibleRect.maxX()
           ) {
             viewport.write(char, point)
           }
 
-          point.x += width
+          point.x += charWidth
           // do not early exit when point.x >= maxX. 'line' may contain ANSI codes that
           // need to be picked up by mergePen.
         }

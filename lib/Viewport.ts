@@ -173,7 +173,7 @@ export class Viewport {
     }
 
     style ??= this.#style
-    const defaultStyle = style
+    const startingStyle = style
     let x = to.x
     for (const char of unicode.printableChars(input)) {
       if (char === '\n') {
@@ -184,8 +184,8 @@ export class Viewport {
       if (width === 0) {
         style =
           char === RESET
-            ? defaultStyle
-            : defaultStyle.merge(Style.fromSGR(char))
+            ? startingStyle
+            : startingStyle.merge(Style.fromSGR(char, startingStyle))
       } else if (x >= minX && x + width - 1 < maxX) {
         this.#terminal.writeChar(
           char,

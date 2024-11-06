@@ -106,6 +106,7 @@ export class CollapsibleText extends View {
       return
     }
 
+    const startingStyle = Style.NONE
     viewport.usingPen(this.#style, pen => {
       const {width, height} = unicode.stringSize(
         lines,
@@ -130,8 +131,7 @@ export class CollapsibleText extends View {
         for (const char of unicode.printableChars(line)) {
           const width = unicode.charWidth(char)
           if (width === 0) {
-            // track the current style regardless of wether we are printing
-            pen.mergePen(Style.fromSGR(char))
+            pen.mergePen(Style.fromSGR(char, startingStyle))
             continue
           }
 

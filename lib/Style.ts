@@ -146,7 +146,7 @@ export class Style {
       }, {} as any)
   }
 
-  static fromSGR(ansi: string): Style {
+  static fromSGR(ansi: string, prevStyle: Style): Style {
     let match = ansi.match(/^\x1b\[([\d;]*)m$/)
     if (!match) {
       return Style.NONE
@@ -196,7 +196,18 @@ export class Style {
 
       switch (code) {
         case '':
+          break
         case '0':
+          styles.foreground = prevStyle.foreground ?? 'default'
+          styles.background = prevStyle.background ?? 'default'
+          styles.bold = prevStyle.bold ?? false
+          styles.dim = prevStyle.dim ?? false
+          styles.italic = prevStyle.italic ?? false
+          styles.underline = prevStyle.underline ?? false
+          styles.blink = prevStyle.blink ?? false
+          styles.inverse = prevStyle.inverse ?? false
+          styles.invisible = prevStyle.invisible ?? false
+          styles.strikeout = prevStyle.strikeout ?? false
           break
         case '1':
           styles.bold = true
@@ -205,44 +216,44 @@ export class Style {
           styles.dim = true
           break
         case '22':
-          styles.bold = false
-          styles.dim = false
+          styles.bold = prevStyle.bold ?? false
+          styles.dim = prevStyle.dim ?? false
           break
         case '3':
           styles.italic = true
           break
         case '23':
-          styles.italic = false
+          styles.italic = prevStyle.italic ?? false
           break
         case '4':
           styles.underline = true
           break
         case '24':
-          styles.underline = false
+          styles.underline = prevStyle.underline ?? false
           break
         case '5':
           styles.blink = true
           break
         case '25':
-          styles.blink = false
+          styles.blink = prevStyle.blink ?? false
           break
         case '7':
           styles.inverse = true
           break
         case '27':
-          styles.inverse = false
+          styles.inverse = prevStyle.inverse ?? false
           break
         case '8':
           styles.invisible = true
           break
         case '28':
-          styles.invisible = false
+          styles.invisible = prevStyle.invisible ?? false
           break
         case '9':
           styles.strikeout = true
           break
         case '29':
-          styles.strikeout = false
+          styles.strikeout = prevStyle.strikeout ?? false
           break
         case '30':
           styles.foreground = 'black'
@@ -354,6 +365,8 @@ export class Style {
 
   /**
    * @param prevStyle Used by the buffer to reset foreground/background colors and attrs
+   * @param text If provided, the text will be "wrapped" in the new codes, and
+   * `prevStyle` will be restored.
    */
   toSGR(prevStyle: Style, text?: string): string {
     const {global: globalProgram} = program
