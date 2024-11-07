@@ -1,5 +1,3 @@
-import {unicode} from '../sys'
-
 import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
 import {View} from '../View'

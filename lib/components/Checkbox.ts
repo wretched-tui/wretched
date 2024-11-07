@@ -8,10 +8,6 @@ import {Rect, Point, Size} from '../geometry'
 import {
   type HotKey,
   type MouseEvent,
-  isMousePressStart,
-  isMousePressExit,
-  isMouseEnter,
-  isMouseExit,
   isMouseClicked,
   styleTextForHotKey,
 } from '../events'

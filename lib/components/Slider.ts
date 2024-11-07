@@ -4,9 +4,7 @@ import {Point, Rect, Size, interpolate} from '../geometry'
 import {
   type MouseEvent,
   isMouseDragging,
-  isMouseEnter,
   isMouseExit,
-  isMouseMove,
   isMouseClicked,
   isMousePressStart,
   isMousePressExit,

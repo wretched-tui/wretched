@@ -1,7 +1,6 @@
 import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
 import {View} from '../View'
-import type {Style} from '../Style'
 import {Point, Size} from '../geometry'
 
 type Direction = 'vertical' | 'horizontal'

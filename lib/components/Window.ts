@@ -1,4 +1,3 @@
-import type {Viewport} from '../Viewport'
 import {type Props as ContainerProps, Container} from '../Container'
 import {Size} from '../geometry'
 

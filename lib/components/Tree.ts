@@ -4,15 +4,7 @@ import {type Props as ViewProps, View} from '../View'
 import {Stack} from './Stack'
 import {Container} from '../Container'
 import {Rect, Point, Size} from '../geometry'
-import {
-  type MouseEvent,
-  isMousePressStart,
-  isMousePressExit,
-  isMouseEnter,
-  isMouseExit,
-  isMouseMove,
-  isMouseClicked,
-} from '../events'
+import {type MouseEvent, isMouseClicked} from '../events'
 import {Style} from '../Style'
 import {System} from '../System'
 

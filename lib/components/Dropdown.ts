@@ -14,12 +14,8 @@ import {
   Separator,
   Text,
 } from '../components'
-import {
-  type MouseEvent,
-  isMouseEnter,
-  isMouseExit,
-  isMouseClicked,
-} from '../events'
+import {type MouseEvent, isMouseClicked} from '../events'
+import {System} from '../System'
 
 interface BorderChars {
   control: BoxBorderChars
@@ -58,7 +54,6 @@ type ConstructorProps<T, M extends boolean | undefined> = Props<T, M> & {
 export class Dropdown<T, M extends boolean> extends View {
   dropdownSelector: DropdownSelector<T>
   #title?: string[]
-  #isHover = false
   #showModal = false
   readonly #multiple: boolean
   #onSelectCallback?: SelectMultipleFn<T> | SelectOneFn<T>
@@ -149,12 +144,8 @@ export class Dropdown<T, M extends boolean> extends View {
     return size.grow(8, 0)
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
-    }
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
     if (isMouseClicked(event)) {
       this.#showModal = true
@@ -175,7 +166,7 @@ export class Dropdown<T, M extends boolean> extends View {
     viewport.registerMouse(['mouse.move', 'mouse.button.left'])
     const lines = this.#titleLines()
     const textStyle = this.theme.ui({
-      isHover: this.#isHover && !this.#showModal,
+      isHover: this.isHover && !this.#showModal,
     })
 
     viewport.paint(textStyle)
@@ -198,7 +189,7 @@ export class Dropdown<T, M extends boolean> extends View {
     viewport.write(
       this.#showModal
         ? ARROWS.open
-        : this.#isHover
+        : this.isHover
           ? ARROWS.hover
           : ARROWS.default,
       new Point(

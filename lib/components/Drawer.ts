@@ -13,6 +13,7 @@ import {
 import type {Style} from '../Style'
 import {Theme} from '../Theme'
 import {define} from '../util'
+import {System} from '../System'
 
 interface Props extends ContainerProps {
   location?: Edge
@@ -35,8 +36,6 @@ export class Drawer extends Container {
   drawerView?: View
   contentView?: View
 
-  #isHover = false
-  #isPressed = false
   #drawerSize = Size.zero
   #isOpen = false
   #currentDx = 0
@@ -184,18 +183,8 @@ export class Drawer extends Container {
     return false
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMousePressStart(event)) {
-      this.#isPressed = true
-    } else if (isMousePressExit(event)) {
-      this.#isPressed = false
-    }
-
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
-    }
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
     if (isMouseClicked(event)) {
       this.#setIsOpen(!this.#isOpen, true)
@@ -204,7 +193,6 @@ export class Drawer extends Container {
 
   #saveDrawerSize(available: Size) {
     let remainingSize: Size
-    let adjustSize: Size
     switch (this.#location) {
       case 'top':
       case 'bottom':
@@ -243,17 +231,17 @@ export class Drawer extends Container {
     const [drawerSize] = this.#saveDrawerSize(viewport.contentSize)
 
     const _uiStyle = this.theme.ui({
-      isHover: this.#isHover,
-      isPressed: this.#isPressed,
+      isHover: this.isHover,
+      isPressed: this.isPressed,
     })
     const textStyle = this.theme
       .text({
-        isHover: this.#isHover,
-        isPressed: this.#isPressed,
+        isHover: this.isHover,
+        isPressed: this.isPressed,
       })
       .merge({foreground: _uiStyle.foreground})
     const uiStyle =
-      this.#isHover || this.#isPressed
+      this.isHover || this.isPressed
         ? _uiStyle
         : _uiStyle.merge({
             background: textStyle.background,
@@ -412,7 +400,7 @@ export class Drawer extends Container {
       contentView.render(inside)
     })
 
-    if (this.#isHover) {
+    if (this.isHover) {
       viewport.registerMouse(
         ['mouse.move', 'mouse.button.left'],
         drawerButtonRect,
@@ -472,13 +460,13 @@ export class Drawer extends Container {
       for (point.x = minX; point.x <= maxX; point.x++) {
         let drawer: [string, string, string]
         if (point.x === 0) {
-          if (this.#isHover) {
+          if (this.isHover) {
             drawer = ['╮', '│', '│']
           } else {
             drawer = ['╮', '│', '']
           }
         } else if (point.x === maxX) {
-          if (this.#isHover) {
+          if (this.isHover) {
             drawer = ['╭', '│', '│']
           } else {
             drawer = ['╭', '│', '']
@@ -493,7 +481,7 @@ export class Drawer extends Container {
             chevron = '∨'
           }
           let c1: string, c2: string, c3: string
-          if (this.#isHover) {
+          if (this.isHover) {
             c1 = ' '
             c2 = chevron
             c3 = '─'
@@ -539,13 +527,13 @@ export class Drawer extends Container {
       for (point.x = minX; point.x <= maxX; point.x++) {
         let drawer: [string, string, string]
         if (point.x === 0) {
-          if (this.#isHover) {
+          if (this.isHover) {
             drawer = ['╭', '│', '│']
           } else {
             drawer = ['', '╭', '│']
           }
         } else if (point.x === maxX) {
-          if (this.#isHover) {
+          if (this.isHover) {
             drawer = ['╮', '│', '│']
           } else {
             drawer = ['', '╮', '│']
@@ -560,7 +548,7 @@ export class Drawer extends Container {
             chevron = '∧'
           }
           let c1: string, c2: string, c3: string
-          if (this.#isHover) {
+          if (this.isHover) {
             c1 = '─'
             c2 = chevron
             c3 = ' '
@@ -606,14 +594,14 @@ export class Drawer extends Container {
         point.x = drawerButtonRect.minX()
         let drawer: string
         if (point.y === 0) {
-          if (this.#isHover) {
+          if (this.isHover) {
             drawer = '╭──'
           } else {
             drawer = '╭─'
             point.x += 1
           }
         } else if (point.y === maxY) {
-          if (this.#isHover) {
+          if (this.isHover) {
             drawer = '╰──'
           } else {
             drawer = '╰─'
@@ -621,7 +609,7 @@ export class Drawer extends Container {
           }
         } else {
           drawer = ''
-          if (!this.#isHover) {
+          if (!this.isHover) {
             point.x += 1
           }
           drawer += '│'
@@ -658,12 +646,12 @@ export class Drawer extends Container {
       for (point.y = minY; point.y <= maxY; point.y++) {
         let drawer: string
         if (point.y === 0) {
-          drawer = '─' + (this.#isHover ? '─' : '') + '╮'
+          drawer = '─' + (this.isHover ? '─' : '') + '╮'
         } else if (point.y === maxY) {
-          drawer = '─' + (this.#isHover ? '─' : '') + '╯'
+          drawer = '─' + (this.isHover ? '─' : '') + '╯'
         } else {
           drawer = ''
-          drawer += this.#isHover ? ' ' : ''
+          drawer += this.isHover ? ' ' : ''
           drawer += this.#isOpen ? '‹' : '›'
           drawer += '│'
         }

@@ -4,12 +4,7 @@ import type {Viewport} from '../Viewport'
 import {View, type Props as ViewProps} from '../View'
 import {Style} from '../Style'
 import {Point, Size} from '../geometry'
-import {
-  type MouseEvent,
-  isMousePressStart,
-  isMousePressExit,
-  isMouseClicked,
-} from '../events'
+import {type MouseEvent, isMouseClicked} from '../events'
 import {System} from '../System'
 
 interface Props extends ViewProps {

@@ -4,14 +4,8 @@ import {View} from '../View'
 import {type Props as ContainerProps, Container} from '../Container'
 import {Text} from './Text'
 import {Rect, Point, Size} from '../geometry'
-import {
-  type MouseEvent,
-  isMousePressStart,
-  isMousePressExit,
-  isMouseEnter,
-  isMouseExit,
-  isMouseClicked,
-} from '../events'
+import {type MouseEvent, isMouseClicked} from '../events'
+import {System} from '../System'
 
 interface StyleProps {
   isCollapsed?: boolean
@@ -32,8 +26,6 @@ export class Collapsible extends Container {
   #expandedView?: View
 
   #isCollapsed = true
-  #isPressed = false
-  #isHover = false
 
   constructor(props: Props) {
     super(props)
@@ -94,22 +86,12 @@ export class Collapsible extends Container {
     return (size ?? Size.zero).grow(2, 0)
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMousePressStart(event)) {
-      this.#isPressed = true
-    } else if (isMousePressExit(event)) {
-      this.#isPressed = false
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
-      if (isMouseClicked(event)) {
-        this.#isCollapsed = !this.#isCollapsed
-        this.invalidateSize()
-      }
-    }
-
-    if (isMouseEnter(event)) {
-      this.#isHover = true
-    } else if (isMouseExit(event)) {
-      this.#isHover = false
+    if (isMouseClicked(event)) {
+      this.#isCollapsed = !this.#isCollapsed
+      this.invalidateSize()
     }
   }
 
@@ -121,8 +103,8 @@ export class Collapsible extends Container {
     viewport.registerMouse(['mouse.button.left', 'mouse.move'])
 
     const textStyle = this.theme.text({
-      isPressed: this.#isPressed,
-      isHover: this.#isHover,
+      isPressed: this.isPressed,
+      isHover: this.isHover,
     })
 
     viewport.paint(textStyle)
