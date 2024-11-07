@@ -10,6 +10,7 @@ import {
   isMousePressExit,
   isMouseClicked,
 } from '../events'
+import {System} from '../System'
 
 interface Props extends ViewProps {
   text: string
@@ -20,7 +21,6 @@ export class CollapsibleText extends View {
   #lines: string[] = []
   #style: Props['style']
   #isCollapsed = true
-  #isPressed = false
 
   constructor(props: Props) {
     super(props)
@@ -68,31 +68,18 @@ export class CollapsibleText extends View {
 
     if (this.#isCollapsed) {
       const lineWidth = unicode.lineWidth(this.#lines[0])
-      if (lineWidth <= available.width) {
-        return new Size(lineWidth, 1)
-      }
-
       return new Size(lineWidth + 2, 1)
     }
 
-    const stringSize = new Size(
-      unicode.stringSize(this.#lines, available.width),
-    ).mutableCopy()
-    stringSize.width += 2
-
-    return stringSize
+    return new Size(unicode.stringSize(this.#lines, available.width)).grow(2, 0)
   }
 
-  receiveMouse(event: MouseEvent) {
-    if (isMousePressStart(event)) {
-      this.#isPressed = true
-    } else if (isMousePressExit(event)) {
-      this.#isPressed = false
+  receiveMouse(event: MouseEvent, system: System) {
+    super.receiveMouse(event, system)
 
-      if (isMouseClicked(event)) {
-        this.#isCollapsed = !this.#isCollapsed
-        this.invalidateSize()
-      }
+    if (isMouseClicked(event)) {
+      this.#isCollapsed = !this.#isCollapsed
+      this.invalidateSize()
     }
   }
 
@@ -119,7 +106,7 @@ export class CollapsibleText extends View {
         viewport.write(
           this.#isCollapsed ? '► ' : '▼ ',
           Point.zero,
-          this.theme.text({isPressed: this.#isPressed}),
+          this.theme.text({isPressed: this.isPressed}),
         )
         offsetX = 2
       }

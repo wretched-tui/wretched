@@ -14,7 +14,6 @@ interface Props extends ContainerProps {
 
 interface SectionProps extends ContainerProps {
   title?: string
-  view: View
   isOpen?: boolean
   onClick?: (section: Section, isOpen: boolean) => void
 }
@@ -96,20 +95,28 @@ export class Accordion extends Container {
       sectionView = Section.create(titleOrSection as string, view as View)
     }
 
-    const onClick = this.#sectionDidChange.bind(this)
-    sectionView.onClick = onClick
-    if (!this.#multiple && sectionView.isOpen) {
-      this.sections.forEach(section => (section.isOpen = false))
-    }
-
     this.add(sectionView)
   }
 
+  add(child: View, at?: number) {
+    if (child instanceof Section) {
+      child.onClick = this.#sectionDidChange.bind(this)
+      if (!this.#multiple && child.isOpen) {
+        this.sections.forEach(section => (section.isOpen = false))
+      }
+    }
+
+    super.add(child, at)
+  }
+
   naturalSize(available: Size): Size {
-    let remainingSize = available
+    let remainingSize = available.mutableCopy()
     return this.sections.reduce((size, section) => {
       const sectionSize = section.naturalSize(remainingSize)
-      remainingSize = remainingSize.shrink(0, sectionSize.height)
+      remainingSize.height = Math.max(
+        0,
+        remainingSize.height - sectionSize.height,
+      )
       return new Size(
         Math.max(sectionSize.width, size.width),
         size.height + sectionSize.height,
@@ -146,20 +153,18 @@ class Section extends Container {
   #actualViewHeight = 0
 
   #titleView: Text
-  #view: View
 
   static create(
     title: string,
-    view: View,
+    child: View,
     extraProps: Omit<SectionProps, 'title' | 'view'> = {},
   ) {
-    return new Section({title, view, ...extraProps})
+    return new Section({title, child, ...extraProps})
   }
 
-  constructor({title, view, isOpen, ...props}: SectionProps) {
+  constructor({title, isOpen, ...props}: SectionProps) {
     super(props)
 
-    this.#view = view
     this.#isOpen = isOpen ?? false
 
     this.#titleView = new Text({
@@ -170,7 +175,6 @@ class Section extends Container {
     this.#update({isOpen})
 
     this.add(this.#titleView)
-    this.add(view)
 
     define(this, 'title', {enumerable: true})
   }
@@ -224,7 +228,21 @@ class Section extends Container {
     const collapsedSize = this.#titleView.naturalSize(available).grow(4, 1)
     const remainingSize = available.shrink(0, collapsedSize.height)
     // 1 => left margin (no right margin)
-    const viewSize = this.#view.naturalSize(remainingSize).grow(1, 0)
+
+    let width = 0
+    let height = 0
+    const children = this.children.filter(child => child !== this.#titleView)
+    for (const child of children) {
+      if (!child.isVisible) {
+        continue
+      }
+      const naturalSize = child.naturalSize(remainingSize)
+      width = Math.max(width, naturalSize.width)
+      height = Math.max(height, naturalSize.height)
+    }
+    width += 1
+
+    const viewSize = new Size(width, height)
     return this.#currentSize(collapsedSize, viewSize)
   }
 
@@ -306,7 +324,15 @@ class Section extends Container {
           .atY(textSize.height)
           .withSize(viewport.contentSize.width, this.#currentViewHeight),
         inner => {
-          this.#view.render(inner)
+          const children = this.children.filter(
+            child => child !== this.#titleView,
+          )
+          for (const child of children) {
+            if (!child.isVisible) {
+              continue
+            }
+            child.render(viewport)
+          }
         },
       )
     }
@@ -329,7 +355,9 @@ class Section extends Container {
               [0, arrows.length - 1],
             ),
           )
-          inner.write(arrows[index], new Point(1, 0))
+          if (arrows[index]) {
+            inner.write(arrows[index], new Point(1, 0))
+          }
         } else if (this.#isOpen) {
           inner.write(
             this.isHover ? ARROWS.openHover : ARROWS.open,

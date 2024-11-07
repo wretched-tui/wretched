@@ -845,7 +845,7 @@ export class Input extends View {
     ).mutableCopy()
     if (cursorPosition.y === 0) {
       dest = 0
-    } else {
+    } else if (cursorPosition.y <= this.#wrappedLines.length) {
       const [targetChars, targetWidth] =
         this.#wrappedLines[cursorPosition.y - 1]
       dest = this.#wrappedLines

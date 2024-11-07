@@ -121,8 +121,6 @@ export class Tabs extends Container {
       return size
     }, Size.zero.mutableCopy())
 
-    tabTitleSize.height += TAB_SEPARATOR_HEIGHT
-
     const childSize = Size.zero.mutableCopy()
     const availableChildSize = available.shrink(0, tabTitleSize.height)
     for (const tab of this.tabs) {

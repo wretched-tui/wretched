@@ -130,10 +130,14 @@ export class Text extends View {
   }
 
   naturalSize(available: Size): Size {
+    if (this.#lines.length === 0) {
+      return Size.zero
+    }
+
     return this.#lines.reduce((size, [, width]) => {
       if (this.#wrap) {
         const lineHeight = 1 + ~~(width / available.width)
-        size.width = available.width
+        size.width = Math.max(size.width, Math.min(width, available.width))
         size.height += lineHeight
         return size
       }
