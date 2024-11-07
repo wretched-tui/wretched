@@ -1,6 +1,6 @@
 import type {Viewport} from '../Viewport'
-import {type Props as ViewProps, View} from '../View'
-import {Container} from '../Container'
+import {View} from '../View'
+import {Container, Props as ContainerProps} from '../Container'
 import {Rect, Point, Size, type Edge} from '../geometry'
 import {
   type MouseEvent,
@@ -14,15 +14,15 @@ import type {Style} from '../Style'
 import {Theme} from '../Theme'
 import {define} from '../util'
 
-interface Props extends ViewProps {
+interface Props extends ContainerProps {
   location?: Edge
   isOpen?: boolean
   onToggle?: (isOpen: boolean) => void
 }
 
 interface ConstructorProps extends Props {
-  drawerView: View
-  contentView: View
+  drawer?: View
+  content?: View
 }
 
 const DRAWER_BORDER = 2
@@ -32,8 +32,8 @@ const DRAWER_BTN_SIZE = {
 }
 
 export class Drawer extends Container {
-  readonly drawerView: View
-  readonly contentView: View
+  drawerView?: View
+  contentView?: View
 
   #isHover = false
   #isPressed = false
@@ -43,11 +43,16 @@ export class Drawer extends Container {
   #location: Edge = 'left'
   #onToggle: Props['onToggle']
 
-  constructor({contentView, drawerView, ...props}: ConstructorProps) {
+  constructor({content, drawer, ...props}: ConstructorProps) {
     super(props)
 
-    this.add((this.drawerView = drawerView))
-    this.add((this.contentView = contentView))
+    if (content) {
+      this.add((this.contentView = content))
+    }
+
+    if (drawer) {
+      this.add((this.drawerView = drawer))
+    }
 
     this.#update(props)
 
@@ -103,6 +108,12 @@ export class Drawer extends Container {
     if (report) {
       this.#onToggle?.(value)
     }
+  }
+
+  add(child: View, at?: number) {
+    super.add(child, at)
+    this.contentView = this.children[0]
+    this.drawerView = this.children[1]
   }
 
   naturalSize(available: Size): Size {
@@ -205,8 +216,9 @@ export class Drawer extends Container {
         break
     }
 
-    const drawerSize = this.drawerView.naturalSize(remainingSize)
-    const contentSize = this.contentView.naturalSize(remainingSize)
+    const drawerSize = this.drawerView?.naturalSize(remainingSize) ?? Size.zero
+    const contentSize =
+      this.contentView?.naturalSize(remainingSize) ?? Size.zero
     this.#drawerSize = drawerSize
     return [drawerSize, contentSize]
   }
@@ -390,8 +402,14 @@ export class Drawer extends Container {
     drawerRect: Rect,
   ) {
     // contentView renders before registerMouse so the drawer can be "on top"
+    const contentView = this.contentView
+    const drawerView = this.drawerView
+    if (!contentView || !drawerView) {
+      return
+    }
+
     viewport.clipped(contentRect, inside => {
-      this.contentView.render(inside)
+      contentView.render(inside)
     })
 
     if (this.#isHover) {
@@ -424,7 +442,7 @@ export class Drawer extends Container {
     if (this.#currentDx > 0) {
       viewport.paint(this.theme.text(), drawerRect)
       viewport.clipped(drawerRect, inside => {
-        this.drawerView.render(inside)
+        drawerView.render(inside)
       })
     }
   }

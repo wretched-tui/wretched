@@ -327,8 +327,8 @@ const contentView = Stack.right([
 demo(
   new Drawer({
     theme: 'secondary',
-    drawerView,
-    contentView,
+    drawer: drawerView,
+    content: contentView,
   }),
   false,
 )
