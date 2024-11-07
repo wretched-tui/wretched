@@ -386,7 +386,7 @@ class TabTitle extends Container {
 }
 
 class Section extends Container {
-  #titleView: TabTitle = new TabTitle('')
+  readonly titleView: TabTitle = new TabTitle('')
 
   static create(
     title: string,
@@ -399,20 +399,16 @@ class Section extends Container {
   constructor({title, ...props}: TabProps) {
     super(props)
 
-    this.#titleView.title = title ?? ''
+    this.titleView.title = title ?? ''
 
     define(this, 'title', {enumerable: true})
   }
 
-  get titleView() {
-    return this.#titleView
-  }
-
   get title() {
-    return this.#titleView.title
+    return this.titleView.title
   }
   set title(value: string) {
-    this.#titleView.title = value
+    this.titleView.title = value
   }
 }
 
