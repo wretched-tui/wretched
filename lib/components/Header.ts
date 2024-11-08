@@ -32,6 +32,7 @@ export class Header extends Container {
       text: text,
       font: font,
       style: this.#style,
+      wrap: true,
     })
 
     this.add(this.#text)
@@ -43,11 +44,12 @@ export class Header extends Container {
 
   render(viewport: Viewport) {
     const inside = viewport.contentRect.inset({left: 1, right: 1, bottom: 1})
+    const textSize = this.#text.naturalSize(inside.size)
     viewport.clipped(inside, inside => {
       this.#text.render(inside)
     })
 
-    const maxWidth = this.#text.naturalSize(Size.zero).width + 2
+    const maxWidth = textSize.width + 2
     let border
     switch (this.#border) {
       case 'single':
@@ -62,7 +64,7 @@ export class Header extends Container {
     }
     viewport.write(
       border.repeat(maxWidth),
-      new Point(0, viewport.contentSize.height - 1),
+      new Point(0, textSize.height),
       this.#style,
     )
   }
