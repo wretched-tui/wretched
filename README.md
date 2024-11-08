@@ -21,7 +21,7 @@ bun demo inputs.ts
 ### demo code
 
 ```tsx
-import {Screen, Box, Flow, Text, Button, interceptConsoleLog} from 'wretched'
+import {Screen, Box, Stack, Text, Button, interceptConsoleLog} from 'wretched'
 
 // Recommended:
 interceptConsoleLog()
@@ -34,7 +34,7 @@ Screen.start(
   new Box({
     border: 'single',
     children: [
-      Flow.down([
+      Stack.down([
         new Text({text: 'First, there was Ncurses'}),
         new Button({text: 'Tell me more!'}),
       ]),

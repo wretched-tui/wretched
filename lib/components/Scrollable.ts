@@ -23,7 +23,7 @@ interface ContentOffset {
 }
 
 /**
- * Scrollable is meant to scroll _a single view_, ie a Flow view. But all the
+ * Scrollable is meant to scroll _a single view_, ie a Stack view. But all the
  * container views are optimized to check their _visibleRect_, and won't render
  * children that are not in view, saving some CPU cycles.
  */
