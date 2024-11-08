@@ -9,7 +9,7 @@ import {Style} from '../Style'
 import {System} from '../System'
 
 type RenderFn<T> = (datum: T, path: string) => View
-type GetChildrenFn<T> = (datum: T, path: string) => T[]
+type GetChildrenFn<T> = (datum: T, path: string) => T[] | undefined
 
 interface StyleProps<T> {
   data: T[]
@@ -26,7 +26,7 @@ type ChildProps = ViewProps & {
   onToggle: () => void
 }
 
-// must be in the form `.${index0}`, `.${index0}.${index1}`, `.${index0}.${index1}.${index2}`
+// in the form `.${index0}`, `.${index0}.${index1}`, `.${index0}.${index1}.${index2}`
 type Path = string
 
 const TREE_BULLET_WIDTH = 4
@@ -90,7 +90,7 @@ export class Tree<T extends any> extends Container {
       const datum = data[index]
       const isExpanded = this.#isChildExpanded(path)
       const children = this.#getChildren(datum, path)
-      const hasChildren = children.length > 0
+      const hasChildren = children ? children.length > 0 : false
       const isLast = index === data.length - 1
       const currentPathData = {
         isLast,
@@ -130,7 +130,7 @@ export class Tree<T extends any> extends Container {
 
       prevChildren.delete(view)
 
-      if (isExpanded) {
+      if (isExpanded && children) {
         this.#addViews(children, prevChildren, count, path, pathData)
       }
     }
