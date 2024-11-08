@@ -20,7 +20,9 @@ export abstract class Container extends View {
     if (child) {
       this.add(child)
     } else if (children) {
-      this.addAll(children)
+      for (const child of children) {
+        this.add(child)
+      }
     }
   }
 
@@ -83,13 +85,6 @@ export abstract class Container extends View {
         continue
       }
       child.render(viewport)
-    }
-  }
-
-  addAll(children: View[], at?: number) {
-    for (const view of children) {
-      this.add(view, at)
-      at = at !== undefined ? at + 1 : undefined
     }
   }
 
