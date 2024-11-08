@@ -37,7 +37,6 @@ export class Tabs extends Container {
     extraProps: Props = {},
   ): Tabs {
     const tabsView = new Tabs(extraProps)
-    tabsView.debug = true
     for (const tab of tabs) {
       if (tab instanceof Section) {
         tabsView.addTab(tab)
@@ -328,7 +327,6 @@ export class Tabs extends Container {
       viewport.write(underline, new Point(xLeft, tabHeight))
       xLeft += separatorWidth
     })
-    this.debug = false
   }
 }
 

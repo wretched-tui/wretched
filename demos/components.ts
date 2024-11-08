@@ -297,7 +297,7 @@ const contentView = Stack.right([
       Stack.right([
         Stack.down([
           Stack.right([
-            Stack.down([primary1, primary2], {gap: 1, debug: true}),
+            Stack.down([primary1, primary2], {gap: 1}),
             Stack.down([button1, button2], {gap: 1}),
             Stack.down(checkboxes, {padding: 1}),
           ]),
