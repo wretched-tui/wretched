@@ -136,7 +136,7 @@ export class Text extends View {
 
     return this.#lines.reduce((size, [, width]) => {
       if (this.#wrap) {
-        const lineHeight = 1 + ~~(width / available.width)
+        const lineHeight = Math.ceil(width / available.width)
         size.width = Math.max(size.width, Math.min(width, available.width))
         size.height += lineHeight
         return size

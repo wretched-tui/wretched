@@ -121,7 +121,7 @@ export class Slider extends View {
     // try to have enough room for every value
     const min = Math.max(
       MIN,
-      -~((this.#range[1] - this.#range[0]) / this.#step),
+      Math.ceil((this.#range[1] - this.#range[0]) / this.#step),
     )
     if (this.#direction === 'horizontal') {
       const minWidth = min + 2 * (this.#buttons ? 3 : this.#border ? 1 : 0)

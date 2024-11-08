@@ -174,7 +174,9 @@ export class Box extends Container {
         if (lineTop.length) {
           viewport.write(
             lineTop
-              .repeat(-~(innerTopWidth / this.#borderSizes.topMiddle.width))
+              .repeat(
+                Math.ceil(innerTopWidth / this.#borderSizes.topMiddle.width),
+              )
               .slice(0, innerTopWidth),
             new Point(leftMaxX, lineY),
           )
@@ -207,7 +209,9 @@ export class Box extends Container {
         if (lineBottom.length) {
           viewport.write(
             lineBottom
-              .repeat(-~(innerBottomWidth / this.#borderSizes.topMiddle.width))
+              .repeat(
+                Math.ceil(innerBottomWidth / this.#borderSizes.topMiddle.width),
+              )
               .slice(0, innerBottomWidth),
             new Point(leftMaxX, lineY),
           )
