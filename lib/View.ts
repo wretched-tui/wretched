@@ -55,6 +55,7 @@ export interface Edges {
 }
 
 export abstract class View {
+  // id = performance.now().toString(36)
   parent: Container | undefined = undefined
   debug: boolean = false
 
