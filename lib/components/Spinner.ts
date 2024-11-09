@@ -3,13 +3,28 @@ import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Point, Size} from '../geometry'
 
+interface Props extends ViewProps {
+  isAnimating?: boolean
+}
+
 export class Spinner extends View {
+  #isAnimating = false
   #tick = 0
   #frame = 0
   #frameLen = 1
 
-  constructor(props: ViewProps = {}) {
+  constructor({isAnimating, ...props}: Props = {}) {
     super(props)
+    this.#update({isAnimating})
+  }
+
+  update({isAnimating, ...props}: Props) {
+    super.update(props)
+    this.#update(props)
+  }
+
+  #update({isAnimating}: Props) {
+    this.#isAnimating = isAnimating ?? true
   }
 
   naturalSize() {
@@ -31,7 +46,9 @@ export class Spinner extends View {
       return
     }
 
-    viewport.registerTick()
+    if (this.#isAnimating) {
+      viewport.registerTick()
+    }
 
     const char = ONE[this.#frame]
     viewport.write(char, Point.zero)

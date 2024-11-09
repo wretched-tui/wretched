@@ -318,7 +318,7 @@ const contentView = Stack.right([
       tabs,
       Stack.right([
         scrollable,
-        new Spinner({width: 1, height: 1, debug: true}),
+        new Spinner({width: 1, height: 1, debug: true, isAnimating: false}),
       ]),
       tree,
     ],
