@@ -54,6 +54,7 @@ type DigitName =
   | '/'
   | '^'
   | '%'
+  | '='
   | '#'
   | ':'
   | '!'
@@ -151,7 +152,7 @@ export class Digits extends View {
       return
     }
 
-    viewport.usingPen(this.#style, pen => {
+    viewport.usingPen(this.#style, () => {
       const point = new Point(0, 0).mutableCopy()
       for (const digit of this.#digits) {
         if (digit === '\n') {
@@ -425,6 +426,12 @@ const DIGITS_BOLD: Record<DigitName, Digit> = {
     ' ╱ ',
     '╱ ◦',
     ],
+  '=': [
+    2,
+    '▂▂',
+    '▂▂',
+    '  ',
+  ],
   '#': [
     3,
     '╋╋',
@@ -796,6 +803,12 @@ const DIGITS: Record<DigitName, Digit> = {
     '◦ ╱',
     ' ╱ ',
     '╱ ◦',
+  ],
+  '=': [
+    2,
+    '__',
+    '__',
+    '  ',
   ],
   '#': [
     3,
