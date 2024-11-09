@@ -156,7 +156,7 @@ export class Scrollable extends Container {
     }
 
     if (event.shift || !tooTall) {
-      this.scrollBy(delta, 0)
+      this.scrollBy(-delta, 0)
     } else {
       this.scrollBy(0, delta)
     }
