@@ -194,8 +194,7 @@ export class Screen {
         this.triggerKeyboard(event)
         break
       case 'mouse': {
-        const system = new UnboundSystem(this.#focusManager)
-        this.triggerMouse(event, system)
+        this.triggerMouse(event)
         break
       }
     }
@@ -257,7 +256,8 @@ export class Screen {
     this.#mouseManager.checkMouse(view, x, y)
   }
 
-  triggerMouse(systemEvent: SystemMouseEvent, system: UnboundSystem): void {
+  triggerMouse(systemEvent: SystemMouseEvent): void {
+    const system = new UnboundSystem(this.#focusManager)
     this.#mouseManager.trigger(systemEvent, system)
   }
 

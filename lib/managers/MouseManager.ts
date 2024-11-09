@@ -154,11 +154,37 @@ export class MouseManager {
     this.#mouseListeners.set(mouseKey(x, y), listener)
   }
 
+  hasMouseDownListener(x: number, y: number, event: SystemMouseEvent) {
+    const listener = this.getMouseListener(x, y)
+    if (!listener) {
+      return false
+    }
+
+    switch (event.button) {
+      case 'left':
+        return Boolean(listener.buttonLeft || listener.buttonAll)
+      case 'middle':
+        return Boolean(listener.buttonMiddle || listener.buttonAll)
+      case 'right':
+        return Boolean(listener.buttonRight || listener.buttonAll)
+    }
+
+    return false
+  }
+
   getMouseListener(x: number, y: number) {
     return this.#mouseListeners.get(mouseKey(x, y))
   }
 
   trigger(systemEvent: SystemMouseEvent, system: UnboundSystem): void {
+    if (
+      systemEvent.name === 'mouse.button.down' &&
+      !this.hasMouseDownListener(systemEvent.x, systemEvent.y, systemEvent)
+    ) {
+      system.focusManager.unfocus()
+      return
+    }
+
     this.#mousePosition = new Point(systemEvent.x, systemEvent.y)
 
     if (systemEvent.name === 'mouse.move.in' && this.#mouseDownEvent) {

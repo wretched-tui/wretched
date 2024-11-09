@@ -1,10 +1,12 @@
 import {View} from '../View'
 import {match, type HotKeyDef, type KeyEvent} from '../events'
 
+const UNFOCUS = Symbol('UNFOCUS')
+
 export class FocusManager {
   #didCommit = false
-  #currentFocus: View | undefined
-  #prevFocus: View | undefined
+  #currentFocus: View | undefined | typeof UNFOCUS
+  #prevFocus: View | undefined | typeof UNFOCUS
   #focusRing: View[] = []
   #hotKeys: [View, HotKeyDef][] = []
 
@@ -39,7 +41,7 @@ export class FocusManager {
       } else {
         this.nextFocus()
       }
-    } else if (this.#currentFocus) {
+    } else if (this.#currentFocus && this.#currentFocus !== UNFOCUS) {
       this.#currentFocus.receiveKey(event)
     }
   }
@@ -75,13 +77,24 @@ export class FocusManager {
     return true
   }
 
+  unfocus() {
+    this.#currentFocus = UNFOCUS
+  }
+
   /**
    * @return boolean Whether the focus changed
    */
   commit(): boolean {
     this.#didCommit = true
 
-    if (this.#focusRing.length > 0 && this.#prevFocus && !this.#currentFocus) {
+    if (this.#prevFocus === UNFOCUS && !this.#currentFocus) {
+      this.#currentFocus = UNFOCUS
+      return false
+    } else if (
+      this.#focusRing.length > 0 &&
+      this.#prevFocus &&
+      !this.#currentFocus
+    ) {
       this.#currentFocus = this.#focusRing[0]
       return true
     } else {
@@ -90,7 +103,7 @@ export class FocusManager {
   }
 
   #reorderRing() {
-    if (!this.#currentFocus) {
+    if (!this.#currentFocus || this.#currentFocus === UNFOCUS) {
       return
     }
 
@@ -102,6 +115,11 @@ export class FocusManager {
   }
 
   prevFocus() {
+    if (this.#currentFocus === UNFOCUS) {
+      this.#currentFocus = this.#focusRing.at(-1)
+      return
+    }
+
     if (this.#focusRing.length <= 1) {
       return
     }
@@ -116,6 +134,11 @@ export class FocusManager {
   }
 
   nextFocus() {
+    if (this.#currentFocus === UNFOCUS) {
+      this.#currentFocus = this.#focusRing[0]
+      return
+    }
+
     if (this.#focusRing.length <= 1) {
       return
     }
@@ -125,8 +148,7 @@ export class FocusManager {
     const first = this.#focusRing.shift()!
     this.#focusRing.push(first)
 
-    const next = this.#focusRing[0]
-    this.#currentFocus = next
+    this.#currentFocus = this.#focusRing[0]
 
     return this.#currentFocus
   }
