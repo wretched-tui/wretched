@@ -82,6 +82,8 @@ export function inspect(
     return newline ? `[\n${innerTab}${inner}\n${tab}]` : `[ ${inner} ]`
   } else if (typeof value === 'string') {
     return colorize.string(value, recursionDepth > 0)
+  } else if (typeof value === 'symbol') {
+    return colorize.symbol(value)
   } else if (
     typeof value === 'number' ||
     typeof value === 'boolean' ||
