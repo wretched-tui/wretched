@@ -67,7 +67,7 @@ export class Collapsible extends Container {
     expanded: expandedView,
   }: Props) {
     this.#isCollapsed = isCollapsed ?? true
-    this.#showCollapsed = showCollapsed ?? true
+    this.#showCollapsed = showCollapsed ?? false
 
     // edge case: expandedView is being assigned, but not collapsedView
     if (expandedView && !collapsedView) {
