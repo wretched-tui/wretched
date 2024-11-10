@@ -25,9 +25,14 @@ import {
   Spinner,
   Tabs,
   Text,
+  ToggleGroup,
   Tree,
   type FontFamily,
   FontFamilies,
+  bold,
+  italic,
+  underline,
+  strikeout,
 } from 'wretched'
 
 import {demo} from './demo'
@@ -324,7 +329,15 @@ const contentView = Stack.right([
       tabs,
       Stack.right([
         scrollable,
-        new Spinner({width: 1, height: 1, debug: true, isAnimating: false}),
+        new Spinner({
+          padding: 1,
+          isAnimating: true,
+        }),
+        new ToggleGroup({
+          titles: [bold('B'), italic('I'), underline('U'), strikeout('S')],
+          multiple: true,
+          selected: [],
+        }),
       ]),
       tree,
     ],
