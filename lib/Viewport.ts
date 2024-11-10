@@ -174,10 +174,20 @@ export class Viewport {
 
     style ??= this.#style
     const startingStyle = style
-    let x = to.x
+    let x = to.x,
+      y = to.y
     for (const char of unicode.printableChars(input)) {
       if (char === '\n') {
-        break
+        x = to.x
+        y += 1
+        if (y >= maxY) {
+          break
+        }
+        continue
+      }
+
+      if (x >= maxX) {
+        continue
       }
 
       const width = unicode.charWidth(char)
@@ -190,7 +200,7 @@ export class Viewport {
         this.#terminal.writeChar(
           char,
           this.#offset.x + x,
-          this.#offset.y + to.y,
+          this.#offset.y + y,
           style,
         )
 
@@ -203,17 +213,12 @@ export class Viewport {
           this.#screen.checkMouse(
             this.#currentRender,
             this.#offset.x + x,
-            this.#offset.y + to.y,
+            this.#offset.y + y,
           )
         }
       }
 
       x += width
-
-      // no need to consider characters after this; newline/wrap isn't supported here
-      if (x >= maxX) {
-        break
-      }
     }
   }
 
