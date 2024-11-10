@@ -325,13 +325,14 @@ const contentView = Stack.right([
       slider2,
       slider3,
       collapsible,
+      expandible,
       collapsibleText,
       tabs,
       Stack.right([
         scrollable,
         new Spinner({
           padding: 1,
-          isAnimating: true,
+          isAnimating: false,
         }),
         new ToggleGroup({
           titles: [bold('B'), italic('I'), underline('U'), strikeout('S')],

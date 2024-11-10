@@ -25,7 +25,7 @@ export async function demo(
   })
   const [screen, program] = await Screen.start(
     async program => {
-      await iTerm2.setBackground(program, [23, 23, 23])
+      // await iTerm2.setBackground(program, [23, 23, 23])
 
       return new Window({
         child: new TrackMouse({
