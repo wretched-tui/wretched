@@ -70,7 +70,7 @@ export class Viewport {
   }
 
   get isEmpty(): boolean {
-    return this.#contentSize.isEmpty()
+    return this.#contentSize.isEmpty
   }
 
   /**

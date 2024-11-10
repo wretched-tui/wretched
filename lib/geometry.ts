@@ -176,7 +176,7 @@ export class Size {
     }
   }
 
-  isEmpty() {
+  get isEmpty() {
     return this.width === 0 || this.height === 0
   }
 }
@@ -252,8 +252,8 @@ export class Rect {
     return this.origin.isEqual(rect.origin) && this.size.isEqual(rect.size)
   }
 
-  isEmpty() {
-    return this.size.isEmpty()
+  get isEmpty() {
+    return this.size.isEmpty
   }
 
   includes(point: Point) {

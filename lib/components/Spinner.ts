@@ -42,7 +42,7 @@ export class Spinner extends View {
   }
 
   render(viewport: Viewport) {
-    if (viewport.contentSize.isEmpty()) {
+    if (viewport.isEmpty) {
       return
     }
 

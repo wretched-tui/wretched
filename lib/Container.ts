@@ -84,6 +84,7 @@ export abstract class Container extends View {
       if (!child.isVisible) {
         continue
       }
+
       child.render(viewport)
     }
   }
