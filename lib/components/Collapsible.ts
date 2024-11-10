@@ -8,7 +8,16 @@ import {type MouseEvent, isMouseClicked} from '../events'
 import {System} from '../System'
 
 interface StyleProps {
+  /**
+   * @default true
+   */
   isCollapsed?: boolean
+  /**
+   * If true, the collapsed view is always shown. Usually the expanded view
+   * *replaces* the collapsed view.
+   * @default false
+   */
+  showCollapsed?: boolean
   collapsed?: View
   expanded?: View
 }
@@ -26,6 +35,7 @@ export class Collapsible extends Container {
   #expandedView?: View
 
   #isCollapsed = true
+  #showCollapsed = false
 
   constructor(props: Props) {
     super(props)
@@ -52,14 +62,16 @@ export class Collapsible extends Container {
 
   #update({
     isCollapsed,
+    showCollapsed,
     collapsed: collapsedView,
     expanded: expandedView,
   }: Props) {
     this.#isCollapsed = isCollapsed ?? true
+    this.#showCollapsed = showCollapsed ?? true
 
     // edge case: expandedView is being assigned, but not collapsedView
-    if (expandedView && !this.#collapsedView && !collapsedView) {
-      collapsedView = new Text()
+    if (expandedView && !collapsedView) {
+      collapsedView = this.#collapsedView ?? new Text()
     }
 
     if (collapsedView && collapsedView !== this.#collapsedView) {
@@ -76,14 +88,20 @@ export class Collapsible extends Container {
   }
 
   naturalSize(available: Size): Size {
-    let size: Size | undefined
+    let size: Size
     if (this.#isCollapsed) {
-      size = this.#collapsedView?.naturalSize(available)
+      size = this.#collapsedView?.naturalSize(available) ?? Size.zero
+    } else if (this.#showCollapsed) {
+      let collapsedSize =
+        this.#collapsedView?.naturalSize(available) ?? Size.zero
+      const remaining = available.shrink(0, collapsedSize.height)
+      size = this.#expandedView?.naturalSize(remaining) ?? Size.zero
+      size = size.growHeight(collapsedSize)
     } else {
-      size = this.#expandedView?.naturalSize(available)
+      size = this.#expandedView?.naturalSize(available) ?? Size.zero
     }
 
-    return (size ?? Size.zero).grow(2, 0)
+    return size.grow(2, 0)
   }
 
   receiveMouse(event: MouseEvent, system: System) {
@@ -109,21 +127,29 @@ export class Collapsible extends Container {
 
     viewport.paint(textStyle)
 
-    const contentSize = viewport.contentSize.shrink(2, 0)
-    const naturalSize =
-      (this.#isCollapsed
-        ? this.#collapsedView?.naturalSize(contentSize)
-        : this.#expandedView?.naturalSize(contentSize)) ?? Size.zero
     const offset = new Point(2, 0)
-
     viewport.write(
       this.#isCollapsed ? '►' : '▼',
       new Point(0, offset.y),
       textStyle,
     )
-    viewport.clipped(new Rect(offset, naturalSize), inside => {
+
+    const contentSize = viewport.contentSize.shrink(2, 0)
+    viewport.clipped(new Rect(offset, contentSize), inside => {
       if (this.#isCollapsed) {
         this.#collapsedView?.render(inside)
+      } else if (this.#showCollapsed) {
+        const collapsedSize =
+          this.#collapsedView?.naturalSize(contentSize) ?? Size.zero
+        let remaining = contentSize
+        remaining = remaining.shrink(0, collapsedSize.height)
+        this.#collapsedView?.render(inside)
+        viewport.clipped(
+          new Rect([0, collapsedSize.height], remaining),
+          inside => {
+            this.#expandedView?.render(inside)
+          },
+        )
       } else {
         this.#expandedView?.render(inside)
       }
