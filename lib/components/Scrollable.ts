@@ -3,6 +3,7 @@ import {type Props as ContainerProps, Container} from '../Container'
 import {Point, Rect, Size, interpolate} from '../geometry'
 import {type MouseEvent} from '../events'
 import {Style} from '../Style'
+import {type Orientation} from './types'
 
 interface Props extends ContainerProps {
   /**
@@ -33,7 +34,7 @@ export class Scrollable extends Container {
   #contentOffset: ContentOffset
   #contentSize: Size = Size.zero
   #visibleSize: Size = Size.zero
-  #prevMouseDown?: 'horizontal' | 'vertical' = undefined
+  #prevMouseDown?: Orientation = undefined
 
   constructor(props: Props) {
     super(props)

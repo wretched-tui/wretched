@@ -11,8 +11,7 @@ import {
   isMousePressEnd,
 } from '../events'
 import type {Style} from '../Style'
-
-type Direction = 'vertical' | 'horizontal'
+import {type Orientation} from './types'
 
 const MIN = 5
 
@@ -48,7 +47,7 @@ type Props = ViewProps &
      * What direction to draw the slider.
      * Default: 'horizontal'
      */
-    direction?: Direction
+    direction?: Orientation
     /**
      * Whether to show a border around the slider.
      * Default: false
@@ -67,7 +66,7 @@ type Props = ViewProps &
 
 export class Slider extends View {
   // styles
-  #direction: Direction = 'horizontal'
+  #direction: Orientation = 'horizontal'
   #border: boolean = false
   #buttons: boolean = false
 

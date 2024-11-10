@@ -2,8 +2,8 @@ import type {Viewport} from '../Viewport'
 import type {Props as ViewProps} from '../View'
 import {View} from '../View'
 import {Point, Size} from '../geometry'
+import {type Orientation} from './types'
 
-type Direction = 'vertical' | 'horizontal'
 type Border =
   | 'single'
   | 'leading'
@@ -16,13 +16,13 @@ type Border =
   | 'double'
 
 interface Props extends ViewProps {
-  direction: Direction
+  direction: Orientation
   padding?: number
   border?: Border
 }
 
 export class Separator extends View {
-  #direction: Direction = 'vertical'
+  #direction: Orientation = 'vertical'
   #padding: number = 0
   #border: Border = 'single'
 

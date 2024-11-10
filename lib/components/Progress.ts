@@ -2,11 +2,10 @@ import {Viewport} from '../Viewport'
 import {type Props as ViewProps, View} from '../View'
 import {Point, Size, interpolate} from '../geometry'
 import {Style} from '../Style'
-
-type Direction = 'vertical' | 'horizontal'
+import {type Orientation} from './types'
 
 interface Props extends ViewProps {
-  direction?: Direction
+  direction?: Orientation
   min?: number
   max?: number
   value?: number
@@ -14,7 +13,7 @@ interface Props extends ViewProps {
 }
 
 export class Progress extends View {
-  #direction: Direction = 'horizontal'
+  #direction: Orientation = 'horizontal'
   #range: [number, number] = [0, 100]
   #value: number = 0
   #showPercent: boolean = false

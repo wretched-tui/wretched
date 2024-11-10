@@ -4,8 +4,7 @@ import type {FlexShorthand, FlexSize} from '../View'
 import {Container} from '../Container'
 import {Rect, Point, Size, MutablePoint} from '../geometry'
 import {define} from '../util'
-
-type Direction = 'right' | 'left' | 'down' | 'up'
+import {type Direction} from './types'
 
 interface Props extends ViewProps {
   children?: ([FlexShorthand, View] | View)[]
