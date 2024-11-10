@@ -117,10 +117,7 @@ export class Accordion extends Container {
         0,
         remainingSize.height - sectionSize.height,
       )
-      return new Size(
-        Math.max(sectionSize.width, size.width),
-        size.height + sectionSize.height,
-      )
+      return size.growHeight(sectionSize)
     }, Size.zero.mutableCopy())
   }
 

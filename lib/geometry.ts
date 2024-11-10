@@ -109,6 +109,40 @@ export class Size {
   }
 
   /**
+   * Expand the width, but only increase the height if the new height is taller than
+   * the previous height.
+   */
+  growWidth(size: Size): Size
+  growWidth(_: {width: number; height: number}): Size
+  growWidth(_: [number, number]): Size
+  growWidth(width: number): Size
+  growWidth(...args: SizeArgs | [number]): Size {
+    if (args.length === 1 && typeof args[0] === 'number') {
+      return this.grow(args[0], 0)
+    }
+
+    const [w, h] = toWH(args as SizeArgs)
+    return new Size(Math.max(this.width + w), Math.max(this.height, h))
+  }
+
+  /**
+   * Expand the height, but only increase the width if the new width is taller than
+   * the previous width.
+   */
+  growHeight(size: Size): Size
+  growHeight(_: {width: number; height: number}): Size
+  growHeight(_: [number, number]): Size
+  growHeight(height: number): Size
+  growHeight(...args: SizeArgs | [number]): Size {
+    if (args.length === 1 && typeof args[0] === 'number') {
+      return this.grow(0, args[0])
+    }
+
+    const [w, h] = toWH(args as SizeArgs)
+    return new Size(Math.max(this.width, w), Math.max(this.height + h))
+  }
+
+  /**
    * Restricts width to a maximum size (width must be <= maxWidth)
    */
   maxWidth(maxWidth: number): Size {
