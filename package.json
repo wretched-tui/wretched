@@ -6,7 +6,7 @@
     "Shawn Chen <meishangchen@gmail.com>",
     "Christopher Jeffrey (via Blessed)"
   ],
-  "version": "1.0.11",
+  "version": "1.0.12",
   "license": "MIT",
   "preferGlobal": false,
   "repository": {
